@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LitmusTrend - Automated Trading & Signal Platform</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <span class="logo-icon">⚡</span> Litmus<span class="highlight">Trend</span>
+            </a>
+            <div class="nav-toggle" id="mobile-menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#hero">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#ea-setup">MT5 Setup</a></li>
+                <li><button class="btn btn-outline" onclick="openModal('loginModal')">Login</button></li>
+                <li><button class="btn btn-primary" onclick="openModal('registerModal')">Get Started</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section id="hero" class="hero">
+        <div class="hero-content">
+            <span class="badge">MT5 + Supabase + Vercel Integration</span>
+            <h1>Automate Your Forex & Crypto Trading with <span class="gradient-text">LitmusTrend</span></h1>
+            <p>Connect your MetaTrader 5 Expert Advisor directly to real-time website analytics, cloud databases, and automated signal networks.</p>
+            <div class="hero-btns">
+                <a href="#dashboard" class="btn btn-primary btn-lg">View Live Dashboard</a>
+                <a href="#ea-setup" class="btn btn-secondary btn-lg">Download MT5 EA</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <h3>99.9%</h3>
+                    <p>Uptime Execution</p>
+                </div>
+                <div class="stat">
+                    <h3>< 50ms</h3>
+                    <p>API Latency</p>
+                </div>
+                <div class="stat">
+                    <h3>24/7</h3>
+                    <p>Cloud Monitoring</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section id="features" class="features">
+        <div class="section-header">
+            <h2>Built For Professional Algorithmic Traders</h2>
+            <p>Everything you need to bridge MetaTrader 5, cloud backends, and live trader web dashboards.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>Automated MT5 EA Sync</h3>
+                <p>Seamlessly stream trade execution, lot sizes, entry prices, and PnL directly from MetaTrader 5 to your web dashboard using MQL5 WebRequest.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Real-Time Supabase Sync</h3>
+                <p>Instantaneous database sync for trade logs, user license authorizations, performance analytics, and custom trading signals.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>License & Access Control</h3>
+                <p>Protect your proprietary Expert Advisors with remote backend license checking before executing trades on client MT5 terminals.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🐍</div>
+                <h3>Python Strategy Engine</h3>
+                <p>Run machine learning models and quantitative strategies in Python and broadcast signals live to MT5 and web subscribers.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD PREVIEW -->
+    <section id="dashboard" class="dashboard-section">
+        <div class="section-header">
+            <h2>Live Trading Dashboard</h2>
+            <p>Real-time analytics streamed from connected MetaTrader 5 Expert Advisors.</p>
+        </div>
+
+        <div class="dashboard-container">
+            <!-- Metrics Bar -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-title">Total Account Balance</span>
+                    <span class="metric-value">$12,480.50</span>
+                    <span class="metric-sub positive">+14.2% this month</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">Win Rate</span>
+                    <span class="metric-value">68.4%</span>
+                    <span class="metric-sub positive">142 W / 65 L</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">Open Positions</span>
+                    <span class="metric-value">3 Trades</span>
+                    <span class="metric-sub neutral">0.30 Total Lots</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-title">EA Connection Status</span>
+                    <span class="metric-value status-online">Connected ●</span>
+                    <span class="metric-sub">MT5 Server: Vercel Cloud API</span>
+                </div>
+            </div>
+
+            <!-- Recent Trades Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Recent Executed Trades</h3>
+                    <button class="btn btn-sm btn-outline" id="refresh-trades-btn">Refresh Trades</button>
+                </div>
+                <table class="trades-table">
+                    <thead>
+                        <tr>
+                            <th>Ticket / ID</th>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Lots</th>
+                            <th>Open Price</th>
+                            <th>Close Price</th>
+                            <th>Profit ($)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trades-tbody">
+                        <tr>
+                            <td>#1094821</td>
+                            <td><strong>EURUSD</strong></td>
+                            <td><span class="tag tag-buy">BUY</span></td>
+                            <td>0.10</td>
+                            <td>1.08540</td>
+                            <td>1.08910</td>
+                            <td class="profit-positive">+$37.00</td>
+                            <td><span class="status-closed">Closed</span></td>
+                        </tr>
+                        <tr>
+                            <td>#1094822</td>
+                            <td><strong>GBPUSD</strong></td>
+                            <td><span class="tag tag-sell">SELL</span></td>
+                            <td>0.15</td>
+                            <td>1.27210</td>
+                            <td>1.26880</td>
+                            <td class="profit-positive">+$49.50</td>
+                            <td><span class="status-closed">Closed</span></td>
+                        </tr>
+                        <tr>
+                            <td>#1094823</td>
+                            <td><strong>XAUUSD</strong></td>
+                            <td><span class="tag tag-buy">BUY</span></td>
+                            <td>0.05</td>
+                            <td>2415.30</td>
+                            <td>-</td>
+                            <td class="profit-positive">+$18.20</td>
+                            <td><span class="status-open">Open</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- MT5 SETUP GUIDE -->
+    <section id="ea-setup" class="setup-section">
+        <div class="section-header">
+            <h2>Connecting Your MT5 Expert Advisor</h2>
+            <p>Follow these 3 quick steps to link MetaTrader 5 to LitmusTrend.</p>
+        </div>
+        <div class="setup-steps">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <h3>Enable WebRequest in MT5</h3>
+                <p>Open MT5 -> <strong>Tools -> Options -> Expert Advisors</strong>. Check <em>"Allow WebRequest for listed URL"</em> and add your Vercel URL.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <h3>Download LitmusTrend.mq5</h3>
+                <p>Place the <code>LitmusTrend_EA.mq5</code> file inside your MT5 <code>MQL5/Experts</code> folder and compile it in MetaEditor.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <h3>Attach EA & Enter Secret Key</h3>
+                <p>Drag the EA onto your chart, enter your API Secret Key in the inputs tab, and click <strong>OK</strong>.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p>&copy; 2026 LitmusTrend. All rights reserved. Powered by Vercel, Supabase & MT5 MQL5.</p>
+        </div>
+    </footer>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Login to LitmusTrend</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" required placeholder="trader@litmustrend.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- REGISTER MODAL -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('registerModal')">&times;</span>
+            <h2>Create Trader Account</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" required placeholder="trader@litmustrend.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>MT5 Account Number</label>
+                    <input type="text" required placeholder="e.g. 1098234">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Register Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

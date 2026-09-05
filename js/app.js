@@ -270,15 +270,17 @@ function deleteCurrentAccount() {
 // --- 6. ADD ACCOUNT MODAL ---
 function openAddAccountModal() {
     document.getElementById('addAccountModal').classList.remove('hidden');
+    document.getElementById('accModalError').innerText = '';
     document.getElementById('accName').focus();
 }
 
 function closeAddAccountModal() {
     document.getElementById('addAccountModal').classList.add('hidden');
     document.getElementById('addAccountForm').reset();
+    document.getElementById('accModalError').innerText = '';
 }
 
-function handleCreateAccount(e) {
+async function handleCreateAccount(e) {
     e.preventDefault();
 
     const name = document.getElementById('accName').value.trim();
@@ -286,37 +288,57 @@ function handleCreateAccount(e) {
     const server = document.getElementById('accServer').value.trim();
     const login = document.getElementById('accLogin').value.trim();
     const password = document.getElementById('accPassword').value.trim();
+    const btn = document.getElementById('btnSaveAcc');
+    const errEl = document.getElementById('accModalError');
 
-    // Attach to backend dispatcher in background
-    fetch('/api/portal/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            account_name: name,
-            strategy,
-            server,
-            account: login,
-            password
-        })
-    }).catch(() => {});
+    if (!name || !server || !login || !password) return;
 
-    const newAcc = {
-        id: 'acc-' + Date.now(),
-        name,
-        strategy,
-        server,
-        login,
-        isPaused: false,
-        activeTrade: null,
-        trades: []
-    };
+    btn.disabled = true;
+    btn.innerText = 'Verifying with MT5 Broker...';
+    errEl.innerText = '';
 
-    accounts.push(newAcc);
-    saveAccounts();
-    closeAddAccountModal();
+    try {
+        const response = await fetch('/api/portal/connect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                account_name: name,
+                strategy,
+                server,
+                account: login,
+                password
+            })
+        });
 
-    // Select the new account immediately
-    selectAccount(newAcc.id);
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            const newAcc = {
+                id: 'acc-' + Date.now(),
+                name,
+                strategy,
+                server,
+                login,
+                isPaused: false,
+                activeTrade: null,
+                trades: []
+            };
+
+            accounts.push(newAcc);
+            saveAccounts();
+            closeAddAccountModal();
+
+            // Select the new account immediately
+            selectAccount(newAcc.id);
+        } else {
+            errEl.innerText = data.error || 'Authentication Failed: Broker rejected credentials. Please check your MT5 server and login.';
+        }
+    } catch (err) {
+        errEl.innerText = 'Verification service error. Unable to reach broker gateway.';
+    } finally {
+        btn.disabled = false;
+        btn.innerText = 'Add Account & Start Bot';
+    }
 }
 
 // --- UTILITIES ---

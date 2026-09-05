@@ -267,10 +267,233 @@ function deleteCurrentAccount() {
     }
 }
 
-// --- 6. ADD ACCOUNT MODAL ---
+// --- 6. MT5 BROKER & SERVER SEARCH REGISTRY ---
+const BROKER_DATABASE = [
+    {
+        name: 'Exness',
+        servers: [
+            'Exness-MT5Real', 'Exness-MT5Real2', 'Exness-MT5Real3', 'Exness-MT5Real4',
+            'Exness-MT5Real5', 'Exness-MT5Real6', 'Exness-MT5Real7', 'Exness-MT5Real8',
+            'Exness-MT5Real9', 'Exness-MT5Real10', 'Exness-MT5Real11', 'Exness-MT5Real12',
+            'Exness-MT5Real14', 'Exness-MT5Real15', 'Exness-MT5Real16', 'Exness-MT5Real17',
+            'Exness-MT5Trial', 'Exness-MT5Trial2'
+        ]
+    },
+    {
+        name: 'FTMO',
+        servers: ['FTMO-Server', 'FTMO-Server2', 'FTMO-Server3', 'FTMO-Demo']
+    },
+    {
+        name: 'FundedNext',
+        servers: ['FundedNext-Server', 'FundedNext-Server-2', 'FundedNext-Demo']
+    },
+    {
+        name: 'IC Markets',
+        servers: [
+            'ICMarketsSC-MT5', 'ICMarketsSC-MT5-2', 'ICMarketsSC-MT5-3', 'ICMarketsSC-MT5-4',
+            'ICMarketsEU-MT5', 'ICMarkets-Demo'
+        ]
+    },
+    {
+        name: 'Pepperstone',
+        servers: ['Pepperstone-MT5-Live01', 'Pepperstone-MT5-Live02', 'Pepperstone-MT5-Demo01']
+    },
+    {
+        name: 'OctaFX / Octa',
+        servers: ['OctaFX-Real', 'OctaFX-Real2', 'OctaFX-Real3', 'OctaFX-Demo']
+    },
+    {
+        name: 'XM Global',
+        servers: [
+            'XMGlobal-MT5', 'XMGlobal-MT5 2', 'XMGlobal-MT5 3', 'XMGlobal-MT5 4',
+            'XMGlobal-MT5 5', 'XMGlobal-MT5 6', 'XMGlobal-MT5 7', 'XMGlobal-Demo'
+        ]
+    },
+    {
+        name: 'Deriv',
+        servers: ['Deriv-Server', 'Deriv-Server-02', 'Deriv-Server-03', 'Deriv-Demo']
+    },
+    {
+        name: 'Funding Pips',
+        servers: ['FundingPips-Server', 'FundingPips-Server-2', 'FundingPips-Demo']
+    },
+    {
+        name: 'RoboForex',
+        servers: ['RoboForex-Pro', 'RoboForex-ECN', 'RoboForex-ProCent', 'RoboForex-Demo']
+    },
+    {
+        name: 'The Funded Trader (TFT)',
+        servers: ['TheFundedTrader-Live', 'TheFundedTrader-Live2', 'TheFundedTrader-Demo']
+    },
+    {
+        name: 'Alpha Capital Group',
+        servers: ['AlphaCapital-Live', 'AlphaCapital-Demo']
+    },
+    {
+        name: 'Funded Trading Plus',
+        servers: ['FundedTradingPlus-Server', 'FundedTradingPlus-Demo']
+    },
+    {
+        name: 'FXTM (ForexTime)',
+        servers: ['ForexTime-MT5-Real', 'ForexTime-MT5-Demo']
+    },
+    {
+        name: 'HFM (HotForex)',
+        servers: ['HFMarketsGlobal-Live5', 'HFMarketsGlobal-Live6', 'HFMarketsGlobal-Demo5']
+    },
+    {
+        name: 'AvaTrade',
+        servers: ['Ava-Real 1', 'Ava-Real 2', 'Ava-Demo 1']
+    },
+    {
+        name: 'FP Markets',
+        servers: ['FPMarkets-Live', 'FPMarkets-Demo']
+    },
+    {
+        name: 'FxPro',
+        servers: ['FxPro-MT5', 'FxPro-MT5-2', 'FxPro-MT5-Demo']
+    },
+    {
+        name: 'JustMarkets',
+        servers: ['JustForex-Live', 'JustForex-Live2', 'JustForex-Demo']
+    },
+    {
+        name: 'Vantage Markets',
+        servers: ['VantageInternational-Live 1', 'VantageInternational-Live 2', 'VantageInternational-Demo']
+    },
+    {
+        name: 'Eightcap',
+        servers: ['Eightcap-Real', 'Eightcap-Real2', 'Eightcap-Demo']
+    }
+];
+
+let isManualServerMode = false;
+let expandedBrokerName = null;
+
+function handleBrokerFocus() {
+    const input = document.getElementById('brokerSearchInput');
+    handleBrokerSearch(input.value || '');
+}
+
+function handleBrokerSearch(query) {
+    const dropdown = document.getElementById('brokerSearchResults');
+    if (!dropdown) return;
+
+    const q = (query || '').trim().toLowerCase();
+    dropdown.innerHTML = '';
+    dropdown.classList.remove('hidden');
+
+    const filtered = BROKER_DATABASE.filter(b => {
+        if (!q) return true;
+        const nameMatch = b.name.toLowerCase().includes(q);
+        const serverMatch = b.servers.some(s => s.toLowerCase().includes(q));
+        return nameMatch || serverMatch;
+    });
+
+    if (filtered.length === 0) {
+        dropdown.innerHTML = `
+            <div class="broker-empty-msg">
+                No broker found matching "${escapeHtml(query)}".<br>
+                <button type="button" class="btn-text-link" style="margin-top:6px;" onclick="toggleManualServerInput('${escapeHtml(query)}')">Click to enter server manually</button>
+            </div>
+        `;
+        return;
+    }
+
+    filtered.forEach(broker => {
+        const isExpanded = expandedBrokerName === broker.name || (q.length > 1 && broker.name.toLowerCase().includes(q));
+        const group = document.createElement('div');
+        group.className = 'broker-group';
+
+        group.innerHTML = `
+            <div class="broker-group-header" onclick="toggleBrokerExpand('${escapeHtml(broker.name)}')">
+                <span>🏦 ${escapeHtml(broker.name)}</span>
+                <span class="broker-server-count">${broker.servers.length} servers ${isExpanded ? '▲' : '▼'}</span>
+            </div>
+            <div class="broker-servers-list ${isExpanded ? '' : 'hidden'}" id="servers-${escapeHtml(broker.name)}">
+                ${broker.servers.map(srv => `
+                    <div class="server-item" onclick="selectBrokerServer('${escapeHtml(srv)}')">
+                        <span>${escapeHtml(srv)}</span>
+                        <span class="server-type-tag">${srv.toLowerCase().includes('demo') || srv.toLowerCase().includes('trial') ? 'DEMO' : 'LIVE'}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        dropdown.appendChild(group);
+    });
+}
+
+function toggleBrokerExpand(brokerName) {
+    expandedBrokerName = (expandedBrokerName === brokerName) ? null : brokerName;
+    const input = document.getElementById('brokerSearchInput');
+    handleBrokerSearch(input.value || '');
+}
+
+function selectBrokerServer(serverName) {
+    document.getElementById('accServer').value = serverName;
+    document.getElementById('selectedServerName').innerText = serverName;
+    
+    // Hide search input & dropdown
+    document.getElementById('brokerSearchInput').classList.add('hidden');
+    document.getElementById('brokerSearchResults').classList.add('hidden');
+    document.getElementById('selectedServerDisplay').classList.remove('hidden');
+}
+
+function clearSelectedServer() {
+    document.getElementById('accServer').value = '';
+    document.getElementById('selectedServerName').innerText = '';
+    document.getElementById('selectedServerDisplay').classList.add('hidden');
+    
+    const searchInput = document.getElementById('brokerSearchInput');
+    searchInput.classList.remove('hidden');
+    searchInput.value = '';
+    searchInput.focus();
+    handleBrokerSearch('');
+}
+
+function toggleManualServerInput(prefillValue = '') {
+    isManualServerMode = !isManualServerMode;
+    const searchMode = document.getElementById('brokerSearchMode');
+    const manualMode = document.getElementById('brokerManualMode');
+    const toggleBtn = document.getElementById('btnToggleManualServer');
+    const manualInput = document.getElementById('accServerManual');
+
+    if (isManualServerMode) {
+        searchMode.classList.add('hidden');
+        manualMode.classList.remove('hidden');
+        toggleBtn.innerText = 'Search Broker';
+        if (prefillValue) {
+            manualInput.value = prefillValue;
+            syncManualServer(prefillValue);
+        }
+        manualInput.focus();
+    } else {
+        manualMode.classList.add('hidden');
+        searchMode.classList.remove('hidden');
+        toggleBtn.innerText = 'Enter Manually';
+        clearSelectedServer();
+    }
+}
+
+function syncManualServer(val) {
+    document.getElementById('accServer').value = (val || '').trim();
+}
+
+// Close broker dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('brokerSearchMode');
+    const dropdown = document.getElementById('brokerSearchResults');
+    if (wrap && dropdown && !wrap.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// --- 7. ADD ACCOUNT MODAL ---
 function openAddAccountModal() {
     document.getElementById('addAccountModal').classList.remove('hidden');
     document.getElementById('accModalError').innerText = '';
+    clearSelectedServer();
     document.getElementById('accName').focus();
 }
 
@@ -278,6 +501,7 @@ function closeAddAccountModal() {
     document.getElementById('addAccountModal').classList.add('hidden');
     document.getElementById('addAccountForm').reset();
     document.getElementById('accModalError').innerText = '';
+    clearSelectedServer();
 }
 
 async function handleCreateAccount(e) {

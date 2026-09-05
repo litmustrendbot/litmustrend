@@ -197,8 +197,31 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Broker MT5 Server</label>
-                    <input type="text" id="accServer" class="form-input" placeholder="e.g. Exness-MT5Real7, FTMO-Server" required>
+                    <div class="field-label-row">
+                        <label>Broker MT5 Server</label>
+                        <button type="button" class="btn-text-link" id="btnToggleManualServer" onclick="toggleManualServerInput()">Enter Manually</button>
+                    </div>
+
+                    <!-- MT5 Broker Search Mode -->
+                    <div id="brokerSearchMode" class="broker-search-wrap">
+                        <input type="text" id="brokerSearchInput" class="form-input" placeholder="Type broker name (e.g. Exness, FTMO, IC Markets, Deriv...)" autocomplete="off" oninput="handleBrokerSearch(this.value)" onfocus="handleBrokerFocus()">
+                        
+                        <!-- Selected Server Display -->
+                        <div id="selectedServerDisplay" class="selected-server-chip hidden">
+                            <span class="chip-label">Server:</span>
+                            <strong id="selectedServerName"></strong>
+                            <button type="button" class="chip-clear" onclick="clearSelectedServer()">&times; Change</button>
+                        </div>
+
+                        <!-- Dropdown matching brokers & servers -->
+                        <div id="brokerSearchResults" class="broker-dropdown hidden"></div>
+                        <input type="hidden" id="accServer" required>
+                    </div>
+
+                    <!-- Manual Input Fallback -->
+                    <div id="brokerManualMode" class="hidden">
+                        <input type="text" id="accServerManual" class="form-input" placeholder="e.g. Exness-MT5Real7, FTMO-Server" oninput="syncManualServer(this.value)">
+                    </div>
                 </div>
 
                 <div class="form-row">

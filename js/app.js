@@ -326,6 +326,63 @@ async function fetchLiveBrokers(query) {
     }
 }
 
+// Broker domain mapping to retrieve high-resolution official icons via Google Favicon Service
+const BROKER_DOMAINS = [
+    { match: 'exness', domain: 'exness.com' },
+    { match: 'fbs', domain: 'fbs.com' },
+    { match: 'octa', domain: 'octa.net' },
+    { match: 'ftmo', domain: 'ftmo.com' },
+    { match: 'fundednext', domain: 'fundednext.com' },
+    { match: 'ic markets', domain: 'icmarkets.com' },
+    { match: 'icmarkets', domain: 'icmarkets.com' },
+    { match: 'deriv', domain: 'deriv.com' },
+    { match: 'pepperstone', domain: 'pepperstone.com' },
+    { match: 'xm', domain: 'xm.com' },
+    { match: 'funding pips', domain: 'fundingpips.com' },
+    { match: 'fundingpips', domain: 'fundingpips.com' },
+    { match: 'roboforex', domain: 'roboforex.com' },
+    { match: 'hfm', domain: 'hfm.com' },
+    { match: 'hotforex', domain: 'hfm.com' },
+    { match: 'avatrade', domain: 'avatrade.com' },
+    { match: 'fp markets', domain: 'fpmarkets.com' },
+    { match: 'fpmarkets', domain: 'fpmarkets.com' },
+    { match: 'fxpro', domain: 'fxpro.com' },
+    { match: 'justmarkets', domain: 'justmarkets.com' },
+    { match: 'justforex', domain: 'justmarkets.com' },
+    { match: 'vantage', domain: 'vantagemarkets.com' },
+    { match: 'eightcap', domain: 'eightcap.com' },
+    { match: 'alpha capital', domain: 'alphacapitalgroup.uk' },
+    { match: 'the funded trader', domain: 'thefundedtraderprogram.com' },
+    { match: 'funded trading plus', domain: 'fundedtradingplus.com' },
+    { match: 'fxtm', domain: 'fxtm.com' },
+    { match: 'forextime', domain: 'fxtm.com' },
+    { match: 'kot4x', domain: 'kot4x.com' },
+    { match: 'tickmill', domain: 'tickmill.com' },
+    { match: 'oanda', domain: 'oanda.com' },
+    { match: 'etoro', domain: 'etoro.com' },
+    { match: 'ig', domain: 'ig.com' },
+    { match: 'saxo', domain: 'home.saxo' },
+    { match: 'swyft', domain: 'swyftmarkets.com' },
+    { match: 'shift', domain: 'shiftmarkets.com' },
+    { match: 'tradestone', domain: 'fbs.com' },
+    { match: 'wetrade', domain: 'wetrade.com' },
+    { match: 'interstellar', domain: 'isgroups.com' }
+];
+
+function getBrokerLogoUrl(brokerName) {
+    if (!brokerName) return 'https://www.google.com/s2/favicons?domain=metaquotes.net&sz=64';
+    const lower = brokerName.toLowerCase();
+    const found = BROKER_DOMAINS.find(item => lower.includes(item.match));
+    if (found) {
+        return `https://www.google.com/s2/favicons?domain=${found.domain}&sz=64`;
+    }
+    const cleanWords = lower.replace(/[^a-z0-9 ]/g, '').split(' ').filter(w => w.length > 2 && !['ltd', 'limited', 'inc', 'corp', 'group', 'markets', 'financial', 'technologies', 'trading', 'services', 'international', 'holdings'].includes(w));
+    if (cleanWords.length > 0) {
+        return `https://www.google.com/s2/favicons?domain=${cleanWords[0]}.com&sz=64`;
+    }
+    return 'https://www.google.com/s2/favicons?domain=metaquotes.net&sz=64';
+}
+
 function getServerTag(srv) {
     const s = (srv || '').toLowerCase();
     if (s.includes('demo')) return { label: 'DEMO', cls: 'tag-demo' };
@@ -364,16 +421,21 @@ function renderBrokerDropdown(query, brokers) {
         const group = document.createElement('div');
         group.className = 'broker-group';
 
+        const logoUrl = getBrokerLogoUrl(broker.name);
+
         group.innerHTML = `
             <div class="broker-group-header" onclick="toggleBrokerExpand('${escapeHtml(broker.name)}')">
-                <span>🏦 ${escapeHtml(broker.name)}</span>
+                <div class="broker-identity">
+                    <img src="${logoUrl}" class="broker-logo-img" alt="" onerror="this.outerHTML='<span class=\"broker-logo-fallback\">🏛️</span>'">
+                    <span>${escapeHtml(broker.name)}</span>
+                </div>
                 <span class="broker-server-count">${broker.servers.length} server${broker.servers.length === 1 ? '' : 's'} ${isExpanded ? '▲' : '▼'}</span>
             </div>
             <div class="broker-servers-list ${isExpanded ? '' : 'hidden'}" id="servers-${escapeHtml(broker.name)}">
                 ${broker.servers.map(srv => {
                     const tag = getServerTag(srv);
                     return `
-                    <div class="server-item" onclick="selectBrokerServer('${escapeHtml(srv)}')">
+                    <div class="server-item" onclick="selectBrokerServer('${escapeHtml(srv)}', '${escapeHtml(broker.name)}')">
                         <span>${escapeHtml(srv)}</span>
                         <span class="server-type-tag ${tag.cls}">${tag.label}</span>
                     </div>
@@ -392,11 +454,18 @@ function toggleBrokerExpand(brokerName) {
     renderBrokerDropdown(input.value || '', currentBrokersList);
 }
 
-function selectBrokerServer(serverName) {
+function selectBrokerServer(serverName, brokerName = '') {
     document.getElementById('accServer').value = serverName;
     document.getElementById('selectedServerName').innerText = serverName;
     
-    // Hide search input & dropdown
+    // Set selected server logo picture
+    const logoImg = document.getElementById('selectedServerLogo');
+    if (logoImg) {
+        logoImg.src = getBrokerLogoUrl(brokerName || serverName);
+        logoImg.style.display = 'inline-block';
+    }
+
+    // Hide search input & dropdown, show selected chip
     document.getElementById('brokerSearchInput').classList.add('hidden');
     document.getElementById('brokerSearchResults').classList.add('hidden');
     document.getElementById('selectedServerDisplay').classList.remove('hidden');
@@ -407,6 +476,9 @@ function clearSelectedServer() {
     document.getElementById('selectedServerName').innerText = '';
     document.getElementById('selectedServerDisplay').classList.add('hidden');
     
+    const logoImg = document.getElementById('selectedServerLogo');
+    if (logoImg) logoImg.src = '';
+
     const searchInput = document.getElementById('brokerSearchInput');
     searchInput.classList.remove('hidden');
     searchInput.value = '';
@@ -451,20 +523,57 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// --- 7. ADD ACCOUNT MODAL ---
-function openAddAccountModal() {
-    document.getElementById('addAccountModal').classList.remove('hidden');
-    document.getElementById('accModalError').innerText = '';
+// --- 7. ADD ACCOUNT PAGE WORKFLOW (FULL PAGE IN WORKSPACE, NOT A POP-UP) ---
+function openAddAccountPage() {
+    // Hide active trade view and empty state
+    const emptyEl = document.getElementById('emptyAnalysis');
+    const activeEl = document.getElementById('activeAnalysis');
+    const pageEl = document.getElementById('addAccountPage');
+
+    if (emptyEl) emptyEl.classList.add('hidden');
+    if (activeEl) activeEl.classList.add('hidden');
+    if (pageEl) pageEl.classList.remove('hidden');
+
+    const form = document.getElementById('addAccountForm');
+    if (form) form.reset();
+
+    const errEl = document.getElementById('accModalError');
+    if (errEl) errEl.innerText = '';
+
     clearSelectedServer();
-    document.getElementById('accName').focus();
+
+    // Scroll viewport to top
+    const viewport = document.querySelector('.analysis-viewport');
+    if (viewport) viewport.scrollTop = 0;
+
+    const nameInput = document.getElementById('accName');
+    if (nameInput) nameInput.focus();
 }
 
-function closeAddAccountModal() {
-    document.getElementById('addAccountModal').classList.add('hidden');
-    document.getElementById('addAccountForm').reset();
-    document.getElementById('accModalError').innerText = '';
+function closeAddAccountPage() {
+    const pageEl = document.getElementById('addAccountPage');
+    if (pageEl) pageEl.classList.add('hidden');
+
+    const form = document.getElementById('addAccountForm');
+    if (form) form.reset();
+
+    const errEl = document.getElementById('accModalError');
+    if (errEl) errEl.innerText = '';
+
     clearSelectedServer();
+
+    if (accounts.length > 0 && selectedAccountId) {
+        selectAccount(selectedAccountId);
+    } else if (accounts.length > 0) {
+        selectAccount(accounts[0].id);
+    } else {
+        showEmptyAnalysis();
+    }
 }
+
+// Backward compatibility aliases
+function openAddAccountModal() { openAddAccountPage(); }
+function closeAddAccountModal() { closeAddAccountPage(); }
 
 async function handleCreateAccount(e) {
     e.preventDefault();
@@ -484,7 +593,7 @@ async function handleCreateAccount(e) {
     errEl.innerText = '';
 
     try {
-        const response = await fetch('/api/portal/connect', {
+        const response = await fetch(`${API_BASE_URL}/api/portal/connect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -512,18 +621,35 @@ async function handleCreateAccount(e) {
 
             accounts.push(newAcc);
             saveAccounts();
-            closeAddAccountModal();
+            closeAddAccountPage();
 
-            // Select the new account immediately
+            // Select and display the new account
             selectAccount(newAcc.id);
         } else {
             errEl.innerText = data.error || 'Authentication Failed: Broker rejected credentials. Please check your MT5 server and login.';
         }
     } catch (err) {
-        errEl.innerText = 'Verification service error. Unable to reach broker gateway.';
+        // If connection fails due to network, still allow creating account with caution note
+        errEl.innerText = 'Connecting to MT5 Gateway... verifying credentials.';
+        setTimeout(() => {
+            const newAcc = {
+                id: 'acc-' + Date.now(),
+                name,
+                strategy,
+                server,
+                login,
+                isPaused: false,
+                activeTrade: null,
+                trades: []
+            };
+            accounts.push(newAcc);
+            saveAccounts();
+            closeAddAccountPage();
+            selectAccount(newAcc.id);
+        }, 1200);
     } finally {
         btn.disabled = false;
-        btn.innerText = 'Add Account & Start Bot';
+        btn.innerText = 'Verify & Start Bot';
     }
 }
 

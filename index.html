@@ -46,7 +46,7 @@
             </div>
 
             <div class="sidebar-action">
-                <button class="btn btn-primary btn-block btn-sm" onclick="openAddAccountModal()">+ Add Account</button>
+                <button class="btn btn-primary btn-block btn-sm" onclick="openAddAccountPage()">+ Add Account</button>
             </div>
 
             <div class="sidebar-section-title">ACCOUNTS (<span id="accountsCount">0</span>)</div>
@@ -64,7 +64,7 @@
             <div id="emptyAnalysis" class="empty-analysis hidden">
                 <h2>No Account Selected</h2>
                 <p>Add an account or select one from the sidebar to view live trade analysis.</p>
-                <button class="btn btn-primary" onclick="openAddAccountModal()">+ Add Account</button>
+                <button class="btn btn-primary" onclick="openAddAccountPage()">+ Add Account</button>
             </div>
 
             <!-- ACTIVE ACCOUNT TRADE ANALYSIS CONTENT -->
@@ -166,85 +166,91 @@
                     </table>
                 </div>
 
+            <!-- ==============================================================
+                 3. ADD ACCOUNT PAGE VIEW (OPENS AS A FULL PAGE, NOT A POP-UP)
+                 ============================================================== -->
+            <div id="addAccountPage" class="account-page-view hidden">
+                <div class="page-top-bar">
+                    <div>
+                        <h2>Connect MT5 Trading Account</h2>
+                        <p class="page-subtitle">Configure your broker account details to link with LitmusTrend automated execution.</p>
+                    </div>
+                    <button type="button" class="btn-action" id="btnCancelAddPage" onclick="closeAddAccountPage()">← Back to Dashboard</button>
+                </div>
+
+                <div class="account-form-card">
+                    <form id="addAccountForm" onsubmit="handleCreateAccount(event)">
+                        <div class="form-group">
+                            <label>Account Name / Label</label>
+                            <input type="text" id="accName" class="form-input" placeholder="e.g. Exness Growth, FTMO 100k, Personal Real" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Select Expert Advisor / Strategy</label>
+                            <select id="accStrategy" class="form-input select-input" required>
+                                <option value="PDC 5M 10% Risk EA">PDC 5M 10% Risk EA (Aggressive 10% Risk &bull; 1:10 TP)</option>
+                                <option value="PDC 5M 5% Risk EA">PDC 5M 5% Risk EA (Moderate 5% Risk &bull; 1:10 TP)</option>
+                                <option value="PDC 5M 1% Risk EA">PDC 5M 1% Risk EA (Prop Firm 1% Risk &bull; FTMO Safe)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="field-label-row">
+                                <label>Broker MT5 Server</label>
+                                <button type="button" class="btn-text-link" id="btnToggleManualServer" onclick="toggleManualServerInput()">Enter Manually</button>
+                            </div>
+
+                            <!-- MT5 Broker Search Mode with Company Logos -->
+                            <div id="brokerSearchMode" class="broker-search-wrap">
+                                <input type="text" id="brokerSearchInput" class="form-input" placeholder="Type broker name (e.g. Exness, FTMO, FBS, Octa, IC Markets...)" autocomplete="off" oninput="handleBrokerSearch(this.value)" onfocus="handleBrokerFocus()">
+                                
+                                <!-- Selected Server Display with Logo -->
+                                <div id="selectedServerDisplay" class="selected-server-chip hidden">
+                                    <div class="selected-server-info">
+                                        <img id="selectedServerLogo" class="broker-logo-img" src="" alt="" onerror="this.style.display='none'">
+                                        <div>
+                                            <span class="chip-label">Server:</span>
+                                            <strong id="selectedServerName"></strong>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="chip-clear" onclick="clearSelectedServer()">&times; Change</button>
+                                </div>
+
+                                <!-- Dropdown matching brokers & servers with pictures -->
+                                <div id="brokerSearchResults" class="broker-dropdown hidden"></div>
+                                <input type="hidden" id="accServer" required>
+                            </div>
+
+                            <!-- Manual Input Fallback -->
+                            <div id="brokerManualMode" class="hidden">
+                                <input type="text" id="accServerManual" class="form-input" placeholder="e.g. Exness-MT5Real7, FTMO-Server" oninput="syncManualServer(this.value)">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>MT5 Login ID</label>
+                                <input type="text" id="accLogin" class="form-input" placeholder="e.g. 2108930" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>MT5 Password</label>
+                                <input type="password" id="accPassword" class="form-input" placeholder="••••••••••••" required>
+                            </div>
+                        </div>
+
+                        <div class="form-actions-row">
+                            <button type="button" class="btn btn-secondary" onclick="closeAddAccountPage()">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="btnSaveAcc">Verify & Start Bot</button>
+                        </div>
+
+                        <div id="accModalError" class="passcode-error"></div>
+                    </form>
+                </div>
             </div>
 
         </main>
     </section>
-
-    <!-- ==============================================================
-         3. ADD ACCOUNT MODAL
-         ============================================================== -->
-    <div id="addAccountModal" class="modal-overlay hidden">
-        <div class="modal-panel">
-            <div class="modal-top">
-                <h3>Add MT5 Trading Account</h3>
-                <button class="btn-close" onclick="closeAddAccountModal()">&times;</button>
-            </div>
-
-            <form id="addAccountForm" onsubmit="handleCreateAccount(event)">
-                <div class="form-group">
-                    <label>Account Name</label>
-                    <input type="text" id="accName" class="form-input" placeholder="e.g. Exness Growth, FTMO 100k, Personal Real" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Select Expert Advisor / Strategy</label>
-                    <select id="accStrategy" class="form-input select-input" required>
-                        <option value="PDC 5M 10% Risk EA">PDC 5M 10% Risk EA (Aggressive 10% Risk &bull; 1:10 TP)</option>
-                        <option value="PDC 5M 5% Risk EA">PDC 5M 5% Risk EA (Moderate 5% Risk &bull; 1:10 TP)</option>
-                        <option value="PDC 5M 1% Risk EA">PDC 5M 1% Risk EA (Prop Firm 1% Risk &bull; FTMO Safe)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <div class="field-label-row">
-                        <label>Broker MT5 Server</label>
-                        <button type="button" class="btn-text-link" id="btnToggleManualServer" onclick="toggleManualServerInput()">Enter Manually</button>
-                    </div>
-
-                    <!-- MT5 Broker Search Mode -->
-                    <div id="brokerSearchMode" class="broker-search-wrap">
-                        <input type="text" id="brokerSearchInput" class="form-input" placeholder="Type broker name (e.g. Exness, FTMO, IC Markets, Deriv...)" autocomplete="off" oninput="handleBrokerSearch(this.value)" onfocus="handleBrokerFocus()">
-                        
-                        <!-- Selected Server Display -->
-                        <div id="selectedServerDisplay" class="selected-server-chip hidden">
-                            <span class="chip-label">Server:</span>
-                            <strong id="selectedServerName"></strong>
-                            <button type="button" class="chip-clear" onclick="clearSelectedServer()">&times; Change</button>
-                        </div>
-
-                        <!-- Dropdown matching brokers & servers -->
-                        <div id="brokerSearchResults" class="broker-dropdown hidden"></div>
-                        <input type="hidden" id="accServer" required>
-                    </div>
-
-                    <!-- Manual Input Fallback -->
-                    <div id="brokerManualMode" class="hidden">
-                        <input type="text" id="accServerManual" class="form-input" placeholder="e.g. Exness-MT5Real7, FTMO-Server" oninput="syncManualServer(this.value)">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>MT5 Login ID</label>
-                        <input type="text" id="accLogin" class="form-input" placeholder="e.g. 2108930" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>MT5 Password</label>
-                        <input type="password" id="accPassword" class="form-input" placeholder="••••••••••••" required>
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddAccountModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="btnSaveAcc">Add Account & Start Bot</button>
-                </div>
-
-                <div id="accModalError" class="passcode-error"></div>
-            </form>
-        </div>
-    </div>
 
     <script src="js/brokers_data.js"></script>
     <script src="js/app.js"></script>

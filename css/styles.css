@@ -1,25 +1,27 @@
 /* ====================================================================
-   LITMUSTREND BOT - CLEAN MINIMALIST PLATFORM STYLESHEET
-   Subtle Ambient Aesthetic & High-Performance Account Management
+   LITMUSTREND BOT - ANTIGRAVITY-STYLE SPLIT WORKSPACE
+   Left Accounts Sidebar + Large Trade Analysis Viewport
    ==================================================================== */
 
 :root {
     --bg-base: #080a0f;
-    --bg-card: rgba(14, 18, 28, 0.85);
-    --bg-card-hover: rgba(19, 26, 42, 0.95);
-    --bg-input: #0c101a;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-accent: rgba(0, 136, 255, 0.4);
+    --bg-sidebar: #0b0e14;
+    --bg-sidebar-hover: rgba(255, 255, 255, 0.04);
+    --bg-sidebar-active: rgba(0, 136, 255, 0.12);
+    --bg-input: #0f131c;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-subtle: rgba(255, 255, 255, 0.04);
     
     --accent: #0088ff;
-    --cyan: #00f0ff;
+    --cyan: #00e5ff;
     --green: #00e676;
     --red: #ff5252;
     --orange: #ffab00;
     
-    --text-main: #f8fafc;
-    --text-muted: #8b9bb4;
-    --text-dim: #54647d;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-dim: #475569;
     
     --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -33,33 +35,20 @@
 
 body.dark-theme {
     background-color: var(--bg-base);
-    color: var(--text-main);
+    color: var(--text-primary);
     font-family: var(--font-main);
     min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
 }
 
-/* ====================================================================
-   SUBTLE AMBIENT GLOW BACKGROUND (CLEAN & MINIMAL)
-   ==================================================================== */
+/* Subtle background */
 .ambient-glow {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background: 
-        radial-gradient(circle at 50% 0%, rgba(0, 136, 255, 0.08) 0%, transparent 60%),
-        radial-gradient(circle at 80% 90%, rgba(0, 230, 118, 0.04) 0%, transparent 50%),
-        radial-gradient(circle at 10% 80%, rgba(124, 77, 255, 0.05) 0%, transparent 50%);
-    animation: calmPulse 18s ease-in-out infinite alternate;
-}
-
-@keyframes calmPulse {
-    0% { opacity: 0.7; transform: scale(1); }
-    100% { opacity: 1; transform: scale(1.05); }
+    background: radial-gradient(circle at 50% 0%, rgba(0, 136, 255, 0.05) 0%, transparent 60%);
 }
 
 /* ====================================================================
@@ -70,12 +59,11 @@ body.dark-theme {
     position: relative;
     z-index: 2;
     width: 100%;
-    min-height: 100vh;
+    height: 100vh;
 }
 
 .screen.active-screen {
     display: flex;
-    flex-direction: column;
 }
 
 /* ====================================================================
@@ -87,342 +75,528 @@ body.dark-theme {
     padding: 24px;
 }
 
-.passcode-card {
-    max-width: 440px;
+.passcode-panel {
+    max-width: 400px;
     width: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 42px 34px;
     text-align: center;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6);
-    animation: fadeInScale 0.35s ease-out;
 }
 
-@keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.96); }
-    to { opacity: 1; transform: scale(1); }
+.brand-title {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+    color: #fff;
 }
 
-.brand-badge {
-    display: inline-flex;
+.brand-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+}
+
+.passcode-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-family: var(--font-mono);
+    text-align: center;
+    letter-spacing: 0.25em;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+}
+
+.passcode-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.passcode-error {
+    color: var(--red);
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-top: 12px;
+    min-height: 18px;
+}
+
+/* ====================================================================
+   2. APP LAYOUT: SIDEBAR + LARGE ANALYSIS VIEWPORT
+   ==================================================================== */
+.app-layout {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- LEFT SIDEBAR (LIKE ANTIGRAVITY CHAT HISTORY) --- */
+.sidebar {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.sidebar-header {
+    height: 64px;
+    padding: 0 20px;
+    display: flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(0, 136, 255, 0.1);
-    border: 1px solid rgba(0, 136, 255, 0.25);
-    color: var(--cyan);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-    letter-spacing: 0.06em;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
 }
 
-.pulse-dot {
-    width: 7px;
-    height: 7px;
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-name {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: #fff;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
     background: var(--green);
     border-radius: 50%;
     box-shadow: 0 0 8px var(--green);
 }
 
-.portal-title {
-    font-size: 2.1rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    margin-bottom: 8px;
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
 }
 
-.portal-sub {
-    color: var(--text-muted);
-    font-size: 0.92rem;
-    margin-bottom: 30px;
-    line-height: 1.5;
-}
-
-.input-wrap {
-    margin-bottom: 20px;
-}
-
-.passcode-field {
-    width: 100%;
-    padding: 15px 18px;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.06);
     color: #fff;
-    font-size: 1.1rem;
+}
+
+.sidebar-action {
+    padding: 16px 20px 10px;
+}
+
+.sidebar-section-title {
+    padding: 12px 20px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+}
+
+.accounts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* ACCOUNT ITEM IN SIDEBAR (LIKE CHAT ITEM) */
+.account-list-item {
+    padding: 12px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    border-left: 3px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.account-list-item:hover {
+    background: var(--bg-sidebar-hover);
+}
+
+.account-list-item.selected {
+    background: var(--bg-sidebar-active);
+    border-left-color: var(--accent);
+}
+
+.item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 190px;
+}
+
+.item-trades-badge {
     font-family: var(--font-mono);
-    text-align: center;
-    letter-spacing: 0.2em;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
-.passcode-field:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 16px rgba(0, 136, 255, 0.3);
-}
-
-.error-text {
-    color: var(--red);
-    font-size: 0.84rem;
+.account-list-item.selected .item-trades-badge {
+    color: var(--cyan);
     font-weight: 600;
-    margin-top: 14px;
-    min-height: 20px;
+}
+
+.item-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 6px;
+    align-items: center;
 }
 
 /* ====================================================================
-   2. MAIN DASHBOARD SCREEN
+   LARGE MAIN TRADE ANALYSIS AREA
    ==================================================================== */
-.app-header {
-    height: 72px;
-    background: rgba(8, 10, 15, 0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 50;
+.analysis-viewport {
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 36px 48px;
+    background: var(--bg-base);
 }
 
-.header-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.header-brand h2 {
-    font-size: 1.3rem;
-    font-weight: 800;
-}
-
-.active-count-tag {
-    font-size: 0.75rem;
-    background: rgba(0, 230, 118, 0.12);
-    border: 1px solid rgba(0, 230, 118, 0.25);
-    color: var(--green);
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-weight: 600;
-}
-
-.header-actions {
-    display: flex;
-    gap: 12px;
-}
-
-.dashboard-body {
-    max-width: 1200px;
-    width: 100%;
+.analysis-content {
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 36px 24px 80px;
 }
 
-.dashboard-header-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 28px;
-}
-
-.dashboard-header-bar h3 {
-    font-size: 1.7rem;
-    font-weight: 800;
-}
-
-.section-sub {
-    color: var(--text-muted);
-    font-size: 0.94rem;
-    margin-top: 4px;
-}
-
-/* ACCOUNTS GRID */
-.accounts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 22px;
-}
-
-.account-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 210px;
-}
-
-.account-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--border-accent);
-    background: var(--bg-card-hover);
-    box-shadow: 0 12px 28px -6px rgba(0, 136, 255, 0.18);
-}
-
-.card-top {
+/* ANALYSIS HEADER */
+.analysis-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 14px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
 }
 
-.acc-title {
-    font-size: 1.15rem;
-    font-weight: 700;
+.analysis-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+.analysis-meta {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.analysis-meta strong {
     color: #fff;
 }
 
-.status-chip {
-    font-size: 0.72rem;
-    color: var(--green);
-    background: rgba(0, 230, 118, 0.12);
-    border: 1px solid rgba(0, 230, 118, 0.25);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+.meta-sep {
+    color: var(--text-dim);
 }
 
-.acc-meta {
+.analysis-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 7px 14px;
     font-size: 0.82rem;
-    color: var(--text-muted);
-    margin-bottom: 18px;
-}
-
-.acc-strategy-pill {
-    display: inline-block;
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 6px;
-    background: rgba(0, 136, 255, 0.15);
-    border: 1px solid rgba(0, 136, 255, 0.3);
-    color: var(--cyan);
-    margin-bottom: 18px;
-    width: fit-content;
-}
-
-.card-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 14px;
-}
-
-.trades-count-badge {
-    font-family: var(--font-mono);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #fff;
-}
-
-.trades-count-badge strong {
-    color: var(--green);
-}
-
-.view-action-text {
-    font-size: 0.8rem;
-    color: var(--accent);
     font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
 }
 
-/* EMPTY STATE */
-.empty-card {
-    background: var(--bg-card);
-    border: 1px dashed var(--border);
-    border-radius: 16px;
-    padding: 60px 24px;
-    text-align: center;
-    max-width: 520px;
-    margin: 40px auto;
+.btn-action:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
-.empty-icon {
-    font-size: 3rem;
-    margin-bottom: 16px;
+.btn-action.danger {
+    color: var(--red);
+    border-color: rgba(255, 82, 82, 0.3);
 }
 
-.empty-card h3 {
-    font-size: 1.3rem;
+.btn-action.danger:hover {
+    background: rgba(255, 82, 82, 0.1);
+}
+
+/* ====================================================================
+   TRADE PERFORMANCE OVERVIEW (NO BOXES, NO PILLS, FLAT & SPACIOUS)
+   ==================================================================== */
+.performance-overview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-title {
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
     margin-bottom: 8px;
 }
 
-.empty-card p {
+.metric-val {
+    font-size: 2.1rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    line-height: 1.1;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+.metric-footnote {
+    font-size: 0.8rem;
     color: var(--text-muted);
-    font-size: 0.92rem;
+}
+
+.text-green { color: var(--green) !important; }
+.text-red { color: var(--red) !important; }
+.text-orange { color: var(--orange) !important; }
+
+/* ACTIVE 5M POSITION BAR */
+.open-position-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: rgba(0, 136, 255, 0.05);
+    border: 1px solid rgba(0, 136, 255, 0.2);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    margin-bottom: 36px;
+}
+
+.open-pos-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.open-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 0.05em;
+}
+
+.open-pos-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.open-pnl {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+/* ====================================================================
+   CLEAN TRADES TABLE (NO GIMMICKY PILLS)
+   ==================================================================== */
+.trades-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.section-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title-bar h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.trades-count-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.clean-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.88rem;
+}
+
+.clean-table th {
+    padding: 12px 14px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+}
+
+.clean-table td {
+    padding: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+
+.clean-table td strong {
+    color: #fff;
+}
+
+.text-type-buy {
+    color: var(--green);
+    font-weight: 700;
+}
+
+.text-type-sell {
+    color: var(--red);
+    font-weight: 700;
+}
+
+/* EMPTY ANALYSIS VIEW */
+.empty-analysis {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 70vh;
+    text-align: center;
+}
+
+.empty-analysis h2 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.empty-analysis p {
+    color: var(--text-secondary);
     margin-bottom: 24px;
 }
 
 /* ====================================================================
-   BUTTONS & FORM CONTROLS
+   BUTTONS & FORMS
    ==================================================================== */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 9px 18px;
-    border-radius: 8px;
+    padding: 10px 18px;
+    border-radius: 6px;
     font-size: 0.88rem;
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s;
     text-decoration: none;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #0088ff 0%, #0099ff 100%);
+    background: var(--accent);
     color: #fff;
-    box-shadow: 0 4px 14px rgba(0, 136, 255, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #0077e6 0%, #0088ee 100%);
-    transform: translateY(-1px);
+    background: #0077e6;
 }
 
-.btn-outline {
+.btn-secondary {
     background: transparent;
     border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
     color: #fff;
-}
-
-.btn-outline:hover {
-    border-color: var(--accent);
-    background: rgba(0, 136, 255, 0.1);
-}
-
-.btn-danger-outline {
-    background: transparent;
-    border: 1px solid rgba(255, 82, 82, 0.4);
-    color: var(--red);
-}
-
-.btn-danger-outline:hover {
-    background: rgba(255, 82, 82, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn-block {
     width: 100%;
 }
 
-.btn-lg {
-    padding: 13px 24px;
-    font-size: 0.98rem;
+.btn-sm {
+    padding: 8px 14px;
+    font-size: 0.84rem;
+}
+
+/* MODAL */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-panel {
+    max-width: 480px;
+    width: 100%;
+    background: #0c1018;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+}
+
+.modal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.4rem;
+    cursor: pointer;
 }
 
 .form-group {
@@ -431,104 +605,41 @@ body.dark-theme {
 
 .form-group label {
     display: block;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-muted);
     margin-bottom: 6px;
 }
 
-.form-control {
+.form-input {
     width: 100%;
-    padding: 11px 14px;
+    padding: 10px 14px;
     background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 6px;
     color: #fff;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     font-family: var(--font-main);
-    transition: border-color 0.2s;
 }
 
-.form-control:focus {
+.form-input:focus {
     outline: none;
     border-color: var(--accent);
 }
 
-.select-control {
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b9bb4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    background-size: 16px;
+.select-input {
     cursor: pointer;
 }
 
-.select-control option {
-    background: #0d1321;
+.select-input option {
+    background: #0c1018;
     color: #fff;
 }
 
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
-}
-
-/* ====================================================================
-   MODALS
-   ==================================================================== */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(4, 6, 10, 0.75);
-    backdrop-filter: blur(10px);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.modal-card {
-    background: #0d121e;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 30px;
-    width: 100%;
-    max-width: 520px;
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
-    animation: fadeInScale 0.2s ease-out;
-}
-
-.modal-lg {
-    max-width: 860px;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 22px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding-bottom: 14px;
-}
-
-.modal-header h3 {
-    font-size: 1.3rem;
-    font-weight: 800;
-}
-
-.modal-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1.6rem;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.modal-close-btn:hover {
-    color: #fff;
+    gap: 12px;
 }
 
 .modal-actions {
@@ -538,145 +649,34 @@ body.dark-theme {
     margin-top: 24px;
 }
 
-.modal-footer-between {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 24px;
-}
-
-.form-feedback {
-    margin-top: 12px;
-    font-size: 0.84rem;
-    text-align: center;
-}
-
-/* ====================================================================
-   ACCOUNT TRADES DETAIL VIEW
-   ==================================================================== */
-.detail-sub-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 4px;
-}
-
-.badge-strategy {
-    font-size: 0.74rem;
-    background: rgba(0, 136, 255, 0.15);
-    color: var(--cyan);
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 700;
-}
-
-.detail-server {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-}
-
-.trade-stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 22px;
-}
-
-.stat-box {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-}
-
-.stat-lbl {
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    font-weight: 600;
-    display: block;
-    margin-bottom: 4px;
-}
-
-.stat-num {
-    font-size: 1.5rem;
-    font-family: var(--font-mono);
-    font-weight: 800;
-}
-
-.text-blue { color: var(--cyan) !important; }
-.text-green { color: var(--green) !important; }
-.text-red { color: var(--red) !important; }
-.text-orange { color: var(--orange) !important; }
-
-.trades-table-wrap {
-    max-height: 320px;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-}
-
-.trades-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.84rem;
-    text-align: left;
-}
-
-.trades-table th {
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text-dim);
-    font-weight: 700;
-    padding: 10px 12px;
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid var(--border);
-}
-
-.trades-table td {
-    padding: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-}
-
-.trades-table td strong {
-    color: #fff;
-}
-
-.pill-buy {
-    color: var(--green);
-    background: rgba(0, 230, 118, 0.12);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 0.72rem;
-}
-
-.pill-sell {
-    color: var(--red);
-    background: rgba(255, 82, 82, 0.12);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 0.72rem;
-}
-
 .hidden {
     display: none !important;
 }
 
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .performance-overview {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
 @media (max-width: 768px) {
-    .trade-stats-row {
-        grid-template-columns: repeat(2, 1fr);
+    .app-layout {
+        flex-direction: column;
     }
-    .form-row {
-        grid-template-columns: 1fr;
+    .sidebar {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 240px;
     }
-    .app-header {
-        padding: 0 16px;
+    .performance-overview {
+        grid-template-columns: 1fr 1fr;
+    }
+    .open-position-bar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
     }
 }

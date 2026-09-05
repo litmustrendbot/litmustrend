@@ -7,76 +7,165 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="dark-theme">
 
-    <!-- SUBTLE MINIMALIST AMBIENT BACKGROUND -->
+    <!-- SUBTLE BACKGROUND -->
     <div class="ambient-glow"></div>
 
     <!-- ==============================================================
          1. PASSCODE SCREEN (HOMEPAGE)
          ============================================================== -->
     <section id="passcodeScreen" class="screen active-screen">
-        <div class="passcode-card">
-            <div class="brand-badge">
-                <span class="pulse-dot"></span>
-                <span>SYSTEM SECURE</span>
-            </div>
-            <h1 class="portal-title">LitmusTrend Bot</h1>
-            <p class="portal-sub">Enter system passcode to access auto-trading accounts</p>
+        <div class="passcode-panel">
+            <h1 class="brand-title">LitmusTrend Bot</h1>
+            <p class="brand-subtitle">Enter passcode to access your auto-trading accounts</p>
 
             <form id="passcodeForm" onsubmit="verifyPasscode(event)">
-                <div class="input-wrap">
-                    <input type="password" id="passcodeInput" class="passcode-field" placeholder="Enter Passcode" autocomplete="off" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block btn-lg">
-                    <span>Unlock Dashboard &rarr;</span>
-                </button>
-                <div id="passcodeError" class="error-text"></div>
+                <input type="password" id="passcodeInput" class="passcode-input" placeholder="Enter Passcode" autocomplete="off" required>
+                <button type="submit" class="btn btn-primary btn-block">Unlock Dashboard</button>
+                <div id="passcodeError" class="passcode-error"></div>
             </form>
         </div>
     </section>
 
     <!-- ==============================================================
-         2. MAIN ACCOUNTS DASHBOARD (UNLOCKED)
+         2. MAIN DASHBOARD: SIDEBAR + LARGE TRADE ANALYSIS AREA
          ============================================================== -->
-    <section id="dashboardScreen" class="screen">
+    <section id="dashboardScreen" class="screen app-layout">
         
-        <!-- HEADER -->
-        <header class="app-header">
-            <div class="header-brand">
-                <span class="pulse-dot"></span>
-                <h2>LitmusTrend Bot</h2>
-                <span class="active-count-tag" id="headerCountTag">0 Accounts Active</span>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-primary" onclick="openAddAccountModal()">+ Add Account</button>
-                <button class="btn btn-outline" onclick="lockPortal()">Lock</button>
-            </div>
-        </header>
-
-        <!-- MAIN CONTAINER -->
-        <main class="dashboard-body">
-            
-            <div class="dashboard-header-bar">
-                <div>
-                    <h3>Trading Accounts</h3>
-                    <p class="section-sub">Click on any account to view the trades taken by its assigned Expert Advisor.</p>
+        <!-- LEFT SIDEBAR (ACCOUNTS LIST LIKE CHAT HISTORY) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <span class="live-dot"></span>
+                    <span class="brand-name">LitmusTrend Bot</span>
                 </div>
+                <button class="btn-icon" title="Lock Dashboard" onclick="lockPortal()">🔒</button>
             </div>
 
-            <!-- ACCOUNTS GRID -->
-            <div class="accounts-grid" id="accountsGrid">
-                <!-- Account cards will be dynamically rendered here -->
+            <div class="sidebar-action">
+                <button class="btn btn-primary btn-block btn-sm" onclick="openAddAccountModal()">+ Add Account</button>
             </div>
 
-            <!-- EMPTY STATE (Shows when 0 accounts) -->
-            <div id="emptyState" class="empty-card">
-                <div class="empty-icon">🤖</div>
-                <h3>No Accounts Added Yet</h3>
-                <p>Add your first MT5 account and assign an Expert Advisor to begin auto-trading.</p>
-                <button class="btn btn-primary" onclick="openAddAccountModal()">+ Add Your First Account</button>
+            <div class="sidebar-section-title">ACCOUNTS (<span id="accountsCount">0</span>)</div>
+
+            <!-- ACCOUNTS LIST (SCROLLABLE LIKE CHAT HISTORY) -->
+            <div class="accounts-list" id="accountsList">
+                <!-- Accounts injected here -->
+            </div>
+        </aside>
+
+        <!-- LARGE MAIN TRADE ANALYSIS AREA -->
+        <main class="analysis-viewport">
+            
+            <!-- EMPTY STATE (IF NO ACCOUNTS) -->
+            <div id="emptyAnalysis" class="empty-analysis hidden">
+                <h2>No Account Selected</h2>
+                <p>Add an account or select one from the sidebar to view live trade analysis.</p>
+                <button class="btn btn-primary" onclick="openAddAccountModal()">+ Add Account</button>
+            </div>
+
+            <!-- ACTIVE ACCOUNT TRADE ANALYSIS CONTENT -->
+            <div id="activeAnalysis" class="analysis-content">
+                
+                <!-- TOP HEADER BAR -->
+                <div class="analysis-header">
+                    <div>
+                        <h2 id="viewAccName">Account Name</h2>
+                        <div class="analysis-meta">
+                            <span id="viewStrategyText">PDC 5M 10% Risk EA</span>
+                            <span class="meta-sep">&bull;</span>
+                            <span id="viewServerText">Exness-MT5Real7</span>
+                            <span class="meta-sep">&bull;</span>
+                            <span>Login: <strong id="viewLoginText">213908953</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="analysis-header-actions">
+                        <button class="btn-action" id="btnTogglePause" onclick="toggleCurrentAccountPause()">Pause EA</button>
+                        <button class="btn-action danger" onclick="deleteCurrentAccount()">Remove Account</button>
+                    </div>
+                </div>
+
+                <!-- TRADE PERFORMANCE STATS (CLEAN TYPOGRAPHY, NO GIMMICKY BOXES/PILLS) -->
+                <div class="performance-overview">
+                    <div class="metric-item">
+                        <span class="metric-title">Total Trades Taken</span>
+                        <span class="metric-val" id="metricTotalTrades">0</span>
+                        <span class="metric-footnote" id="metricWinLoss">0 Wins / 0 Losses</span>
+                    </div>
+
+                    <div class="metric-item">
+                        <span class="metric-title">Win Rate</span>
+                        <span class="metric-val text-green" id="metricWinRate">0.0%</span>
+                        <span class="metric-footnote">Target 1:10 R:R</span>
+                    </div>
+
+                    <div class="metric-item">
+                        <span class="metric-title">Net Performance</span>
+                        <span class="metric-val text-green" id="metricNetProfit">+$0.00</span>
+                        <span class="metric-footnote" id="metricGainPercent">+0.0% Account Growth</span>
+                    </div>
+
+                    <div class="metric-item">
+                        <span class="metric-title">Profit Factor</span>
+                        <span class="metric-val" id="metricProfitFactor">0.00</span>
+                        <span class="metric-footnote">Risk-Adjusted Return</span>
+                    </div>
+
+                    <div class="metric-item">
+                        <span class="metric-title">Circuit Breaker</span>
+                        <span class="metric-val text-orange" id="metricCircuit">0 / 3</span>
+                        <span class="metric-footnote">Daily Loss Guard (Safe)</span>
+                    </div>
+                </div>
+
+                <!-- ACTIVE LIVE TRADE (IF CURRENTLY OPEN) -->
+                <div class="open-position-bar" id="openPositionBar">
+                    <div class="open-pos-left">
+                        <span class="open-tag">ACTIVE 5M TRADE</span>
+                        <strong id="openSymbol">XAUUSD</strong>
+                        <span id="openType">BUY</span>
+                        <span>Lots: <strong id="openLots">0.50</strong></span>
+                        <span>Entry: <strong id="openEntry">2,740.10</strong></span>
+                        <span>1:10 Target: <strong id="openTarget">2,758.10</strong></span>
+                    </div>
+                    <div class="open-pos-right">
+                        <span>Trailing: <strong class="text-green" id="openTrailing">Active (+9.5R)</strong></span>
+                        <span class="open-pnl text-green" id="openPnl">+$1,000.00 (+100%)</span>
+                    </div>
+                </div>
+
+                <!-- TRADE ANALYSIS & EXECUTION LOG -->
+                <div class="trades-section">
+                    <div class="section-title-bar">
+                        <h3>Executed Trades History</h3>
+                        <span class="trades-count-label"><span id="tableTradesCount">0</span> trades recorded</span>
+                    </div>
+
+                    <table class="clean-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Timestamp</th>
+                                <th>Instrument</th>
+                                <th>Type</th>
+                                <th>Volume</th>
+                                <th>Entry Price</th>
+                                <th>Exit Price</th>
+                                <th>Target</th>
+                                <th>Outcome</th>
+                                <th>Return / Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tradesTableBody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
 
         </main>
@@ -86,22 +175,21 @@
          3. ADD ACCOUNT MODAL
          ============================================================== -->
     <div id="addAccountModal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3>Add MT5 Account</h3>
-                <button class="modal-close-btn" onclick="closeAddAccountModal()">&times;</button>
+        <div class="modal-panel">
+            <div class="modal-top">
+                <h3>Add MT5 Trading Account</h3>
+                <button class="btn-close" onclick="closeAddAccountModal()">&times;</button>
             </div>
 
             <form id="addAccountForm" onsubmit="handleCreateAccount(event)">
-                
                 <div class="form-group">
-                    <label for="accName">Account Name</label>
-                    <input type="text" id="accName" class="form-control" required placeholder="e.g. Exness Growth, FTMO Challenge, Personal 10k">
+                    <label>Account Name</label>
+                    <input type="text" id="accName" class="form-input" placeholder="e.g. Exness Growth, FTMO 100k, Personal Real" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="accStrategy">Choose Expert Advisor / Strategy</label>
-                    <select id="accStrategy" class="form-control select-control" required>
+                    <label>Select Expert Advisor / Strategy</label>
+                    <select id="accStrategy" class="form-input select-input" required>
                         <option value="PDC 5M 10% Risk EA">PDC 5M 10% Risk EA (Aggressive 10% Risk &bull; 1:10 TP)</option>
                         <option value="PDC 5M 5% Risk EA">PDC 5M 5% Risk EA (Moderate 5% Risk &bull; 1:10 TP)</option>
                         <option value="PDC 5M 1% Risk EA">PDC 5M 1% Risk EA (Prop Firm 1% Risk &bull; FTMO Safe)</option>
@@ -109,95 +197,27 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="accServer">Broker MT5 Server</label>
-                    <input type="text" id="accServer" class="form-control" required placeholder="e.g. Exness-MT5Real7, FTMO-Server, IC-Markets">
+                    <label>Broker MT5 Server</label>
+                    <input type="text" id="accServer" class="form-input" placeholder="e.g. Exness-MT5Real7, FTMO-Server" required>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="accLogin">MT5 Login (Account Number)</label>
-                        <input type="text" id="accLogin" class="form-control" required placeholder="e.g. 21084920">
+                        <label>MT5 Login ID</label>
+                        <input type="text" id="accLogin" class="form-input" placeholder="e.g. 2108930" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="accPassword">MT5 Password</label>
-                        <input type="password" id="accPassword" class="form-control" required placeholder="••••••••••••">
+                        <label>MT5 Password</label>
+                        <input type="password" id="accPassword" class="form-input" placeholder="••••••••••••" required>
                     </div>
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" onclick="closeAddAccountModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="btnSaveAccount">Add Account & Start Bot</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddAccountModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveAcc">Add Account & Start Bot</button>
                 </div>
-
-                <div id="addAccountFeedback" class="form-feedback"></div>
             </form>
-        </div>
-    </div>
-
-    <!-- ==============================================================
-         4. ACCOUNT TRADES DETAIL MODAL (CLICK ACCOUNT TO VIEW TRADES)
-         ============================================================== -->
-    <div id="tradesDetailModal" class="modal-overlay hidden">
-        <div class="modal-card modal-lg">
-            <div class="modal-header">
-                <div>
-                    <h3 id="detailAccName">Account Name</h3>
-                    <div class="detail-sub-bar">
-                        <span class="badge-strategy" id="detailStrategy">PDC 5M 10% Risk EA</span>
-                        <span class="detail-server" id="detailServerLogin">Server: --- | Login: ---</span>
-                    </div>
-                </div>
-                <button class="modal-close-btn" onclick="closeTradesModal()">&times;</button>
-            </div>
-
-            <!-- TRADES TAKEN STAT STRIP -->
-            <div class="trade-stats-row">
-                <div class="stat-box">
-                    <span class="stat-lbl">Total Trades Taken</span>
-                    <strong class="stat-num text-blue" id="detailTotalTrades">0</strong>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-lbl">Winning Trades</span>
-                    <strong class="stat-num text-green" id="detailWinTrades">0</strong>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-lbl">Losing Trades</span>
-                    <strong class="stat-num text-red" id="detailLossTrades">0</strong>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-lbl">Daily Circuit Breaker</span>
-                    <strong class="stat-num text-orange" id="detailCircuitStatus">0 / 3 Losses</strong>
-                </div>
-            </div>
-
-            <!-- TRADES LIST TABLE -->
-            <div class="trades-table-wrap">
-                <table class="trades-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Time</th>
-                            <th>Symbol</th>
-                            <th>Type</th>
-                            <th>Lots</th>
-                            <th>Entry</th>
-                            <th>Exit</th>
-                            <th>R:R Target</th>
-                            <th>Result</th>
-                            <th>Profit</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tradesTableBody">
-                        <!-- Trades rows rendered dynamically -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="modal-footer-between">
-                <button class="btn btn-danger-outline" onclick="deleteActiveAccount()">Remove Account</button>
-                <button class="btn btn-outline" onclick="closeTradesModal()">Close</button>
-            </div>
         </div>
     </div>
 

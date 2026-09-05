@@ -54,13 +54,11 @@ function unlockPortal() {
     loadAccounts();
     renderSidebar();
 
-    // Select the first account by default if available
-    if (accounts.length > 0 && !selectedAccountId) {
-        selectAccount(accounts[0].id);
-    } else if (selectedAccountId) {
-        selectAccount(selectedAccountId);
+    // If accounts exist, show first account analysis; otherwise show Add Account form in the blank area
+    if (accounts.length > 0) {
+        selectAccount(selectedAccountId || accounts[0].id);
     } else {
-        showEmptyAnalysis();
+        openAddAccountPage();
     }
 }
 
@@ -127,9 +125,11 @@ function selectAccount(accountId) {
     // Update sidebar highlight
     renderSidebar();
 
-    // Show active analysis content
-    document.getElementById('emptyAnalysis').classList.add('hidden');
-    document.getElementById('activeAnalysis').classList.remove('hidden');
+    // Hide add account page and show active analysis
+    const addPage = document.getElementById('addAccountPage');
+    if (addPage) addPage.classList.add('hidden');
+    const activeEl = document.getElementById('activeAnalysis');
+    if (activeEl) activeEl.classList.remove('hidden');
 
     // Populate header
     document.getElementById('viewAccName').innerText = acc.name;
@@ -232,8 +232,7 @@ function selectAccount(accountId) {
 }
 
 function showEmptyAnalysis() {
-    document.getElementById('emptyAnalysis').classList.remove('hidden');
-    document.getElementById('activeAnalysis').classList.add('hidden');
+    openAddAccountPage();
 }
 
 // --- 5. ACCOUNT ACTIONS (PAUSE / REMOVE) ---
@@ -525,14 +524,20 @@ document.addEventListener('click', (e) => {
 
 // --- 7. ADD ACCOUNT PAGE WORKFLOW (FULL PAGE IN WORKSPACE, NOT A POP-UP) ---
 function openAddAccountPage() {
-    // Hide active trade view and empty state
-    const emptyEl = document.getElementById('emptyAnalysis');
+    selectedAccountId = null;
+    renderSidebar();
+
     const activeEl = document.getElementById('activeAnalysis');
     const pageEl = document.getElementById('addAccountPage');
+    const backBtn = document.getElementById('btnCancelAddPage');
 
-    if (emptyEl) emptyEl.classList.add('hidden');
     if (activeEl) activeEl.classList.add('hidden');
     if (pageEl) pageEl.classList.remove('hidden');
+
+    // Show back button only if there are existing accounts to return to
+    if (backBtn) {
+        backBtn.style.display = accounts.length > 0 ? 'inline-block' : 'none';
+    }
 
     const form = document.getElementById('addAccountForm');
     if (form) form.reset();
@@ -542,7 +547,6 @@ function openAddAccountPage() {
 
     clearSelectedServer();
 
-    // Scroll viewport to top
     const viewport = document.querySelector('.analysis-viewport');
     if (viewport) viewport.scrollTop = 0;
 
@@ -552,7 +556,6 @@ function openAddAccountPage() {
 
 function closeAddAccountPage() {
     const pageEl = document.getElementById('addAccountPage');
-    if (pageEl) pageEl.classList.add('hidden');
 
     const form = document.getElementById('addAccountForm');
     if (form) form.reset();
@@ -562,12 +565,11 @@ function closeAddAccountPage() {
 
     clearSelectedServer();
 
-    if (accounts.length > 0 && selectedAccountId) {
-        selectAccount(selectedAccountId);
-    } else if (accounts.length > 0) {
-        selectAccount(accounts[0].id);
+    if (accounts.length > 0) {
+        if (pageEl) pageEl.classList.add('hidden');
+        selectAccount(selectedAccountId || accounts[0].id);
     } else {
-        showEmptyAnalysis();
+        openAddAccountPage();
     }
 }
 

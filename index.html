@@ -60,15 +60,8 @@
         <!-- LARGE MAIN TRADE ANALYSIS AREA -->
         <main class="analysis-viewport">
             
-            <!-- EMPTY STATE (IF NO ACCOUNTS) -->
-            <div id="emptyAnalysis" class="empty-analysis hidden">
-                <h2>No Account Selected</h2>
-                <p>Add an account or select one from the sidebar to view live trade analysis.</p>
-                <button class="btn btn-primary" onclick="openAddAccountPage()">+ Add Account</button>
-            </div>
-
             <!-- ACTIVE ACCOUNT TRADE ANALYSIS CONTENT -->
-            <div id="activeAnalysis" class="analysis-content">
+            <div id="activeAnalysis" class="analysis-content hidden">
                 
                 <!-- TOP HEADER BAR -->
                 <div class="analysis-header">
@@ -165,6 +158,7 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
 
             <!-- ==============================================================
                  3. ADD ACCOUNT PAGE VIEW (OPENS AS A FULL PAGE, NOT A POP-UP)

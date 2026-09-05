@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LitmusTrend | PDC 5M BOS + FVG Algorithmic Cloud Portal</title>
-    <meta name="description" content="Institutional 5-Minute Break of Structure & FVG Algorithmic Trading Platform. Choose your risk tier (10%, 5%, 1%) and auto-trade hands-free.">
+    <title>LitmusTrend | Cloud Auto-Trading Dashboard</title>
+    <meta name="description" content="LitmusTrend Cloud Auto-Trading Portal. Connect MT5, select your PDC 5M algorithmic strategy, and monitor account progress live.">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,365 +12,387 @@
 </head>
 <body class="dark-theme">
 
-    <!-- INTERACTIVE ANIMATED LIQUIDITY BACKGROUND -->
-    <canvas id="bg-canvas"></canvas>
-
-    <!-- HEADER / NAVIGATION -->
-    <header class="site-header">
-        <div class="container nav-wrap">
-            <a href="#" class="brand-logo">
-                <span class="logo-pulse"></span>
-                <span class="brand-name">Litmus<span class="accent-text">Trend</span></span>
-                <span class="badge-tag">PDC 5M ENGINE</span>
-            </a>
-
-            <nav class="main-nav">
-                <a href="#strategy" class="nav-link">Strategy</a>
-                <a href="#risk-tiers" class="nav-link">Risk Tiers</a>
-                <a href="#connect" class="nav-link">Connect MT5</a>
-                <a href="#downloads" class="nav-link">Downloads</a>
-            </nav>
-
-            <div class="header-actions">
-                <a href="#connect" class="btn btn-glow pulse-btn">Launch Auto-Trading</a>
-            </div>
-        </div>
-    </header>
-
-    <!-- LIVE MARKET TICKER TAPE -->
-    <div class="ticker-wrapper">
-        <div class="ticker-track">
-            <span class="ticker-item"><span class="pulse-dot green"></span> <strong>EURUSD M5</strong>: Bullish PDC Bias Locked &bull; FVG Limit Armed @ 1.08450 (1:10 TP)</span>
-            <span class="ticker-item"><span class="pulse-dot blue"></span> <strong>XAUUSD M5</strong>: Stepped Trailing Active &bull; +9.5R Locked (+47.5%)</span>
-            <span class="ticker-item"><span class="pulse-dot green"></span> <strong>US30 M5</strong>: 5M BOS Confirmed &bull; Institutional Liquidity Target Active</span>
-            <span class="ticker-item"><span class="pulse-dot orange"></span> <strong>CIRCUIT BREAKER</strong>: 3-Loss Daily Guard Status: Optimal (0/3 Max)</span>
-            <span class="ticker-item"><span class="pulse-dot green"></span> <strong>NAS100 M5</strong>: Full 1:10 Take Profit Executed (+100.0%)</span>
-            <!-- Duplicate for seamless infinite loop -->
-            <span class="ticker-item"><span class="pulse-dot green"></span> <strong>EURUSD M5</strong>: Bullish PDC Bias Locked &bull; FVG Limit Armed @ 1.08450 (1:10 TP)</span>
-            <span class="ticker-item"><span class="pulse-dot blue"></span> <strong>XAUUSD M5</strong>: Stepped Trailing Active &bull; +9.5R Locked (+47.5%)</span>
-            <span class="ticker-item"><span class="pulse-dot green"></span> <strong>US30 M5</strong>: 5M BOS Confirmed &bull; Institutional Liquidity Target Active</span>
-            <span class="ticker-item"><span class="pulse-dot orange"></span> <strong>CIRCUIT BREAKER</strong>: 3-Loss Daily Guard Status: Optimal (0/3 Max)</span>
-            <span class="ticker-item"><span class="pulse-dot green"></span> <strong>NAS100 M5</strong>: Full 1:10 Take Profit Executed (+100.0%)</span>
-        </div>
+    <!-- SUBTLE AMBIENT AURORA BACKGROUND (CLEAN & NON-DISTRACTING) -->
+    <div class="ambient-background">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+        <div class="ambient-grid"></div>
     </div>
 
-    <!-- HERO SECTION -->
-    <section class="hero-section">
-        <div class="hero-backdrop"></div>
-        <div class="container hero-container">
-            <div class="hero-badge floating">
-                <span class="dot"></span> Institutional Smart-Money Automation &bull; 1:10 Asymmetric R:R
-            </div>
-            <h1 class="hero-title">
-                Precision Algorithmic Trading<br>
-                <span class="gradient-text">PDC 5M BOS + FVG Engine</span>
-            </h1>
-            <p class="hero-subtitle">
-                Engineered for Gold, Forex, and Indices. Combines Previous Day Close daily bias, 5-minute swing fractals, FVG refinement, and stepped trailing stop protection.
-            </p>
-
-            <div class="hero-cta-wrap">
-                <a href="#connect" class="btn btn-glow btn-lg shimmer-btn">Connect MT5 Account &rarr;</a>
-                <a href="#downloads" class="btn btn-outline btn-lg">Download MT5 EAs</a>
-            </div>
-
-            <!-- KEY STATS STRIP -->
-            <div class="stats-grid reveal">
-                <div class="stat-card glass-card">
-                    <span class="stat-label">Verified YTD Return</span>
-                    <span class="stat-value text-green shimmer-text">+3,172.5%</span>
-                    <span class="stat-sub">48,102 5M Bars Tested</span>
-                </div>
-                <div class="stat-card glass-card">
-                    <span class="stat-label">Risk-to-Reward (TP)</span>
-                    <span class="stat-value text-blue">1:10 R:R</span>
-                    <span class="stat-sub">Stepped Trailing (9.5R - 9.9R)</span>
-                </div>
-                <div class="stat-card glass-card">
-                    <span class="stat-label">Daily Capital Guard</span>
-                    <span class="stat-value text-orange">3-Loss Cap</span>
-                    <span class="stat-sub">Automated Circuit Breaker</span>
-                </div>
-                <div class="stat-card glass-card">
-                    <span class="stat-label">Execution Timeframe</span>
-                    <span class="stat-value">5-Minute</span>
-                    <span class="stat-sub">Broker & Asset Agnostic</span>
+    <!-- MAIN APP CONTAINER -->
+    <div class="app-shell">
+        
+        <!-- TOP NAVIGATION -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="brand">
+                    <span class="status-indicator live"></span>
+                    <span class="brand-title">Litmus<span class="accent-text">Trend</span></span>
+                    <span class="badge-tag">AUTOTRADER CLOUD</span>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- STRATEGY MECHANICS SECTION -->
-    <section id="strategy" class="section-block">
-        <div class="container">
-            <div class="section-head reveal">
-                <span class="badge-tag">MECHANICAL RULES</span>
-                <h2 class="section-title">Algorithmic Execution Flow</h2>
-                <p class="section-desc">100% rule-based SMC architecture that eliminates emotional interference.</p>
-            </div>
+            <nav class="app-tabs">
+                <button class="tab-btn active" onclick="switchView('dashboard')">📊 Live Dashboard</button>
+                <button class="tab-btn" onclick="switchView('add-account')">➕ Add MT5 Account</button>
+                <button class="tab-btn" onclick="switchView('strategies')">⚙️ Strategy Settings</button>
+            </nav>
 
-            <div class="mechanics-grid">
-                <div class="mech-card glass-card reveal">
-                    <div class="mech-step">01</div>
-                    <div class="mech-icon">🧭</div>
-                    <h3>PDC Anchor Bias</h3>
-                    <p>Calculates Previous Day Close at 00:00 rollover. If price is above PDC, only <strong>Bullish Longs</strong> are permitted. If below, only <strong>Bearish Shorts</strong> are taken.</p>
-                </div>
-
-                <div class="mech-card glass-card reveal">
-                    <div class="mech-step">02</div>
-                    <div class="mech-icon">⚡</div>
-                    <h3>5M Swing BOS</h3>
-                    <p>Detects 3-bar fractal swing points. A Break of Structure is confirmed strictly when a 5M candle body <strong>closes beyond</strong> the swing point and initiating impulse extreme.</p>
-                </div>
-
-                <div class="mech-card glass-card reveal">
-                    <div class="mech-step">03</div>
-                    <div class="mech-icon">🎯</div>
-                    <h3>FVG Imbalance Entry</h3>
-                    <p>Scans the breakout leg for 3-bar Fair Value Gaps. Places pending limit orders at the gap boundary. Automatically cancels outdated orders if a fresh BOS develops.</p>
-                </div>
-
-                <div class="mech-card glass-card reveal">
-                    <div class="mech-step">04</div>
-                    <div class="mech-icon">🛡️</div>
-                    <h3>Stepped Trailing (9.5R - 9.9R)</h3>
-                    <p>Allows trades full breathing room to run without early BE choking. At +9.5R floating profit, trailing stop steps dynamically (+5R to +9R) to lock in massive profit until full 1:10 TP.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 3 RISK TIERS SELECTOR SECTION -->
-    <section id="risk-tiers" class="section-block bg-subtle">
-        <div class="container">
-            <div class="section-head reveal">
-                <span class="badge-tag">PORTFOLIO SIZING</span>
-                <h2 class="section-title">Select Your Risk Profile</h2>
-                <p class="section-desc">Three dedicated Expert Advisors engineered for your specific capital requirements.</p>
-            </div>
-
-            <div class="tier-grid">
-                <!-- 10% Risk -->
-                <div class="tier-card featured-tier glass-card reveal">
-                    <div class="popular-tag">MAXIMUM GROWTH</div>
-                    <div class="tier-header">
-                        <h3>10% Risk per Trade</h3>
-                        <div class="tier-code">PDC_5M_10_Percent_Risk_EA</div>
-                        <div class="tier-target">Target: 1:10 R:R (+100% per win)</div>
+            <div class="header-right">
+                <div id="userProfileChip" class="user-chip">
+                    <div class="avatar">LT</div>
+                    <div class="user-info">
+                        <span class="user-name" id="displayUserName">Trader Account</span>
+                        <span class="user-status text-green">● Connected</span>
                     </div>
-                    <div class="tier-body">
-                        <ul class="tier-features">
-                            <li><span>Risk Model</span><strong>10.0% Account Equity</strong></li>
-                            <li><span>Win Return</span><strong>+100% per 10R Hit</strong></li>
-                            <li><span>Best For</span><strong>Aggressive Compounding</strong></li>
-                            <li><span>Circuit Breaker</span><strong>3 Losses Max / Day</strong></li>
-                            <li><span>Max Leverage Cap</span><strong>100x Margin Protection</strong></li>
-                        </ul>
-                        <button class="btn btn-primary btn-block shimmer-btn" onclick="selectTier('10%')">Select 10% Engine</button>
+                </div>
+                <button class="btn btn-outline btn-sm" id="authBtn" onclick="toggleAuthModal()">Sign In</button>
+            </div>
+        </header>
+
+        <!-- MAIN VIEWPORT -->
+        <main class="main-content">
+            
+            <!-- VIEW 1: LIVE DASHBOARD -->
+            <section id="view-dashboard" class="app-view active-view">
+                
+                <!-- TOP METRICS STRIP -->
+                <div class="dashboard-hero">
+                    <div class="hero-left">
+                        <h2>Account Overview</h2>
+                        <p class="subtitle">Live cloud monitoring for your connected MetaTrader 5 accounts.</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" onclick="switchView('add-account')">+ Connect New MT5</button>
                     </div>
                 </div>
 
-                <!-- 5% Risk -->
-                <div class="tier-card glass-card reveal">
-                    <div class="tier-header">
-                        <h3>5% Risk per Trade</h3>
-                        <div class="tier-code">PDC_5M_5_Percent_Risk_EA</div>
-                        <div class="tier-target">Target: 1:10 R:R (+50% per win)</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Total Balance</span>
+                        <div class="metric-value" id="dashBalance">$10,000.00</div>
+                        <div class="metric-sub text-green">Live MT5 Equity: <strong id="dashEquity">$10,000.00</strong></div>
                     </div>
-                    <div class="tier-body">
-                        <ul class="tier-features">
-                            <li><span>Risk Model</span><strong>5.0% Account Equity</strong></li>
-                            <li><span>Win Return</span><strong>+50% per 10R Hit</strong></li>
-                            <li><span>Best For</span><strong>Balanced Drawdown</strong></li>
-                            <li><span>Circuit Breaker</span><strong>3 Losses Max / Day</strong></li>
-                            <li><span>Survival Buffer</span><strong>20 Consecutive Losses</strong></li>
-                        </ul>
-                        <button class="btn btn-outline btn-block" onclick="selectTier('5%')">Select 5% Engine</button>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Active Strategy</span>
+                        <div class="metric-value text-blue" id="dashStrategy">PDC 5M (10% Risk)</div>
+                        <div class="metric-sub">Target: 1:10 R:R &bull; Stepped Trailing</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Daily Circuit Breaker</span>
+                        <div class="metric-value text-green" id="dashCircuit">0 / 3 Losses</div>
+                        <div class="metric-sub">Capital Safe &bull; System Active</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Execution Engine</span>
+                        <div class="metric-value text-green">
+                            <span class="pulse-dot green"></span> Running
+                        </div>
+                        <div class="metric-sub">Latency: 12ms &bull; 5M MQL5 Cloud</div>
                     </div>
                 </div>
 
-                <!-- 1% Risk -->
-                <div class="tier-card glass-card reveal">
-                    <div class="tier-header">
-                        <h3>1% Risk per Trade</h3>
-                        <div class="tier-code">PDC_5M_1_Percent_Risk_EA</div>
-                        <div class="tier-target">Target: 1:10 R:R (+10% per win)</div>
-                    </div>
-                    <div class="tier-body">
-                        <ul class="tier-features">
-                            <li><span>Risk Model</span><strong>1.0% Account Equity</strong></li>
-                            <li><span>Win Return</span><strong>+10% per 10R Hit</strong></li>
-                            <li><span>Best For</span><strong>Prop Firms (FTMO, FundedNext)</strong></li>
-                            <li><span>Circuit Breaker</span><strong>3 Losses Max / Day (-3% max)</strong></li>
-                            <li><span>Prop Compliance</span><strong>100% Drawdown Safe</strong></li>
-                        </ul>
-                        <button class="btn btn-outline btn-block" onclick="selectTier('1%')">Select 1% Engine</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- LIVE CLOUD CONNECT PORTAL -->
-    <section id="connect" class="section-block">
-        <div class="container">
-            <div class="connect-wrapper">
-                <div class="connect-info reveal">
-                    <span class="badge-tag">INSTANT CLOUD DISPATCH</span>
-                    <h2>Automate Your MT5 Account</h2>
-                    <p>Enter your broker credentials to attach your account to our institutional cloud auto-trader. No VPS setup or local software required.</p>
+                <!-- CONNECTED ACCOUNTS & LIVE PROGRESS -->
+                <div class="dashboard-split">
                     
-                    <div class="info-list">
-                        <div class="info-item">
-                            <span class="info-check">&check;</span>
-                            <div>
-                                <strong>Compatible with Any MT5 Broker</strong>
-                                <p>Exness, IC Markets, FTMO, FundedNext, OctaFX, Pepperstone, etc.</p>
+                    <!-- ACTIVE ACCOUNT DETAILS -->
+                    <div class="card panel-card">
+                        <div class="panel-head">
+                            <h3>Connected MT5 Accounts</h3>
+                            <span class="badge-status online" id="accountStatusTag">1 Active</span>
+                        </div>
+
+                        <div class="account-list" id="accountsListContainer">
+                            <div class="account-item active-account">
+                                <div class="account-meta">
+                                    <div class="broker-icon">MT5</div>
+                                    <div>
+                                        <h4 id="itemServer">Exness-MT5Real7</h4>
+                                        <p>Account ID: <strong id="itemAccount">213908953</strong> &bull; Server Time: <span id="clockTime">--:--:--</span></p>
+                                    </div>
+                                </div>
+                                <div class="account-state">
+                                    <span class="risk-badge" id="itemRisk">10% Risk</span>
+                                    <button class="btn-text-danger" onclick="disconnectCurrentAccount()">Disconnect</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="info-item">
-                            <span class="info-check">&check;</span>
-                            <div>
-                                <strong>Ultra-Low Latency Execution</strong>
-                                <p>Real-time websocket trade execution with millisecond precision.</p>
+
+                        <div class="bot-control-bar">
+                            <div class="control-status">
+                                <span>Engine State:</span> <strong class="text-green" id="engineStatusText">Scanning 5M Structure & FVG</strong>
+                            </div>
+                            <div class="control-buttons">
+                                <button class="btn btn-outline btn-sm" id="btnPauseBot" onclick="toggleBotPause()">Pause Strategy</button>
+                                <button class="btn btn-outline btn-sm" onclick="switchView('strategies')">Change Strategy</button>
                             </div>
                         </div>
-                        <div class="info-item">
-                            <span class="info-check">&check;</span>
+                    </div>
+
+                    <!-- LIVE PERFORMANCE / RECENT SIGNALS LOG -->
+                    <div class="card panel-card">
+                        <div class="panel-head">
+                            <h3>Real-Time Trade & Execution Log</h3>
+                            <span class="live-tag"><span class="pulse-dot green"></span> Live Stream</span>
+                        </div>
+
+                        <div class="signal-log-wrap" id="signalLogWrap">
+                            <div class="log-item">
+                                <span class="log-time">16:40:02</span>
+                                <span class="log-tag tag-bos">5M BOS</span>
+                                <span class="log-desc">EURUSD: Bullish Break of Structure confirmed above 1.08320.</span>
+                            </div>
+                            <div class="log-item">
+                                <span class="log-time">16:40:05</span>
+                                <span class="log-tag tag-fvg">FVG LIMIT</span>
+                                <span class="log-desc">Pending Buy Limit armed at 1.08310 (SL: 1.08210, TP: 1.09310 - 1:10 R:R).</span>
+                            </div>
+                            <div class="log-item">
+                                <span class="log-time">15:55:12</span>
+                                <span class="log-tag tag-tp">10R TP HIT</span>
+                                <span class="log-desc text-green">XAUUSD: Take Profit executed successfully (+100.0% return).</span>
+                            </div>
+                            <div class="log-item">
+                                <span class="log-time">14:10:00</span>
+                                <span class="log-tag tag-system">SYSTEM</span>
+                                <span class="log-desc">Previous Day Close (PDC) level anchored at daily reset.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- OPEN TRADES TABLE -->
+                <div class="card table-card">
+                    <div class="panel-head">
+                        <h3>Open Positions & Orders</h3>
+                        <span class="text-secondary" id="openTradesCount">1 Active Position</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Lots</th>
+                                    <th>Open Price</th>
+                                    <th>Current</th>
+                                    <th>Stop Loss</th>
+                                    <th>Take Profit (1:10)</th>
+                                    <th>Trailing Status</th>
+                                    <th>Floating P/L</th>
+                                </tr>
+                            </thead>
+                            <tbody id="openTradesBody">
+                                <tr>
+                                    <td>#9482104</td>
+                                    <td><strong>XAUUSD</strong></td>
+                                    <td><span class="pill-buy">BUY</span></td>
+                                    <td>0.50</td>
+                                    <td>2,740.10</td>
+                                    <td>2,751.20</td>
+                                    <td>2,739.00</td>
+                                    <td>2,758.10</td>
+                                    <td><span class="text-green">Trailing Step Active (+9.5R)</span></td>
+                                    <td><strong class="text-green">+$5,550.00 (+55.5%)</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- VIEW 2: ADD MT5 ACCOUNT -->
+            <section id="view-add-account" class="app-view">
+                <div class="form-container">
+                    <div class="form-card card">
+                        <div class="card-header">
+                            <h2>Add MT5 Trading Account</h2>
+                            <p class="subtitle">Input your broker login credentials and select which algorithmic strategy to deploy.</p>
+                        </div>
+
+                        <form id="connectForm" onsubmit="submitNewAccount(event)">
+                            <div class="form-section">
+                                <label class="section-subtitle">1. MT5 Broker Credentials</label>
+                                
+                                <div class="form-group">
+                                    <label for="inputEmail">Your Email Address</label>
+                                    <input type="email" id="inputEmail" class="form-control" required placeholder="trader@litmustrend.com">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="inputServer">Broker MT5 Server</label>
+                                    <input type="text" id="inputServer" class="form-control" required placeholder="e.g. Exness-MT5Real7, FTMO-Server, IC-Markets">
+                                    <span class="hint">Exact server name as shown on your MetaTrader 5 login screen.</span>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="inputLogin">Account Login (Account Number)</label>
+                                        <input type="text" id="inputLogin" class="form-control" required placeholder="e.g. 213908953">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputPassword">Trading Password</label>
+                                        <input type="password" id="inputPassword" class="form-control" required placeholder="••••••••••••">
+                                        <span class="hint">Investor or Master password.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <label class="section-subtitle">2. Select Algorithmic Strategy & Risk Tier</label>
+                                
+                                <div class="strategy-selector-grid">
+                                    
+                                    <!-- 10% Risk -->
+                                    <label class="strategy-option selected">
+                                        <input type="radio" name="selectedStrategy" value="10%" checked onchange="highlightStrategyOption(this)">
+                                        <div class="option-content">
+                                            <div class="option-head">
+                                                <h4>10% Risk Engine</h4>
+                                                <span class="tag-accent">Aggressive Growth</span>
+                                            </div>
+                                            <p class="option-desc">PDC 5M BOS + FVG with 10% risk per trade. 1:10 Take Profit target (+100% per win).</p>
+                                            <div class="option-badge">3-Loss Daily Circuit Breaker</div>
+                                        </div>
+                                    </label>
+
+                                    <!-- 5% Risk -->
+                                    <label class="strategy-option">
+                                        <input type="radio" name="selectedStrategy" value="5%" onchange="highlightStrategyOption(this)">
+                                        <div class="option-content">
+                                            <div class="option-head">
+                                                <h4>5% Risk Engine</h4>
+                                                <span class="tag-secondary">Balanced</span>
+                                            </div>
+                                            <p class="option-desc">PDC 5M BOS + FVG with 5% risk per trade. 1:10 Take Profit target (+50% per win).</p>
+                                            <div class="option-badge">3-Loss Daily Circuit Breaker</div>
+                                        </div>
+                                    </label>
+
+                                    <!-- 1% Risk -->
+                                    <label class="strategy-option">
+                                        <input type="radio" name="selectedStrategy" value="1%" onchange="highlightStrategyOption(this)">
+                                        <div class="option-content">
+                                            <div class="option-head">
+                                                <h4>1% Risk Engine</h4>
+                                                <span class="tag-prop">Prop Firm Safe</span>
+                                            </div>
+                                            <p class="option-desc">Strict 1.0% equity sizing designed for FTMO, FundedNext, and funded prop accounts.</p>
+                                            <div class="option-badge">Max -3% Daily DD Cap</div>
+                                        </div>
+                                    </label>
+
+                                </div>
+                            </div>
+
+                            <button type="submit" id="btnSubmitAccount" class="btn btn-primary btn-block btn-lg">
+                                <span>🚀 Connect & Start Auto-Trading</span>
+                            </button>
+                            <div id="formFeedback" class="feedback-box"></div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: STRATEGY SETTINGS & DOWNLOADS -->
+            <section id="view-strategies" class="app-view">
+                <div class="strategies-container">
+                    <div class="panel-card card">
+                        <h2>Strategy Settings & Mode Switcher</h2>
+                        <p class="subtitle">Switch the active execution engine for your connected account anytime with zero downtime.</p>
+
+                        <div class="active-engine-card">
                             <div>
-                                <strong>Supabase Real-Time Sync</strong>
-                                <p>Monitored trades and daily circuit breakers stream live to your browser.</p>
+                                <span class="text-secondary">Current Active Strategy:</span>
+                                <h3 id="currentEngineTitle" class="text-green">PDC 5M 10% Risk Engine</h3>
+                                <p id="currentEngineDesc">Running with 10% equity compounding, 1:10 R:R, and 9.5R stepped trailing stop.</p>
+                            </div>
+                            <div class="engine-toggle-actions">
+                                <button class="btn btn-outline" onclick="changeActiveTier('10%')">Switch to 10%</button>
+                                <button class="btn btn-outline" onclick="changeActiveTier('5%')">Switch to 5%</button>
+                                <button class="btn btn-outline" onclick="changeActiveTier('1%')">Switch to 1%</button>
+                            </div>
+                        </div>
+
+                        <div class="downloads-section">
+                            <h3>Standalone MetaTrader 5 Expert Advisors</h3>
+                            <p class="subtitle">Prefer running locally on your own MT5 terminal? Download the direct compiled EAs below:</p>
+                            
+                            <div class="downloads-list">
+                                <div class="download-item">
+                                    <div>
+                                        <strong>PDC_5M_10_Percent_Risk_EA.mq5</strong>
+                                        <p>10% Aggressive compounding bot with built-in daily circuit breaker.</p>
+                                    </div>
+                                    <a href="mql5/PDC_5M_10_Percent_Risk_EA.mq5" download class="btn btn-outline btn-sm">Download .mq5</a>
+                                </div>
+
+                                <div class="download-item">
+                                    <div>
+                                        <strong>PDC_5M_5_Percent_Risk_EA.mq5</strong>
+                                        <p>5% Balanced risk bot with stepped trailing stop.</p>
+                                    </div>
+                                    <a href="mql5/PDC_5M_5_Percent_Risk_EA.mq5" download class="btn btn-outline btn-sm">Download .mq5</a>
+                                </div>
+
+                                <div class="download-item">
+                                    <div>
+                                        <strong>PDC_5M_1_Percent_Risk_EA.mq5</strong>
+                                        <p>1% Strict Prop Firm bot for FTMO and Funded challenges.</p>
+                                    </div>
+                                    <a href="mql5/PDC_5M_1_Percent_Risk_EA.mq5" download class="btn btn-outline btn-sm">Download .mq5</a>
+                                </div>
+
+                                <div class="download-item">
+                                    <div>
+                                        <strong>PDC_5M_BOS_FVG_Strategy.pine</strong>
+                                        <p>TradingView chart visual strategy script.</p>
+                                    </div>
+                                    <a href="pine/PDC_5M_BOS_FVG_Strategy.pine" download class="btn btn-outline btn-sm">Download .pine</a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <div class="connect-card glass-card reveal">
-                    <form id="autoTradeForm" onsubmit="handleAccountConnect(event)">
-                        <div class="form-head">
-                            <h3>Account Setup</h3>
-                            <span class="status-badge"><span class="pulse-dot green"></span> Ready</span>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="userEmail">Trader Email</label>
-                            <input type="email" id="userEmail" required placeholder="trader@litmustrend.com" class="form-control">
-                        </div>
+        </main>
+    </div>
 
-                        <div class="form-group">
-                            <label for="brokerServer">MT5 Broker Server</label>
-                            <input type="text" id="brokerServer" required placeholder="e.g. Exness-MT5Real7, FTMO-Server" class="form-control">
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="accountNumber">MT5 Account ID</label>
-                                <input type="text" id="accountNumber" required placeholder="e.g. 2108924" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="accountPassword">Password</label>
-                                <input type="password" id="accountPassword" required placeholder="••••••••••••" class="form-control">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Risk Tier</label>
-                            <div class="radio-pill-group">
-                                <label class="radio-pill">
-                                    <input type="radio" name="riskTier" value="10%" checked>
-                                    <span>10% Aggressive</span>
-                                </label>
-                                <label class="radio-pill">
-                                    <input type="radio" name="riskTier" value="5%">
-                                    <span>5% Moderate</span>
-                                </label>
-                                <label class="radio-pill">
-                                    <input type="radio" name="riskTier" value="1%">
-                                    <span>1% Prop Firm</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="btnConnect" class="btn btn-glow btn-block shimmer-btn">
-                            <span>🚀 Start Auto-Trading Account</span>
-                        </button>
-                        <div id="connectFeedback" class="feedback-msg"></div>
-                    </form>
-
-                    <!-- LIVE STATUS PANEL -->
-                    <div id="liveStatusPanel" class="live-status-panel hidden">
-                        <div class="panel-header">
-                            <div class="live-dot-wrap"><span class="pulse-dot green"></span> CLOUD DISPATCH ACTIVE</div>
-                            <button class="btn-disconnect" onclick="disconnectAccount()">Disconnect</button>
-                        </div>
-                        <div class="panel-metrics">
-                            <div><span>Account:</span> <strong id="dispAccount">-</strong></div>
-                            <div><span>Server:</span> <strong id="dispServer">-</strong></div>
-                            <div><span>Risk Engine:</span> <strong id="dispRisk" class="text-green">-</strong></div>
-                            <div><span>Equity:</span> <strong id="dispBalance">$100.00</strong></div>
-                            <div><span>Circuit Breaker:</span> <strong id="dispCircuit" class="text-blue">ACTIVE (0/3)</strong></div>
-                        </div>
-                    </div>
-                </div>
+    <!-- AUTH MODAL (CREATE ACCOUNT & SIGN IN) -->
+    <div id="authModal" class="modal-overlay hidden">
+        <div class="modal-card card">
+            <button class="modal-close" onclick="toggleAuthModal()">&times;</button>
+            <div class="modal-tabs">
+                <button class="modal-tab active" id="tabSignIn" onclick="setAuthTab('signin')">Sign In</button>
+                <button class="modal-tab" id="tabSignUp" onclick="setAuthTab('signup')">Create Account</button>
             </div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)">
+                <div class="form-group">
+                    <label for="authEmail">Email Address</label>
+                    <input type="email" id="authEmail" class="form-control" required placeholder="you@domain.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="authPassword">Password</label>
+                    <input type="password" id="authPassword" class="form-control" required placeholder="••••••••••••">
+                </div>
+
+                <button type="submit" id="btnAuthSubmit" class="btn btn-primary btn-block btn-lg">
+                    <span id="authSubmitText">Sign In to Dashboard</span>
+                </button>
+                <div id="authFeedback" class="feedback-box"></div>
+            </form>
         </div>
-    </section>
-
-    <!-- DOWNLOADS SECTION -->
-    <section id="downloads" class="section-block bg-subtle">
-        <div class="container">
-            <div class="section-head reveal">
-                <span class="badge-tag">TERMINAL DEPLOYMENT</span>
-                <h2 class="section-title">Standalone Downloads</h2>
-                <p class="section-desc">Download production files to run directly inside MetaTrader 5 or TradingView.</p>
-            </div>
-
-            <div class="downloads-grid">
-                <div class="download-card glass-card reveal">
-                    <div class="file-icon">🤖</div>
-                    <h4>PDC 5M 10% Risk EA</h4>
-                    <p>Pre-configured for 10% equity compounding.</p>
-                    <a href="mql5/PDC_5M_10_Percent_Risk_EA.mq5" download class="btn btn-outline btn-sm">Download .mq5</a>
-                </div>
-
-                <div class="download-card glass-card reveal">
-                    <div class="file-icon">🤖</div>
-                    <h4>PDC 5M 5% Risk EA</h4>
-                    <p>Pre-configured for 5% balanced risk.</p>
-                    <a href="mql5/PDC_5M_5_Percent_Risk_EA.mq5" download class="btn btn-outline btn-sm">Download .mq5</a>
-                </div>
-
-                <div class="download-card glass-card reveal">
-                    <div class="file-icon">🤖</div>
-                    <h4>PDC 5M 1% Risk EA</h4>
-                    <p>Pre-configured for 1% Prop Firm compliance.</p>
-                    <a href="mql5/PDC_5M_1_Percent_Risk_EA.mq5" download class="btn btn-outline btn-sm">Download .mq5</a>
-                </div>
-
-                <div class="download-card glass-card reveal">
-                    <div class="file-icon">📈</div>
-                    <h4>TradingView Strategy</h4>
-                    <p>Complete Pine Script for chart backtesting.</p>
-                    <a href="pine/PDC_5M_BOS_FVG_Strategy.pine" download class="btn btn-outline btn-sm">Download .pine</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="site-footer">
-        <div class="container footer-content">
-            <div class="footer-brand">
-                <span class="brand-name">Litmus<span class="accent-text">Trend</span></span>
-                <p>Institutional Algorithmic Trading Systems &bull; Built for MT5, Supabase, and Vercel.</p>
-            </div>
-            <div class="footer-copy">
-                &copy; 2026 LitmusTrend. All Rights Reserved. Algorithmic trading involves substantial risk of loss.
-            </div>
-        </div>
-    </footer>
+    </div>
 
     <script src="js/app.js"></script>
 </body>

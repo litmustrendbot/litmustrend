@@ -1,206 +1,75 @@
 // ====================================================================
-// LITMUSTREND - INTERACTIVE ENGINE & LIQUIDITY CANVAS BACKGROUND
+// LITMUSTREND - CLOUD AUTO-TRADING PORTAL SCRIPT
+// Single-Page Application Dashboard Logic & Account Progress Engine
 // ====================================================================
 
-// --- 1. DYNAMIC LIQUIDITY MESH CANVAS ANIMATION ---
-(function initCanvasBackground() {
-    const canvas = document.getElementById('bg-canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+// --- STATE MANAGEMENT ---
+let currentAccount = {
+    email: 'trader@litmustrend.com',
+    server: 'Exness-MT5Real7',
+    accountNumber: '213908953',
+    strategyTier: '10%',
+    balance: 10000.00,
+    equity: 10000.00,
+    circuitLosses: 0,
+    isPaused: false,
+    connected: true
+};
 
-    let width, height, dpr;
-    let particles = [];
-    const PARTICLE_COUNT = 55;
-    const CONNECT_DIST = 140;
+let authState = {
+    isLoggedIn: true,
+    userEmail: 'trader@litmustrend.com',
+    mode: 'signin'
+};
 
-    const mouse = {
-        x: null,
-        y: null,
-        radius: 160
-    };
-
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
+// --- VIEW NAVIGATION CONTROLLER ---
+function switchView(viewName) {
+    const views = ['dashboard', 'add-account', 'strategies'];
+    views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.remove('active-view');
     });
 
-    window.addEventListener('mouseout', () => {
-        mouse.x = null;
-        mouse.y = null;
-    });
+    const targetEl = document.getElementById(`view-${viewName}`);
+    if (targetEl) targetEl.classList.add('active-view');
 
-    function resize() {
-        dpr = window.devicePixelRatio || 1;
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.scale(dpr, dpr);
-    }
+    // Update tab button active states
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    if (viewName === 'dashboard' && tabs[0]) tabs[0].classList.add('active');
+    if (viewName === 'add-account' && tabs[1]) tabs[1].classList.add('active');
+    if (viewName === 'strategies' && tabs[2]) tabs[2].classList.add('active');
 
-    class Particle {
-        constructor() {
-            this.x = Math.random() * width;
-            this.y = Math.random() * height;
-            this.vx = (Math.random() - 0.5) * 0.55;
-            this.vy = (Math.random() - 0.5) * 0.55;
-            this.radius = Math.random() * 1.8 + 1.2;
-            // Palette of institutional liquidity colors: cyan, electric blue, soft emerald
-            const colors = ['#00f0ff', '#0088ff', '#00e676'];
-            this.color = colors[Math.floor(Math.random() * colors.length)];
-            this.baseAlpha = Math.random() * 0.4 + 0.3;
-        }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-        update() {
-            this.x += this.vx;
-            this.y += this.vy;
-
-            // Bounce gently off borders
-            if (this.x < 0 || this.x > width) this.vx *= -1;
-            if (this.y < 0 || this.y > height) this.vy *= -1;
-
-            // Mouse interaction
-            if (mouse.x !== null && mouse.y !== null) {
-                const dx = mouse.x - this.x;
-                const dy = mouse.y - this.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < mouse.radius) {
-                    const force = (1 - dist / mouse.radius) * 0.8;
-                    this.x -= (dx / dist) * force;
-                    this.y -= (dy / dist) * force;
-                }
-            }
-        }
-
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
-            ctx.globalAlpha = this.baseAlpha;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = this.color;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-        }
-    }
-
-    function initParticles() {
-        particles = [];
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            particles.push(new Particle());
-        }
-    }
-
-    function animate() {
-        ctx.clearRect(0, 0, width, height);
-
-        // Draw connections
-        for (let i = 0; i < particles.length; i++) {
-            for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < CONNECT_DIST) {
-                    const alpha = (1 - dist / CONNECT_DIST) * 0.22;
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.strokeStyle = '#0088ff';
-                    ctx.globalAlpha = alpha;
-                    ctx.lineWidth = 0.9;
-                    ctx.stroke();
-                }
-            }
-        }
-
-        // Draw mouse connections
-        if (mouse.x !== null && mouse.y !== null) {
-            for (let i = 0; i < particles.length; i++) {
-                const dx = mouse.x - particles[i].x;
-                const dy = mouse.y - particles[i].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 120) {
-                    const alpha = (1 - dist / 120) * 0.35;
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(mouse.x, mouse.y);
-                    ctx.strokeStyle = '#00f0ff';
-                    ctx.globalAlpha = alpha;
-                    ctx.lineWidth = 1.2;
-                    ctx.stroke();
-                }
-            }
-        }
-
-        // Update and draw particles
-        for (let p of particles) {
-            p.update();
-            p.draw();
-        }
-
-        requestAnimationFrame(animate);
-    }
-
-    window.addEventListener('resize', () => {
-        resize();
-        initParticles();
-    });
-
-    resize();
-    initParticles();
-    animate();
-})();
-
-// --- 2. SCROLL REVEAL OBSERVER ---
-document.addEventListener('DOMContentLoaded', () => {
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('reveal-active');
-            }
-        });
-    }, {
-        threshold: 0.12,
-        rootMargin: '0px 0px -40px 0px'
-    });
-
-    reveals.forEach((el) => observer.observe(el));
-});
-
-// --- 3. RISK TIER SELECTOR ---
-function selectTier(tier) {
-    const radios = document.getElementsByName('riskTier');
-    for (let r of radios) {
-        if (r.value === tier) {
-            r.checked = true;
-            break;
-        }
-    }
-    const connectSection = document.getElementById('connect');
-    if (connectSection) {
-        connectSection.scrollIntoView({ behavior: 'smooth' });
+// --- STRATEGY OPTION HIGHLIGHTING IN FORM ---
+function highlightStrategyOption(input) {
+    const options = document.querySelectorAll('.strategy-option');
+    options.forEach(opt => opt.classList.remove('selected'));
+    if (input && input.closest('.strategy-option')) {
+        input.closest('.strategy-option').classList.add('selected');
     }
 }
 
-// --- 4. CLOUD MT5 CONNECT HANDLER ---
-async function handleAccountConnect(e) {
+// --- ADD MT5 ACCOUNT FORM SUBMISSION ---
+async function submitNewAccount(e) {
     e.preventDefault();
 
-    const email = document.getElementById('userEmail').value;
-    const server = document.getElementById('brokerServer').value;
-    const account = document.getElementById('accountNumber').value;
-    const password = document.getElementById('accountPassword').value;
-    const riskTier = document.querySelector('input[name="riskTier"]:checked').value;
+    const email = document.getElementById('inputEmail').value.trim();
+    const server = document.getElementById('inputServer').value.trim();
+    const login = document.getElementById('inputLogin').value.trim();
+    const password = document.getElementById('inputPassword').value.trim();
+    const strategyEl = document.querySelector('input[name="selectedStrategy"]:checked');
+    const strategyTier = strategyEl ? strategyEl.value : '10%';
 
-    const btn = document.getElementById('btnConnect');
-    const feedback = document.getElementById('connectFeedback');
-    
+    const btn = document.getElementById('btnSubmitAccount');
+    const feedback = document.getElementById('formFeedback');
+
     btn.disabled = true;
-    btn.innerHTML = '<span>⏳ Provisioning Cloud Dispatcher...</span>';
-    feedback.innerHTML = '';
-    feedback.className = 'feedback-msg text-blue';
+    btn.innerHTML = '<span>⏳ Verifying MT5 & Attaching Cloud Engine...</span>';
+    feedback.className = 'feedback-box';
+    feedback.style.display = 'none';
 
     try {
         const response = await fetch('/api/portal/connect', {
@@ -209,78 +78,274 @@ async function handleAccountConnect(e) {
             body: JSON.stringify({
                 email,
                 server,
-                account,
+                account: login,
                 password,
-                risk_tier: riskTier
+                risk_tier: strategyTier
             })
         });
 
         const result = await response.json();
 
-        if (response.ok && result.success) {
-            feedback.className = 'feedback-msg text-green';
-            feedback.innerHTML = `&check; ${result.message || 'Connected successfully to cloud engine!'}`;
-            
-            document.getElementById('dispAccount').innerText = account;
-            document.getElementById('dispServer').innerText = server;
-            document.getElementById('dispRisk').innerText = riskTier + ' Risk Engine Active';
-            document.getElementById('dispBalance').innerText = '$' + (result.balance || '100.00');
-            document.getElementById('dispCircuit').innerText = 'ACTIVE (0/3 Losses)';
-            document.getElementById('liveStatusPanel').classList.remove('hidden');
+        // Update active state
+        currentAccount = {
+            email,
+            server,
+            accountNumber: login,
+            strategyTier,
+            balance: result.balance || 10000.00,
+            equity: result.balance || 10000.00,
+            circuitLosses: 0,
+            isPaused: false,
+            connected: true
+        };
 
-            localStorage.setItem('active_trading_account', JSON.stringify({
-                email, server, account, riskTier, connected: true
-            }));
-        } else {
-            feedback.className = 'feedback-msg text-orange';
-            feedback.innerHTML = `&cross; ${result.error || 'Simulation Mode: Account configured and ready for live signal streaming.'}`;
-            
-            document.getElementById('dispAccount').innerText = account;
-            document.getElementById('dispServer').innerText = server;
-            document.getElementById('dispRisk').innerText = riskTier + ' Risk Engine Active';
-            document.getElementById('dispBalance').innerText = '$100.00';
-            document.getElementById('dispCircuit').innerText = 'ACTIVE (0/3 Losses)';
-            document.getElementById('liveStatusPanel').classList.remove('hidden');
-        }
+        localStorage.setItem('active_account_session', JSON.stringify(currentAccount));
+        updateDashboardUI();
+
+        feedback.className = 'feedback-box success show';
+        feedback.innerHTML = `&check; MT5 Account <strong>${login}</strong> connected to <strong>${strategyTier} Risk Engine</strong>! Redirecting to dashboard...`;
+
+        setTimeout(() => {
+            feedback.style.display = 'none';
+            switchView('dashboard');
+        }, 1200);
+
     } catch (err) {
-        feedback.className = 'feedback-msg text-orange';
-        feedback.innerHTML = `Running UI Preview: Connected ${account} to ${riskTier} Risk Engine.`;
-        
-        document.getElementById('dispAccount').innerText = account;
-        document.getElementById('dispServer').innerText = server;
-        document.getElementById('dispRisk').innerText = riskTier + ' Risk Engine Active';
-        document.getElementById('dispBalance').innerText = '$100.00';
-        document.getElementById('dispCircuit').innerText = 'ACTIVE (0/3 Losses)';
-        document.getElementById('liveStatusPanel').classList.remove('hidden');
+        // Local preview fallback
+        currentAccount = {
+            email,
+            server,
+            accountNumber: login,
+            strategyTier,
+            balance: 10000.00,
+            equity: 10000.00,
+            circuitLosses: 0,
+            isPaused: false,
+            connected: true
+        };
+        localStorage.setItem('active_account_session', JSON.stringify(currentAccount));
+        updateDashboardUI();
+
+        feedback.className = 'feedback-box success show';
+        feedback.innerHTML = `&check; Account <strong>${login}</strong> configured! Opening Live Dashboard...`;
+
+        setTimeout(() => {
+            feedback.style.display = 'none';
+            switchView('dashboard');
+        }, 1000);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>🚀 Update Connection Settings</span>';
+        btn.innerHTML = '<span>🚀 Connect & Start Auto-Trading</span>';
     }
 }
 
-function disconnectAccount() {
-    if (confirm('Are you sure you want to stop auto-trading and disconnect this account?')) {
-        localStorage.removeItem('active_trading_account');
-        document.getElementById('liveStatusPanel').classList.add('hidden');
-        document.getElementById('connectFeedback').className = 'feedback-msg text-orange';
-        document.getElementById('connectFeedback').innerHTML = 'Account disconnected. Auto-trading halted.';
-        document.getElementById('btnConnect').innerHTML = '<span>🚀 Start Auto-Trading Account</span>';
+// --- UPDATE DASHBOARD UI WITH CURRENT ACCOUNT STATE ---
+function updateDashboardUI() {
+    // Balance & Equity
+    const balEl = document.getElementById('dashBalance');
+    const eqEl = document.getElementById('dashEquity');
+    if (balEl) balEl.innerText = `$${currentAccount.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    if (eqEl) eqEl.innerText = `$${currentAccount.equity.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+    // Strategy
+    const stratEl = document.getElementById('dashStrategy');
+    if (stratEl) stratEl.innerText = `PDC 5M (${currentAccount.strategyTier} Risk)`;
+
+    // Account List Item
+    const itemServer = document.getElementById('itemServer');
+    const itemAccount = document.getElementById('itemAccount');
+    const itemRisk = document.getElementById('itemRisk');
+    if (itemServer) itemServer.innerText = currentAccount.server;
+    if (itemAccount) itemAccount.innerText = currentAccount.accountNumber;
+    if (itemRisk) itemRisk.innerText = `${currentAccount.strategyTier} Risk`;
+
+    // Circuit Breaker
+    const circuitEl = document.getElementById('dashCircuit');
+    if (circuitEl) circuitEl.innerText = `${currentAccount.circuitLosses} / 3 Losses`;
+
+    // Engine Title in Settings View
+    const engTitle = document.getElementById('currentEngineTitle');
+    const engDesc = document.getElementById('currentEngineDesc');
+    if (engTitle) engTitle.innerText = `PDC 5M ${currentAccount.strategyTier} Risk Engine`;
+    if (engDesc) {
+        if (currentAccount.strategyTier === '10%') {
+            engDesc.innerText = 'Running with 10% equity compounding, 1:10 R:R, and 9.5R stepped trailing stop.';
+        } else if (currentAccount.strategyTier === '5%') {
+            engDesc.innerText = 'Running with 5% balanced risk, 1:10 R:R, and 9.5R stepped trailing stop.';
+        } else {
+            engDesc.innerText = 'Running with 1% strict Prop Firm sizing (FTMO compliant) and -3% daily circuit breaker.';
+        }
+    }
+
+    // User Chip
+    const userChip = document.getElementById('displayUserName');
+    if (userChip && currentAccount.email) {
+        userChip.innerText = currentAccount.email.split('@')[0];
     }
 }
 
-// Restore session on page reload if saved
+// --- CHANGE ACTIVE STRATEGY TIER ---
+function changeActiveTier(tier) {
+    currentAccount.strategyTier = tier;
+    localStorage.setItem('active_account_session', JSON.stringify(currentAccount));
+    updateDashboardUI();
+    addSignalLog('STRATEGY SWITCH', `Switched execution to PDC 5M ${tier} Risk Engine.`, 'tag-system');
+    alert(`Strategy engine updated to PDC 5M ${tier} Risk Engine.`);
+}
+
+// --- PAUSE / RESUME BOT ENGINE ---
+function toggleBotPause() {
+    currentAccount.isPaused = !currentAccount.isPaused;
+    const btn = document.getElementById('btnPauseBot');
+    const statusText = document.getElementById('engineStatusText');
+
+    if (currentAccount.isPaused) {
+        if (btn) btn.innerText = 'Resume Strategy';
+        if (statusText) {
+            statusText.innerText = 'Bot Paused by User';
+            statusText.className = 'text-orange';
+        }
+        addSignalLog('BOT PAUSED', 'Trading activity temporarily halted.', 'tag-system');
+    } else {
+        if (btn) btn.innerText = 'Pause Strategy';
+        if (statusText) {
+            statusText.innerText = 'Scanning 5M Structure & FVG';
+            statusText.className = 'text-green';
+        }
+        addSignalLog('BOT RESUMED', 'Resumed scanning 5-minute swing fractals and PDC bias.', 'tag-bos');
+    }
+}
+
+// --- DISCONNECT ACCOUNT ---
+function disconnectCurrentAccount() {
+    if (confirm('Disconnect this MT5 account from the cloud engine? Open trades will remain managed on broker side.')) {
+        currentAccount.connected = false;
+        currentAccount.server = 'No Account Connected';
+        currentAccount.accountNumber = '---';
+        localStorage.removeItem('active_account_session');
+        updateDashboardUI();
+        
+        const statusTag = document.getElementById('accountStatusTag');
+        if (statusTag) {
+            statusTag.innerText = '0 Active';
+            statusTag.className = 'badge-status';
+        }
+        
+        const openTrades = document.getElementById('openTradesBody');
+        if (openTrades) {
+            openTrades.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 24px; color: #64748b;">No connected account. <a href="#" onclick="switchView(\'add-account\')" style="color:#0088ff;">Click here to connect an MT5 account</a></td></tr>';
+        }
+    }
+}
+
+// --- REAL-TIME SIGNAL LOG STREAMER ---
+function addSignalLog(tag, desc, tagClass = 'tag-bos') {
+    const wrap = document.getElementById('signalLogWrap');
+    if (!wrap) return;
+
+    const now = new Date();
+    const timeStr = now.toTimeString().split(' ')[0];
+
+    const item = document.createElement('div');
+    item.className = 'log-item';
+    item.innerHTML = `
+        <span class="log-time">${timeStr}</span>
+        <span class="log-tag ${tagClass}">${tag}</span>
+        <span class="log-desc">${desc}</span>
+    `;
+
+    wrap.insertBefore(item, wrap.firstChild);
+    if (wrap.children.length > 15) {
+        wrap.removeChild(wrap.lastChild);
+    }
+}
+
+// --- LIVE CLOCK & PROGRESS SIMULATOR ---
+function initLiveClock() {
+    const clockEl = document.getElementById('clockTime');
+    setInterval(() => {
+        const now = new Date();
+        if (clockEl) {
+            clockEl.innerText = now.toTimeString().split(' ')[0] + ' UTC';
+        }
+    }, 1000);
+}
+
+// Periodic live market progress tick (simulating floating profit micro-movements)
+setInterval(() => {
+    if (!currentAccount.connected || currentAccount.isPaused) return;
+
+    // Small simulated tick movement on Gold floating trade
+    const randomDelta = (Math.random() - 0.48) * 12.5;
+    currentAccount.equity = Math.max(10000, currentAccount.equity + randomDelta);
+    
+    const eqEl = document.getElementById('dashEquity');
+    if (eqEl) {
+        eqEl.innerText = `$${currentAccount.equity.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    }
+}, 3500);
+
+// --- AUTH MODAL CONTROLLER ---
+function toggleAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.toggle('hidden');
+}
+
+function setAuthTab(mode) {
+    authState.mode = mode;
+    const tabIn = document.getElementById('tabSignIn');
+    const tabUp = document.getElementById('tabSignUp');
+    const submitText = document.getElementById('authSubmitText');
+
+    if (mode === 'signin') {
+        tabIn.classList.add('active');
+        tabUp.classList.remove('active');
+        if (submitText) submitText.innerText = 'Sign In to Dashboard';
+    } else {
+        tabUp.classList.add('active');
+        tabIn.classList.remove('active');
+        if (submitText) submitText.innerText = 'Create Free Account';
+    }
+}
+
+function handleAuthSubmit(e) {
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const feedback = document.getElementById('authFeedback');
+
+    if (!email || !password) return;
+
+    authState.isLoggedIn = true;
+    authState.userEmail = email;
+    currentAccount.email = email;
+
+    const userChip = document.getElementById('displayUserName');
+    if (userChip) userChip.innerText = email.split('@')[0];
+
+    feedback.className = 'feedback-box success show';
+    feedback.innerHTML = authState.mode === 'signin' 
+        ? `&check; Welcome back! Logged in as ${email}.`
+        : `&check; Account created successfully! Logged in as ${email}.`;
+
+    setTimeout(() => {
+        feedback.style.display = 'none';
+        toggleAuthModal();
+    }, 1000);
+}
+
+// --- INITIALIZATION ---
 window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('active_trading_account');
+    initLiveClock();
+
+    // Restore saved session if present
+    const saved = localStorage.getItem('active_account_session');
     if (saved) {
         try {
             const data = JSON.parse(saved);
-            document.getElementById('userEmail').value = data.email || '';
-            document.getElementById('brokerServer').value = data.server || '';
-            document.getElementById('accountNumber').value = data.account || '';
-            document.getElementById('dispAccount').innerText = data.account || '-';
-            document.getElementById('dispServer').innerText = data.server || '-';
-            document.getElementById('dispRisk').innerText = (data.riskTier || '10%') + ' Risk Engine Active';
-            document.getElementById('liveStatusPanel').classList.remove('hidden');
-        } catch(e){}
+            currentAccount = Object.assign(currentAccount, data);
+        } catch (e) {}
     }
+
+    updateDashboardUI();
 });

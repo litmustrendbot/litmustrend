@@ -807,8 +807,26 @@ body.dark-theme {
 }
 
 .server-type-tag {
-    font-size: 0.68rem;
-    color: var(--text-dim);
+    font-size: 0.66rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.server-type-tag.tag-real {
+    color: #00d084;
+    background: rgba(0, 208, 132, 0.1);
+}
+
+.server-type-tag.tag-demo {
+    color: #8899a6;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.server-type-tag.tag-trial {
+    color: #e5a93c;
+    background: rgba(229, 169, 60, 0.1);
 }
 
 .broker-empty-msg {

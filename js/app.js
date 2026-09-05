@@ -267,105 +267,16 @@ function deleteCurrentAccount() {
     }
 }
 
-// --- 6. MT5 BROKER & SERVER SEARCH REGISTRY (STRICTLY LIVE SERVERS) ---
-const BROKER_DATABASE = [
-    {
-        name: 'FundedNext Ltd',
-        servers: ['FundedNext-Server', 'FundedNext-Server 2', 'FundedNext-Server 3']
-    },
-    {
-        name: 'Exness Technologies Ltd',
-        servers: [
-            'Exness-MT5Real', 'Exness-MT5Real2', 'Exness-MT5Real3', 'Exness-MT5Real4',
-            'Exness-MT5Real5', 'Exness-MT5Real6', 'Exness-MT5Real7', 'Exness-MT5Real8',
-            'Exness-MT5Real9', 'Exness-MT5Real10', 'Exness-MT5Real11', 'Exness-MT5Real12',
-            'Exness-MT5Real14', 'Exness-MT5Real15', 'Exness-MT5Real16', 'Exness-MT5Real17'
-        ]
-    },
-    {
-        name: 'FTMO Global Markets Ltd',
-        servers: ['FTMO-Server', 'FTMO-Server2', 'FTMO-Server3', 'FTMO-Server4', 'FTMO-Server5']
-    },
-    {
-        name: 'IC Markets Ltd',
-        servers: [
-            'ICMarketsInternational-MT5', 'ICMarketsInternational-MT5-2', 'ICMarketsInternational-MT5-3',
-            'ICMarketsInternational-MT5-4', 'ICMarketsSC-MT5', 'ICMarketsSC-MT5-2', 'ICMarketsSC-MT5-3',
-            'ICMarketsSC-MT5-4', 'ICMarketsEU-MT5'
-        ]
-    },
-    {
-        name: 'Deriv.com Limited',
-        servers: ['Deriv-Server', 'Deriv-Server-02', 'Deriv-Server-03']
-    },
-    {
-        name: 'Funding Pips Ltd',
-        servers: ['FundingPips-Server', 'FundingPips-Server-2']
-    },
-    {
-        name: 'Pepperstone Markets',
-        servers: ['Pepperstone-MT5-Live01', 'Pepperstone-MT5-Live02', 'Pepperstone-MT5-Live03']
-    },
-    {
-        name: 'Octa Markets Incorporated',
-        servers: ['OctaFX-Real', 'OctaFX-Real2', 'OctaFX-Real3']
-    },
-    {
-        name: 'XM Global',
-        servers: [
-            'XMGlobal-MT5', 'XMGlobal-MT5 2', 'XMGlobal-MT5 3', 'XMGlobal-MT5 4',
-            'XMGlobal-MT5 5', 'XMGlobal-MT5 6', 'XMGlobal-MT5 7'
-        ]
-    },
-    {
-        name: 'RoboForex Ltd',
-        servers: ['RoboForex-Pro', 'RoboForex-ECN', 'RoboForex-ProCent']
-    },
-    {
-        name: 'The Funded Trader (TFT)',
-        servers: ['TheFundedTrader-Live', 'TheFundedTrader-Live2']
-    },
-    {
-        name: 'Alpha Capital Group',
-        servers: ['AlphaCapital-Live']
-    },
-    {
-        name: 'Funded Trading Plus Ltd',
-        servers: ['FundedTradingPlus-Live', 'FundedTradingPlus-Server']
-    },
-    {
-        name: 'FXTM (ForexTime)',
-        servers: ['ForexTime-MT5-Real']
-    },
-    {
-        name: 'HFM (HotForex)',
-        servers: ['HFMarketsGlobal-Live5', 'HFMarketsGlobal-Live6']
-    },
-    {
-        name: 'AvaTrade',
-        servers: ['Ava-Real 1', 'Ava-Real 2']
-    },
-    {
-        name: 'FP Markets',
-        servers: ['FPMarkets-Live']
-    },
-    {
-        name: 'FxPro',
-        servers: ['FxPro-MT5', 'FxPro-MT5-2']
-    },
-    {
-        name: 'JustMarkets',
-        servers: ['JustForex-Live', 'JustForex-Live2']
-    },
-    {
-        name: 'Vantage Markets',
-        servers: ['VantageInternational-Live 1', 'VantageInternational-Live 2']
-    },
-    {
-        name: 'Eightcap',
-        servers: ['Eightcap-Real', 'Eightcap-Real2']
-    }
-];
+// --- 6. MT5 BROKER & SERVER SEARCH REGISTRY (OFFICIAL METATRADER 5 DIRECTORY) ---
+// Loads 183 official broker companies with 422 verified servers from js/brokers_data.js
+const BROKER_DATABASE = (typeof OFFICIAL_MT5_BROKERS !== 'undefined' && Array.isArray(OFFICIAL_MT5_BROKERS))
+    ? OFFICIAL_MT5_BROKERS
+    : [];
+
+// If running in VS Code Live Server (port 5500 or any static dev port), route API calls to production backend
+const API_BASE_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '8888'
+    ? 'https://litmustrend.vercel.app'
+    : '';
 
 let isManualServerMode = false;
 let expandedBrokerName = null;
@@ -384,6 +295,10 @@ function handleBrokerSearch(query, triggerApi = true) {
     const q = (query || '').trim();
     dropdown.classList.remove('hidden');
 
+    if (currentBrokersList.length === 0 && BROKER_DATABASE.length > 0) {
+        currentBrokersList = [...BROKER_DATABASE];
+    }
+
     renderBrokerDropdown(q, currentBrokersList);
 
     if (triggerApi && q.length >= 2) {
@@ -399,23 +314,23 @@ async function fetchLiveBrokers(query) {
     if (!q) return;
 
     try {
-        const res = await fetch(`/api/portal/servers?query=${encodeURIComponent(q)}`);
+        const res = await fetch(`${API_BASE_URL}/api/portal/servers?query=${encodeURIComponent(q)}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data && data.success && Array.isArray(data.brokers) && data.brokers.length > 0) {
-            const liveBrokers = data.brokers.map(b => ({
-                name: b.name,
-                servers: (b.servers || []).filter(s => !['demo', 'trial', 'practice', 'contest'].some(kw => s.toLowerCase().includes(kw)))
-            })).filter(b => b.servers.length > 0);
-
-            if (liveBrokers.length > 0) {
-                currentBrokersList = liveBrokers;
-                renderBrokerDropdown(q, liveBrokers);
-            }
+            currentBrokersList = data.brokers;
+            renderBrokerDropdown(q, data.brokers);
         }
     } catch (e) {
-        // Fallback gracefully to current static list
+        // Fallback to offline currentBrokersList
     }
+}
+
+function getServerTag(srv) {
+    const s = (srv || '').toLowerCase();
+    if (s.includes('demo')) return { label: 'DEMO', cls: 'tag-demo' };
+    if (s.includes('trial')) return { label: 'TRIAL', cls: 'tag-trial' };
+    return { label: 'REAL', cls: 'tag-real' };
 }
 
 function renderBrokerDropdown(query, brokers) {
@@ -425,7 +340,9 @@ function renderBrokerDropdown(query, brokers) {
     const q = (query || '').trim().toLowerCase();
     dropdown.innerHTML = '';
 
-    const filtered = brokers.filter(b => {
+    const source = (brokers && brokers.length > 0) ? brokers : BROKER_DATABASE;
+
+    const filtered = source.filter(b => {
         if (!q) return true;
         const nameMatch = b.name.toLowerCase().includes(q);
         const serverMatch = b.servers.some(s => s.toLowerCase().includes(q));
@@ -435,7 +352,7 @@ function renderBrokerDropdown(query, brokers) {
     if (filtered.length === 0) {
         dropdown.innerHTML = `
             <div class="broker-empty-msg">
-                No live MT5 server found matching "${escapeHtml(query)}".<br>
+                No MT5 server found matching "${escapeHtml(query)}".<br>
                 <button type="button" class="btn-text-link" style="margin-top:6px;" onclick="toggleManualServerInput('${escapeHtml(query)}')">Click to enter server manually</button>
             </div>
         `;
@@ -450,15 +367,18 @@ function renderBrokerDropdown(query, brokers) {
         group.innerHTML = `
             <div class="broker-group-header" onclick="toggleBrokerExpand('${escapeHtml(broker.name)}')">
                 <span>🏦 ${escapeHtml(broker.name)}</span>
-                <span class="broker-server-count">${broker.servers.length} live server${broker.servers.length === 1 ? '' : 's'} ${isExpanded ? '▲' : '▼'}</span>
+                <span class="broker-server-count">${broker.servers.length} server${broker.servers.length === 1 ? '' : 's'} ${isExpanded ? '▲' : '▼'}</span>
             </div>
             <div class="broker-servers-list ${isExpanded ? '' : 'hidden'}" id="servers-${escapeHtml(broker.name)}">
-                ${broker.servers.map(srv => `
+                ${broker.servers.map(srv => {
+                    const tag = getServerTag(srv);
+                    return `
                     <div class="server-item" onclick="selectBrokerServer('${escapeHtml(srv)}')">
                         <span>${escapeHtml(srv)}</span>
-                        <span class="server-type-tag">LIVE</span>
+                        <span class="server-type-tag ${tag.cls}">${tag.label}</span>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         `;
 

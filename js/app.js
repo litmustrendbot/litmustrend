@@ -3,72 +3,45 @@
 // Left Accounts Sidebar + Large Trade Analysis Viewport
 // ====================================================================
 
-const AUTHORIZED_PASSCODE = '09161182730';
-
-// Default sample trading accounts with real trade logs
-const DEFAULT_ACCOUNTS = [
-    {
-        id: 'acc-1',
-        name: 'Exness Growth Account',
-        strategy: 'PDC 5M 10% Risk EA',
-        server: 'Exness-MT5Real7',
-        login: '213908953',
-        isPaused: false,
-        activeTrade: {
-            symbol: 'XAUUSD',
-            type: 'BUY',
-            lots: '0.50',
-            entry: '2,740.10',
-            target: '2,758.10',
-            trailing: 'Active (+9.5R)',
-            pnl: '+$1,000.00 (+100.0%)'
-        },
-        trades: [
-            { id: 1, time: '2026-09-05 16:15', symbol: 'XAUUSD', type: 'BUY', lots: '0.50', entry: '2,740.10', exit: '2,758.10', target: '1:10 R:R', result: 'WIN', profit: '+$1,000.00 (+100.0%)' },
-            { id: 2, time: '2026-09-05 14:20', symbol: 'EURUSD', type: 'BUY', lots: '1.00', entry: '1.08200', exit: '1.08100', target: '1:10 R:R', result: 'LOSS', profit: '-$100.00 (-10.0%)' },
-            { id: 3, time: '2026-09-05 11:45', symbol: 'GBPUSD', type: 'SELL', lots: '1.00', entry: '1.29500', exit: '1.28500', target: '1:10 R:R', result: 'WIN', profit: '+$1,000.00 (+100.0%)' },
-            { id: 4, time: '2026-09-05 09:10', symbol: 'US30', type: 'BUY', lots: '0.25', entry: '43,200.0', exit: '43,450.0', target: '1:10 R:R', result: 'WIN', profit: '+$1,000.00 (+100.0%)' },
-            { id: 5, time: '2026-09-04 15:50', symbol: 'NAS100', type: 'BUY', lots: '0.30', entry: '20,110.0', exit: '20,240.0', target: '1:10 R:R', result: 'WIN', profit: '+$1,000.00 (+100.0%)' },
-            { id: 6, time: '2026-09-04 13:00', symbol: 'EURUSD', type: 'SELL', lots: '1.00', entry: '1.08450', exit: '1.08490', target: '1:10 R:R', result: 'LOSS', profit: '-$100.00 (-10.0%)' }
-        ]
-    },
-    {
-        id: 'acc-2',
-        name: 'FTMO Funded Prop Account',
-        strategy: 'PDC 5M 1% Risk EA',
-        server: 'FTMO-Server2',
-        login: '98412034',
-        isPaused: false,
-        activeTrade: null,
-        trades: [
-            { id: 1, time: '2026-09-05 15:30', symbol: 'NAS100', type: 'BUY', lots: '0.50', entry: '20,150.0', exit: '20,280.0', target: '1:10 R:R', result: 'WIN', profit: '+$1,000.00 (+10.0%)' },
-            { id: 2, time: '2026-09-05 13:05', symbol: 'EURUSD', type: 'SELL', lots: '2.00', entry: '1.08450', exit: '1.08490', target: '1:10 R:R', result: 'LOSS', profit: '-$100.00 (-1.0%)' },
-            { id: 3, time: '2026-09-04 10:15', symbol: 'XAUUSD', type: 'BUY', lots: '0.40', entry: '2,735.00', exit: '2,748.50', target: '1:10 R:R', result: 'WIN', profit: '+$1,000.00 (+10.0%)' }
-        ]
-    }
-];
-
-let accounts = [];
-let selectedAccountId = null;
-
-// --- 1. PASSCODE VERIFICATION ---
-function verifyPasscode(e) {
+// --- 1. PASSCODE VERIFICATION VIA SECURE BACKEND ---
+async function verifyPasscode(e) {
     e.preventDefault();
     const input = document.getElementById('passcodeInput').value.trim();
     const errEl = document.getElementById('passcodeError');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
 
-    if (input === AUTHORIZED_PASSCODE) {
-        sessionStorage.setItem('litmus_auth', 'unlocked');
-        errEl.innerText = '';
-        unlockPortal();
-    } else {
-        errEl.innerText = 'Incorrect passcode.';
-        document.getElementById('passcodeInput').select();
+    if (!input) return;
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Verifying...';
+    errEl.innerText = '';
+
+    try {
+        const response = await fetch('/api/portal/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passcode: input })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success && data.token) {
+            sessionStorage.setItem('litmus_auth_token', data.token);
+            unlockPortal();
+        } else {
+            errEl.innerText = data.error || 'Access denied. Invalid passcode.';
+            document.getElementById('passcodeInput').select();
+        }
+    } catch (error) {
+        errEl.innerText = 'Authentication service currently unavailable.';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Unlock Dashboard';
     }
 }
 
 function lockPortal() {
-    sessionStorage.removeItem('litmus_auth');
+    sessionStorage.removeItem('litmus_auth_token');
     document.getElementById('passcodeInput').value = '';
     document.getElementById('passcodeError').innerText = '';
     document.getElementById('dashboardScreen').classList.remove('active-screen');
@@ -354,7 +327,7 @@ function escapeHtml(str) {
 
 // --- INIT ---
 window.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('litmus_auth') === 'unlocked') {
+    if (sessionStorage.getItem('litmus_auth_token')) {
         unlockPortal();
     } else {
         document.getElementById('passcodeScreen').classList.add('active-screen');

@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
                 platform: 'mt5',
                 password: String(password).trim(),
                 server: String(server).trim(),
-                magic: magic,
+                magic: 0,
                 manualTrades: true
             };
 

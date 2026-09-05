@@ -15,7 +15,8 @@ function callMetaApi(path, method, payload, token) {
                 'auth-token': token,
                 'Content-Type': 'application/json',
                 ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr) } : {})
-            }
+            },
+            rejectUnauthorized: false
         };
 
         const req = https.request(options, (res) => {

@@ -267,123 +267,165 @@ function deleteCurrentAccount() {
     }
 }
 
-// --- 6. MT5 BROKER & SERVER SEARCH REGISTRY ---
+// --- 6. MT5 BROKER & SERVER SEARCH REGISTRY (STRICTLY LIVE SERVERS) ---
 const BROKER_DATABASE = [
     {
-        name: 'Exness',
+        name: 'FundedNext Ltd',
+        servers: ['FundedNext-Server', 'FundedNext-Server 2', 'FundedNext-Server 3']
+    },
+    {
+        name: 'Exness Technologies Ltd',
         servers: [
             'Exness-MT5Real', 'Exness-MT5Real2', 'Exness-MT5Real3', 'Exness-MT5Real4',
             'Exness-MT5Real5', 'Exness-MT5Real6', 'Exness-MT5Real7', 'Exness-MT5Real8',
             'Exness-MT5Real9', 'Exness-MT5Real10', 'Exness-MT5Real11', 'Exness-MT5Real12',
-            'Exness-MT5Real14', 'Exness-MT5Real15', 'Exness-MT5Real16', 'Exness-MT5Real17',
-            'Exness-MT5Trial', 'Exness-MT5Trial2'
+            'Exness-MT5Real14', 'Exness-MT5Real15', 'Exness-MT5Real16', 'Exness-MT5Real17'
         ]
     },
     {
-        name: 'FTMO',
-        servers: ['FTMO-Server', 'FTMO-Server2', 'FTMO-Server3', 'FTMO-Demo']
+        name: 'FTMO Global Markets Ltd',
+        servers: ['FTMO-Server', 'FTMO-Server2', 'FTMO-Server3', 'FTMO-Server4', 'FTMO-Server5']
     },
     {
-        name: 'FundedNext',
-        servers: ['FundedNext-Server', 'FundedNext-Server-2', 'FundedNext-Demo']
-    },
-    {
-        name: 'IC Markets',
+        name: 'IC Markets Ltd',
         servers: [
-            'ICMarketsSC-MT5', 'ICMarketsSC-MT5-2', 'ICMarketsSC-MT5-3', 'ICMarketsSC-MT5-4',
-            'ICMarketsEU-MT5', 'ICMarkets-Demo'
+            'ICMarketsInternational-MT5', 'ICMarketsInternational-MT5-2', 'ICMarketsInternational-MT5-3',
+            'ICMarketsInternational-MT5-4', 'ICMarketsSC-MT5', 'ICMarketsSC-MT5-2', 'ICMarketsSC-MT5-3',
+            'ICMarketsSC-MT5-4', 'ICMarketsEU-MT5'
         ]
     },
     {
-        name: 'Pepperstone',
-        servers: ['Pepperstone-MT5-Live01', 'Pepperstone-MT5-Live02', 'Pepperstone-MT5-Demo01']
+        name: 'Deriv.com Limited',
+        servers: ['Deriv-Server', 'Deriv-Server-02', 'Deriv-Server-03']
     },
     {
-        name: 'OctaFX / Octa',
-        servers: ['OctaFX-Real', 'OctaFX-Real2', 'OctaFX-Real3', 'OctaFX-Demo']
+        name: 'Funding Pips Ltd',
+        servers: ['FundingPips-Server', 'FundingPips-Server-2']
+    },
+    {
+        name: 'Pepperstone Markets',
+        servers: ['Pepperstone-MT5-Live01', 'Pepperstone-MT5-Live02', 'Pepperstone-MT5-Live03']
+    },
+    {
+        name: 'Octa Markets Incorporated',
+        servers: ['OctaFX-Real', 'OctaFX-Real2', 'OctaFX-Real3']
     },
     {
         name: 'XM Global',
         servers: [
             'XMGlobal-MT5', 'XMGlobal-MT5 2', 'XMGlobal-MT5 3', 'XMGlobal-MT5 4',
-            'XMGlobal-MT5 5', 'XMGlobal-MT5 6', 'XMGlobal-MT5 7', 'XMGlobal-Demo'
+            'XMGlobal-MT5 5', 'XMGlobal-MT5 6', 'XMGlobal-MT5 7'
         ]
     },
     {
-        name: 'Deriv',
-        servers: ['Deriv-Server', 'Deriv-Server-02', 'Deriv-Server-03', 'Deriv-Demo']
-    },
-    {
-        name: 'Funding Pips',
-        servers: ['FundingPips-Server', 'FundingPips-Server-2', 'FundingPips-Demo']
-    },
-    {
-        name: 'RoboForex',
-        servers: ['RoboForex-Pro', 'RoboForex-ECN', 'RoboForex-ProCent', 'RoboForex-Demo']
+        name: 'RoboForex Ltd',
+        servers: ['RoboForex-Pro', 'RoboForex-ECN', 'RoboForex-ProCent']
     },
     {
         name: 'The Funded Trader (TFT)',
-        servers: ['TheFundedTrader-Live', 'TheFundedTrader-Live2', 'TheFundedTrader-Demo']
+        servers: ['TheFundedTrader-Live', 'TheFundedTrader-Live2']
     },
     {
         name: 'Alpha Capital Group',
-        servers: ['AlphaCapital-Live', 'AlphaCapital-Demo']
+        servers: ['AlphaCapital-Live']
     },
     {
-        name: 'Funded Trading Plus',
-        servers: ['FundedTradingPlus-Server', 'FundedTradingPlus-Demo']
+        name: 'Funded Trading Plus Ltd',
+        servers: ['FundedTradingPlus-Live', 'FundedTradingPlus-Server']
     },
     {
         name: 'FXTM (ForexTime)',
-        servers: ['ForexTime-MT5-Real', 'ForexTime-MT5-Demo']
+        servers: ['ForexTime-MT5-Real']
     },
     {
         name: 'HFM (HotForex)',
-        servers: ['HFMarketsGlobal-Live5', 'HFMarketsGlobal-Live6', 'HFMarketsGlobal-Demo5']
+        servers: ['HFMarketsGlobal-Live5', 'HFMarketsGlobal-Live6']
     },
     {
         name: 'AvaTrade',
-        servers: ['Ava-Real 1', 'Ava-Real 2', 'Ava-Demo 1']
+        servers: ['Ava-Real 1', 'Ava-Real 2']
     },
     {
         name: 'FP Markets',
-        servers: ['FPMarkets-Live', 'FPMarkets-Demo']
+        servers: ['FPMarkets-Live']
     },
     {
         name: 'FxPro',
-        servers: ['FxPro-MT5', 'FxPro-MT5-2', 'FxPro-MT5-Demo']
+        servers: ['FxPro-MT5', 'FxPro-MT5-2']
     },
     {
         name: 'JustMarkets',
-        servers: ['JustForex-Live', 'JustForex-Live2', 'JustForex-Demo']
+        servers: ['JustForex-Live', 'JustForex-Live2']
     },
     {
         name: 'Vantage Markets',
-        servers: ['VantageInternational-Live 1', 'VantageInternational-Live 2', 'VantageInternational-Demo']
+        servers: ['VantageInternational-Live 1', 'VantageInternational-Live 2']
     },
     {
         name: 'Eightcap',
-        servers: ['Eightcap-Real', 'Eightcap-Real2', 'Eightcap-Demo']
+        servers: ['Eightcap-Real', 'Eightcap-Real2']
     }
 ];
 
 let isManualServerMode = false;
 let expandedBrokerName = null;
+let brokerSearchDebounceTimer = null;
+let currentBrokersList = [...BROKER_DATABASE];
 
 function handleBrokerFocus() {
     const input = document.getElementById('brokerSearchInput');
-    handleBrokerSearch(input.value || '');
+    handleBrokerSearch(input.value || '', false);
 }
 
-function handleBrokerSearch(query) {
+function handleBrokerSearch(query, triggerApi = true) {
+    const dropdown = document.getElementById('brokerSearchResults');
+    if (!dropdown) return;
+
+    const q = (query || '').trim();
+    dropdown.classList.remove('hidden');
+
+    renderBrokerDropdown(q, currentBrokersList);
+
+    if (triggerApi && q.length >= 2) {
+        clearTimeout(brokerSearchDebounceTimer);
+        brokerSearchDebounceTimer = setTimeout(() => {
+            fetchLiveBrokers(q);
+        }, 200);
+    }
+}
+
+async function fetchLiveBrokers(query) {
+    const q = (query || '').trim();
+    if (!q) return;
+
+    try {
+        const res = await fetch(`/api/portal/servers?query=${encodeURIComponent(q)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.brokers) && data.brokers.length > 0) {
+            const liveBrokers = data.brokers.map(b => ({
+                name: b.name,
+                servers: (b.servers || []).filter(s => !['demo', 'trial', 'practice', 'contest'].some(kw => s.toLowerCase().includes(kw)))
+            })).filter(b => b.servers.length > 0);
+
+            if (liveBrokers.length > 0) {
+                currentBrokersList = liveBrokers;
+                renderBrokerDropdown(q, liveBrokers);
+            }
+        }
+    } catch (e) {
+        // Fallback gracefully to current static list
+    }
+}
+
+function renderBrokerDropdown(query, brokers) {
     const dropdown = document.getElementById('brokerSearchResults');
     if (!dropdown) return;
 
     const q = (query || '').trim().toLowerCase();
     dropdown.innerHTML = '';
-    dropdown.classList.remove('hidden');
 
-    const filtered = BROKER_DATABASE.filter(b => {
+    const filtered = brokers.filter(b => {
         if (!q) return true;
         const nameMatch = b.name.toLowerCase().includes(q);
         const serverMatch = b.servers.some(s => s.toLowerCase().includes(q));
@@ -393,7 +435,7 @@ function handleBrokerSearch(query) {
     if (filtered.length === 0) {
         dropdown.innerHTML = `
             <div class="broker-empty-msg">
-                No broker found matching "${escapeHtml(query)}".<br>
+                No live MT5 server found matching "${escapeHtml(query)}".<br>
                 <button type="button" class="btn-text-link" style="margin-top:6px;" onclick="toggleManualServerInput('${escapeHtml(query)}')">Click to enter server manually</button>
             </div>
         `;
@@ -408,13 +450,13 @@ function handleBrokerSearch(query) {
         group.innerHTML = `
             <div class="broker-group-header" onclick="toggleBrokerExpand('${escapeHtml(broker.name)}')">
                 <span>🏦 ${escapeHtml(broker.name)}</span>
-                <span class="broker-server-count">${broker.servers.length} servers ${isExpanded ? '▲' : '▼'}</span>
+                <span class="broker-server-count">${broker.servers.length} live server${broker.servers.length === 1 ? '' : 's'} ${isExpanded ? '▲' : '▼'}</span>
             </div>
             <div class="broker-servers-list ${isExpanded ? '' : 'hidden'}" id="servers-${escapeHtml(broker.name)}">
                 ${broker.servers.map(srv => `
                     <div class="server-item" onclick="selectBrokerServer('${escapeHtml(srv)}')">
                         <span>${escapeHtml(srv)}</span>
-                        <span class="server-type-tag">${srv.toLowerCase().includes('demo') || srv.toLowerCase().includes('trial') ? 'DEMO' : 'LIVE'}</span>
+                        <span class="server-type-tag">LIVE</span>
                     </div>
                 `).join('')}
             </div>
@@ -427,7 +469,7 @@ function handleBrokerSearch(query) {
 function toggleBrokerExpand(brokerName) {
     expandedBrokerName = (expandedBrokerName === brokerName) ? null : brokerName;
     const input = document.getElementById('brokerSearchInput');
-    handleBrokerSearch(input.value || '');
+    renderBrokerDropdown(input.value || '', currentBrokersList);
 }
 
 function selectBrokerServer(serverName) {

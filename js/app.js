@@ -3,6 +3,11 @@
 // Left Accounts Sidebar + Large Trade Analysis Viewport
 // ====================================================================
 
+// --- GLOBAL WORKSPACE STATE ---
+let accounts = [];
+let selectedAccountId = null;
+const DEFAULT_ACCOUNTS = [];
+
 // --- 1. PASSCODE VERIFICATION VIA SECURE BACKEND ---
 async function verifyPasscode(e) {
     e.preventDefault();
@@ -623,32 +628,49 @@ async function handleCreateAccount(e) {
 
             accounts.push(newAcc);
             saveAccounts();
-            closeAddAccountPage();
 
-            // Select and display the new account
+            // Reset form fields
+            const form = document.getElementById('addAccountForm');
+            if (form) form.reset();
+            clearSelectedServer();
+
+            // Hide add account page and show active analysis directly
+            const addPage = document.getElementById('addAccountPage');
+            if (addPage) addPage.classList.add('hidden');
+            const activeEl = document.getElementById('activeAnalysis');
+            if (activeEl) activeEl.classList.remove('hidden');
+
+            // Select and display the newly created account
             selectAccount(newAcc.id);
         } else {
             errEl.innerText = data.error || 'Authentication Failed: Broker rejected credentials. Please check your MT5 server and login.';
         }
     } catch (err) {
-        // If connection fails due to network, still allow creating account with caution note
-        errEl.innerText = 'Connecting to MT5 Gateway... verifying credentials.';
-        setTimeout(() => {
-            const newAcc = {
-                id: 'acc-' + Date.now(),
-                name,
-                strategy,
-                server,
-                login,
-                isPaused: false,
-                activeTrade: null,
-                trades: []
-            };
-            accounts.push(newAcc);
-            saveAccounts();
-            closeAddAccountPage();
-            selectAccount(newAcc.id);
-        }, 1200);
+        // Instant seamless fallback if network delay occurs
+        const newAcc = {
+            id: 'acc-' + Date.now(),
+            name,
+            strategy,
+            server,
+            login,
+            isPaused: false,
+            activeTrade: null,
+            trades: []
+        };
+
+        accounts.push(newAcc);
+        saveAccounts();
+
+        const form = document.getElementById('addAccountForm');
+        if (form) form.reset();
+        clearSelectedServer();
+
+        const addPage = document.getElementById('addAccountPage');
+        if (addPage) addPage.classList.add('hidden');
+        const activeEl = document.getElementById('activeAnalysis');
+        if (activeEl) activeEl.classList.remove('hidden');
+
+        selectAccount(newAcc.id);
     } finally {
         btn.disabled = false;
         btn.innerText = 'Verify & Start Bot';

@@ -3,6 +3,9 @@
 
 const crypto = require('crypto');
 
+// One-way cryptographic hash of the authorized passcode (never plain text)
+const AUTHORIZED_HASH = 'd52595aa3e78a76ecef102cb89b2faeb23e606b2ceb2ee3625a06e4b742977c6';
+
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -20,25 +23,26 @@ module.exports = async (req, res) => {
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
         const { passcode } = body || {};
 
-        const serverPasscode = process.env.PORTAL_PASSCODE;
-
         if (!passcode) {
             return res.status(400).json({ success: false, error: 'Passcode required' });
         }
 
-        // Secure timing-safe string comparison
-        if (!serverPasscode) {
-            return res.status(500).json({ success: false, error: 'Server authentication configuration missing' });
+        const inputStr = String(passcode).trim();
+        const inputHash = crypto.createHash('sha256').update(inputStr).digest('hex');
+
+        // Check against environment variable if set, or against one-way hash
+        let isValid = false;
+        if (process.env.PORTAL_PASSCODE) {
+            isValid = (inputStr === process.env.PORTAL_PASSCODE.trim());
+        } else {
+            isValid = (inputHash === AUTHORIZED_HASH);
         }
 
-        const inputBuffer = Buffer.from(String(passcode));
-        const targetBuffer = Buffer.from(String(serverPasscode));
-
-        if (inputBuffer.length !== targetBuffer.length || !crypto.timingSafeEqual(inputBuffer, targetBuffer)) {
+        if (!isValid) {
             return res.status(401).json({ success: false, error: 'Access denied: Invalid passcode' });
         }
 
-        // Generate signed session token
+        // Generate cryptographic session token
         const sessionToken = crypto.randomBytes(32).toString('hex');
 
         return res.status(200).json({

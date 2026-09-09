@@ -434,14 +434,15 @@ function renderBrokerDropdown(query, brokers) {
     }
 
     filtered.forEach(broker => {
-        const isExpanded = expandedBrokerName === broker.name || (q.length > 1 && broker.name.toLowerCase().includes(q));
+        const isSingleBroker = filtered.length === 1;
+        const isExpanded = isSingleBroker || expandedBrokerName === broker.name || (q.length > 1 && broker.name.toLowerCase().includes(q));
         const group = document.createElement('div');
         group.className = 'broker-group';
 
         const logoUrl = getBrokerLogoUrl(broker.name);
 
         group.innerHTML = `
-            <div class="broker-group-header" onclick="toggleBrokerExpand('${escapeHtml(broker.name)}')">
+            <div class="broker-group-header" onclick="toggleBrokerExpand('${escapeHtml(broker.name)}', event)">
                 <div class="broker-identity">
                     <img src="${logoUrl}" class="broker-logo-img" alt="" onerror="this.style.display='none'">
                     <span>${escapeHtml(broker.name)}</span>
@@ -452,7 +453,7 @@ function renderBrokerDropdown(query, brokers) {
                 ${broker.servers.map(srv => {
                     const tag = getServerTag(srv);
                     return `
-                    <div class="server-item" onclick="selectBrokerServer('${escapeHtml(srv)}', '${escapeHtml(broker.name)}')">
+                    <div class="server-item" onclick="selectBrokerServer('${escapeHtml(srv)}', '${escapeHtml(broker.name)}', event)">
                         <span>${escapeHtml(srv)}</span>
                         <span class="server-type-tag ${tag.cls}">${tag.label}</span>
                     </div>
@@ -465,13 +466,21 @@ function renderBrokerDropdown(query, brokers) {
     });
 }
 
-function toggleBrokerExpand(brokerName) {
+function toggleBrokerExpand(brokerName, event) {
+    if (event) {
+        event.stopPropagation();
+    }
     expandedBrokerName = (expandedBrokerName === brokerName) ? null : brokerName;
     const input = document.getElementById('brokerSearchInput');
     renderBrokerDropdown(input.value || '', currentBrokersList);
+    const dropdown = document.getElementById('brokerSearchResults');
+    if (dropdown) dropdown.classList.remove('hidden');
 }
 
-function selectBrokerServer(serverName, brokerName = '') {
+function selectBrokerServer(serverName, brokerName = '', event) {
+    if (event) {
+        event.stopPropagation();
+    }
     document.getElementById('accServer').value = serverName;
     document.getElementById('selectedServerName').innerText = serverName;
     
@@ -536,10 +545,15 @@ document.addEventListener('click', (e) => {
     const wrap = document.getElementById('brokerSearchMode');
     const dropdown = document.getElementById('brokerSearchResults');
     const pillsWrap = document.querySelector('.broker-quick-pills-wrap');
-    if (wrap && dropdown) {
-        if (!wrap.contains(e.target) && (!pillsWrap || !pillsWrap.contains(e.target))) {
-            dropdown.classList.add('hidden');
-        }
+    if (!dropdown || dropdown.classList.contains('hidden')) return;
+
+    const path = e.composedPath ? e.composedPath() : [];
+    const isInside = 
+        (wrap && (wrap.contains(e.target) || path.includes(wrap))) ||
+        (pillsWrap && (pillsWrap.contains(e.target) || path.includes(pillsWrap)));
+
+    if (!isInside) {
+        dropdown.classList.add('hidden');
     }
 });
 
@@ -641,7 +655,7 @@ function goToWizardStep(stepNum) {
         if (subtitleText) subtitleText.innerText = '';
         
         const nameInput = document.getElementById('accName');
-        if (nameInput) setTimeout(() => nameInput.focus(), 80);
+        if (nameInput) setTimeout(() => nameInput.focus({ preventScroll: true }), 80);
     }
 
     const viewport = document.querySelector('.analysis-viewport');
@@ -674,10 +688,16 @@ function quickSelectBroker(brokerName, e) {
     expandedBrokerName = brokerName;
 
     const searchInput = document.getElementById('brokerSearchInput');
+    const dropdown = document.getElementById('brokerSearchResults');
     if (searchInput) {
         searchInput.value = brokerName;
-        handleBrokerSearch(brokerName, false);
-        searchInput.focus();
+    }
+
+    handleBrokerSearch(brokerName, false);
+
+    if (dropdown) {
+        dropdown.classList.remove('hidden');
+        dropdown.scrollTop = 0;
     }
 }
 
@@ -862,6 +882,13 @@ function escapeHtml(str) {
 
 // --- INIT ---
 window.addEventListener('DOMContentLoaded', () => {
+    const dropdown = document.getElementById('brokerSearchResults');
+    if (dropdown) {
+        dropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
     if (sessionStorage.getItem('litmus_auth_token')) {
         unlockPortal();
     } else {

@@ -789,16 +789,16 @@ body.dark-theme {
 
 .broker-dropdown {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
-    max-height: 260px;
+    max-height: 280px;
     overflow-y: auto;
-    background: #0f1420;
-    border: 1px solid var(--border);
+    background: #0d121d;
+    border: 1px solid rgba(0, 136, 255, 0.35);
     border-radius: 8px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
-    z-index: 250;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+    z-index: 300;
 }
 
 .broker-group {
@@ -886,9 +886,9 @@ body.dark-theme {
    ADD ACCOUNT FULL PAGE VIEW (PROFESSIONAL INSTITUTIONAL INTERFACE)
    ==================================================================== */
 .account-page-view {
-    max-width: 980px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 10px 16px 80px 16px;
+    padding: 0 16px 80px 16px;
     animation: fadeIn 0.25s ease-out;
 }
 
@@ -916,18 +916,19 @@ body.dark-theme {
 .page-top-bar {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 22px;
+    align-items: center;
+    padding-bottom: 20px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 26px;
+    margin-bottom: 28px;
+    padding-top: 4px;
 }
 
 .page-top-bar h2 {
-    font-size: 1.85rem;
+    font-size: 1.7rem;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: #fff;
-    margin-bottom: 6px;
+    margin-bottom: 0;
 }
 
 .page-subtitle {
@@ -1108,7 +1109,8 @@ body.dark-theme {
     gap: 12px;
     margin-top: 14px;
     margin-bottom: 28px;
-    max-width: 680px;
+    width: 100%;
+    max-width: 100%;
 }
 
 .minimal-choice-card {
@@ -1180,6 +1182,7 @@ body.dark-theme {
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
+    width: 100%;
 }
 
 .btn-step-back {
@@ -1204,7 +1207,8 @@ body.dark-theme {
 
 /* SEAMLESS FORM (NO BULKY SURROUNDING BOXES) */
 .seamless-form-wrap {
-    max-width: 640px;
+    width: 100%;
+    max-width: 100%;
     margin-top: 16px;
 }
 

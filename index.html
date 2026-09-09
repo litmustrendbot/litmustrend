@@ -118,7 +118,7 @@
                 <!-- ACTIVE LIVE TRADE (IF CURRENTLY OPEN) -->
                 <div class="open-position-bar" id="openPositionBar">
                     <div class="open-pos-left">
-                        <span class="open-tag">ACTIVE 5M TRADE</span>
+                        <span class="open-tag" id="openTag">ACTIVE TRADE</span>
                         <strong id="openSymbol">XAUUSD</strong>
                         <span id="openType">BUY</span>
                         <span>Lots: <strong id="openLots">0.50</strong></span>
@@ -182,9 +182,10 @@
                         <div class="form-group">
                             <label>Select Expert Advisor / Strategy</label>
                             <select id="accStrategy" class="form-input select-input" required>
-                                <option value="PDC 5M 10% Risk EA">PDC 5M 10% Risk EA (Aggressive 10% Risk &bull; 1:10 TP)</option>
-                                <option value="PDC 5M 5% Risk EA">PDC 5M 5% Risk EA (Moderate 5% Risk &bull; 1:10 TP)</option>
-                                <option value="PDC 5M 1% Risk EA">PDC 5M 1% Risk EA (Prop Firm 1% Risk &bull; FTMO Safe)</option>
+                                <option value="PDC 5M — Safe Haven (1% Risk)">Winning Strategy (PDC 5M) — Safe Haven (1% Risk &bull; Prop Firm Safe)</option>
+                                <option value="PDC 5M — Risk Taker (10% Risk)">Winning Strategy (PDC 5M) — Risk Taker (10% Risk &bull; High Growth)</option>
+                                <option value="P4H 1M — Safe Haven (1% Risk)">Lower Timeframe (P4H 1M) — Safe Haven (1% Risk &bull; Prop Firm Safe)</option>
+                                <option value="P4H 1M — Risk Taker (10% Risk)">Lower Timeframe (P4H 1M) — Risk Taker (10% Risk &bull; High Growth)</option>
                             </select>
                         </div>
 

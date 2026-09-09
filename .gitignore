@@ -2,3 +2,5 @@
 node_modules/
 *.pyc
 __pycache__/
+*.log
+tester_run.ini

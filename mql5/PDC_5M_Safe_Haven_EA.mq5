@@ -1,21 +1,39 @@
-//+------------------------------------------------------------------+
-//|                                     PDC_5M_5_Percent_Risk_EA.mq5        |
+﻿//+------------------------------------------------------------------+
+//|                                     PDC_5M_BOS_FVG_EA.mq5        |
 //|                        Copyright 2026, LitmusTrend Automated Bot |
 //|                                       https://litmustrend.com    |
 //+------------------------------------------------------------------+
 #property copyright "LitmusTrend 2026"
 #property link      "https://litmustrend.com"
 #property version   "1.00"
-#property description "PDC 5M BOS FVG (5% Risk) Expert Advisor for MetaTrader 5"
+#property description "PDC 5M BOS + FVG - Safe Haven (1% Risk) Expert Advisor"
 
 #include <Trade\Trade.mqh>
 
+enum ENUM_STRATEGY_TIER
+{
+   TIER_SAFE_HAVEN = 0, // Safe Haven (1.0% Equity Risk â€¢ Prop Firm Safe)
+   TIER_RISK_TAKER = 1, // Risk Taker (10.0% Equity Risk â€¢ High Growth)
+   TIER_CUSTOM     = 2  // Custom Risk ($10 Fixed USD or Custom %)
+};
+
+enum ENUM_RISK_MODE
+{
+   RISK_MODE_FIXED_USD = 0, // Fixed Dollar Amount ($)
+   RISK_MODE_PERCENT   = 1  // Percent of Equity (%)
+};
+
 //--- INPUT PARAMETERS
-input group "=== 1. Risk & Capital Management (5% Risk per Trade) ==="
-input double   InpRiskPercent       = 5.0;           // Risk Percent per Trade (%)
+input group "=== 1. Strategy Tier & Capital Risk ==="
+input ENUM_STRATEGY_TIER InpStrategyTier = TIER_SAFE_HAVEN; // Default Safe Haven 1% Risk // Account Strategy Tier Profile
+input ENUM_RISK_MODE InpRiskMode    = RISK_MODE_PERCENT; // Custom Risk Mode (if Tier = Custom)
+input double   InpRiskUsd           = 10.0;           // Custom Risk Amount ($) (if Fixed USD)
+input double   InpRiskPercent       = 1.0;            // Custom Risk Percent (%) (if Percent)
 input double   InpTakeProfitR       = 10.0;           // Final Take Profit Target (R:R Multiple)
 input bool     InpEnableStepped     = true;           // Enable Stepped Trailing Stop (9.5R - 9.9R)
 input int      InpMaxConsecLossDay  = 3;              // Max Consecutive Losses Per Day (0 = Disabled)
+input bool     InpOnlyOneTrade      = true;           // Do Not Open Another Trade While Running (true = strictly one trade)
+input int      InpMaxTradesPerDay   = 0;              // Max Trades Per Day (0 = Unlimited, 1 = One Trade/Day)
 
 input group "=== 2. Daily Session & Previous Day Close (PDC) Bias ==="
 input bool     InpUsePdcFilter      = true;           // Filter Trades by Previous Day Close
@@ -50,7 +68,7 @@ input ulong    InpMagicNumber       = 55505;          // Unique EA Magic Number
 input ulong    InpSlippage          = 10;             // Allowed Slippage (Points)
 
 //--- DEFINITIONS & PREFIXES
-#define OBJ_PREFIX "PDC5_"
+#define OBJ_PREFIX "PDC_BOS_"
 
 //--- GLOBAL VARIABLES
 CTrade         m_trade;
@@ -58,7 +76,15 @@ datetime       m_last5MBarTime      = 0;
 datetime       m_lastDayTime        = 0;
 double         m_pdcPrice           = 0.0;
 
+// Runtime Strategy Tier Variables
+ulong          g_magic              = 55501;
+ENUM_RISK_MODE g_riskMode           = RISK_MODE_PERCENT;
+double         g_riskPercent        = 1.0;
+double         g_riskUsd            = 10.0;
+string         g_tierName           = "Safe Haven (1% Risk)";
+
 int            m_dailyConsecLosses  = 0;
+int            m_dailyTradesCount   = 0;
 datetime       m_lastHistoryCheck   = 0;
 
 // Market Structure tracking
@@ -113,7 +139,7 @@ void UpdateDailyLosses()
             string sym = HistoryDealGetString(ticket, DEAL_SYMBOL);
             long entryType = HistoryDealGetInteger(ticket, DEAL_ENTRY);
             
-            if(sym == _Symbol && magic == InpMagicNumber && entryType == DEAL_ENTRY_OUT)
+            if(sym == _Symbol && magic == g_magic && entryType == DEAL_ENTRY_OUT)
             {
                double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
                if(profit < 0)
@@ -222,10 +248,10 @@ double CalculateLotSize(double entryPrice, double slPrice)
    double lossPerLot = (riskDist / tickSize) * tickValue;
    if(lossPerLot <= 0) return SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
 
-   // Calculate dynamic risk amount: 10% of Current Account Equity
+   // Calculate risk amount: Fixed Dollar Amount or Percent of Current Account Equity
    double accountEquity = AccountInfoDouble(ACCOUNT_EQUITY);
    if(accountEquity <= 0) accountEquity = AccountInfoDouble(ACCOUNT_BALANCE);
-   double riskAmount = accountEquity * (InpRiskPercent / 100.0);
+   double riskAmount = (g_riskMode == RISK_MODE_FIXED_USD) ? g_riskUsd : (accountEquity * (g_riskPercent / 100.0));
 
    double calculatedLots = riskAmount / lossPerLot;
 
@@ -257,7 +283,7 @@ int OpenPositionsCount()
    int count = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--)
    {
-      if(PositionGetSymbol(i) == _Symbol && PositionGetInteger(POSITION_MAGIC) == InpMagicNumber)
+      if(PositionGetSymbol(i) == _Symbol && PositionGetInteger(POSITION_MAGIC) == g_magic)
          count++;
    }
    return count;
@@ -272,7 +298,7 @@ int OpenOrdersCount()
    for(int i = OrdersTotal() - 1; i >= 0; i--)
    {
       ulong ticket = OrderGetTicket(i);
-      if(ticket > 0 && OrderGetString(ORDER_SYMBOL) == _Symbol && OrderGetInteger(ORDER_MAGIC) == InpMagicNumber)
+      if(ticket > 0 && OrderGetString(ORDER_SYMBOL) == _Symbol && OrderGetInteger(ORDER_MAGIC) == g_magic)
          count++;
    }
    return count;
@@ -286,7 +312,7 @@ void CancelPendingOrders()
    for(int i = OrdersTotal() - 1; i >= 0; i--)
    {
       ulong ticket = OrderGetTicket(i);
-      if(ticket > 0 && OrderGetString(ORDER_SYMBOL) == _Symbol && OrderGetInteger(ORDER_MAGIC) == InpMagicNumber)
+      if(ticket > 0 && OrderGetString(ORDER_SYMBOL) == _Symbol && OrderGetInteger(ORDER_MAGIC) == g_magic)
       {
          m_trade.OrderDelete(ticket);
       }
@@ -315,7 +341,7 @@ void UpdateDashboard()
    string posStr = "FLAT";
    for(int i = PositionsTotal() - 1; i >= 0; i--)
    {
-      if(PositionGetSymbol(i) == _Symbol && PositionGetInteger(POSITION_MAGIC) == InpMagicNumber)
+      if(PositionGetSymbol(i) == _Symbol && PositionGetInteger(POSITION_MAGIC) == g_magic)
       {
          long type = PositionGetInteger(POSITION_TYPE);
          posStr = (type == POSITION_TYPE_BUY) ? "LONG" : "SHORT";
@@ -331,12 +357,14 @@ void UpdateDashboard()
 
    string text = "\n";
    text += "====================================================\n";
-   text += "   PDC 5M BOS FVG (5% RISK)\n";
+   text += "   PDC 5M BOS + FVG STRATEGY (MQL5 EA)\n";
    text += "====================================================\n";
-   double currentRiskUsd = AccountInfoDouble(ACCOUNT_EQUITY) * (InpRiskPercent / 100.0);
+   double currentRiskUsd = (g_riskMode == RISK_MODE_FIXED_USD) ? g_riskUsd : (AccountInfoDouble(ACCOUNT_EQUITY) * (g_riskPercent / 100.0));
+   string riskStr = (g_riskMode == RISK_MODE_FIXED_USD) ? ("$" + DoubleToString(g_riskUsd, 2) + " Fixed") : (DoubleToString(g_riskPercent, 1) + "% ($" + DoubleToString(currentRiskUsd, 2) + ")");
+   text += " Strategy Tier Profile   : " + g_tierName + "\n";
    text += " Instrument / Broker     : " + _Symbol + " [" + TerminalInfoString(TERMINAL_COMPANY) + "]\n";
    text += " Account Equity          : $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2) + "\n";
-   text += " Risk per Trade          : " + DoubleToString(InpRiskPercent, 1) + "% ($" + DoubleToString(currentRiskUsd, 2) + ")\n";
+   text += " Risk per Trade          : " + riskStr + "\n";
    text += " Take Profit Target      : " + DoubleToString(InpTakeProfitR, 1) + "R\n";
    text += " Daily Directional Bias  : " + biasStr + "\n";
    text += " Previous Day Close (PDC): " + DoubleToString(m_pdcPrice, _Digits) + "\n";
@@ -400,7 +428,31 @@ void UpdateSwingPoints(const MqlRates &rates[], int total)
 int OnInit()
 {
    Print("Initializing PDC 5M BOS + FVG Expert Advisor...");
-   m_trade.SetExpertMagicNumber(InpMagicNumber);
+
+   if(InpStrategyTier == TIER_SAFE_HAVEN)
+   {
+      g_magic = 55501;
+      g_riskMode = RISK_MODE_PERCENT;
+      g_riskPercent = 1.0;
+      g_tierName = "Safe Haven (1% Risk â€¢ Prop Firm Safe)";
+   }
+   else if(InpStrategyTier == TIER_RISK_TAKER)
+   {
+      g_magic = 55510;
+      g_riskMode = RISK_MODE_PERCENT;
+      g_riskPercent = 10.0;
+      g_tierName = "Risk Taker (10% Risk â€¢ High Growth)";
+   }
+   else
+   {
+      g_magic = InpMagicNumber;
+      g_riskMode = InpRiskMode;
+      g_riskPercent = InpRiskPercent;
+      g_riskUsd = InpRiskUsd;
+      g_tierName = "Custom Risk Profile";
+   }
+
+   m_trade.SetExpertMagicNumber(g_magic);
    m_trade.SetMarginMode();
    m_trade.SetTypeFillingBySymbol(_Symbol);
    m_trade.SetDeviationInPoints(InpSlippage);
@@ -430,7 +482,7 @@ void ManageActiveTrade()
    int openCount = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--)
    {
-      if(PositionGetSymbol(i) == _Symbol && PositionGetInteger(POSITION_MAGIC) == InpMagicNumber)
+      if(PositionGetSymbol(i) == _Symbol && PositionGetInteger(POSITION_MAGIC) == g_magic)
       {
          openCount++;
          ulong ticket = PositionGetInteger(POSITION_TICKET);
@@ -439,67 +491,68 @@ void ManageActiveTrade()
          double curTP = PositionGetDouble(POSITION_TP);
          double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
 
-         if(m_activeTicket != ticket)
-         {
-            m_activeTicket = ticket;
-            m_activeEntry  = openPrice;
-            m_activeRisk   = (m_setupRiskDist > 0) ? m_setupRiskDist : MathAbs(openPrice - curSL);
-            m_peakR        = 0.0;
-         }
+         // Calculate independent risk distance for this specific position
+         double posRisk = 0.0;
+         if(curTP > 0 && InpTakeProfitR > 0)
+            posRisk = MathAbs(curTP - openPrice) / InpTakeProfitR;
+         else if(curSL > 0)
+            posRisk = MathAbs(openPrice - curSL);
+
+         if(posRisk <= 0) posRisk = _Point * 10.0;
 
          double curPrice = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(_Symbol, SYMBOL_BID) : SymbolInfoDouble(_Symbol, SYMBOL_ASK);
          double currentR = 0.0;
 
          if(type == POSITION_TYPE_BUY)
          {
-            currentR = (curPrice - m_activeEntry) / (m_activeRisk > 0 ? m_activeRisk : _Point);
+            currentR = (curPrice - openPrice) / posRisk;
             m_peakR  = MathMax(m_peakR, currentR);
 
-            if(InpEnableStepped && m_activeRisk > 0)
+            if(InpEnableStepped && posRisk > 0)
             {
                double newSL = curSL;
-               if(m_peakR >= 9.9)
-                  newSL = MathMax(curSL, m_activeEntry + (9.0 * m_activeRisk));
-               else if(m_peakR >= 9.8)
-                  newSL = MathMax(curSL, m_activeEntry + (8.0 * m_activeRisk));
-               else if(m_peakR >= 9.7)
-                  newSL = MathMax(curSL, m_activeEntry + (7.0 * m_activeRisk));
-               else if(m_peakR >= 9.6)
-                  newSL = MathMax(curSL, m_activeEntry + (6.0 * m_activeRisk));
-               else if(m_peakR >= 9.5)
-                  newSL = MathMax(curSL, m_activeEntry + (5.0 * m_activeRisk));
+               if(currentR >= 9.9)
+                  newSL = MathMax(curSL, openPrice + (9.0 * posRisk));
+               else if(currentR >= 9.8)
+                  newSL = MathMax(curSL, openPrice + (8.0 * posRisk));
+               else if(currentR >= 9.7)
+                  newSL = MathMax(curSL, openPrice + (7.0 * posRisk));
+               else if(currentR >= 9.6)
+                  newSL = MathMax(curSL, openPrice + (6.0 * posRisk));
+               else if(currentR >= 9.5)
+                  newSL = MathMax(curSL, openPrice + (5.0 * posRisk));
 
                newSL = NormalizeDouble(newSL, _Digits);
                if(newSL > curSL + _Point)
                {
-                  PrintFormat("[STEPPED SL] Long #%d: Peak %.2fR -> Moving SL to %.5f", ticket, m_peakR, newSL);
+                  PrintFormat("[STEPPED SL] Long #%d: Current %.2fR -> Moving SL to %.5f", ticket, currentR, newSL);
                   m_trade.PositionModify(ticket, newSL, curTP);
                }
             }
          }
          else if(type == POSITION_TYPE_SELL)
          {
-            currentR = (m_activeEntry - curPrice) / (m_activeRisk > 0 ? m_activeRisk : _Point);
+            currentR = (openPrice - curPrice) / posRisk;
             m_peakR  = MathMax(m_peakR, currentR);
 
-            if(InpEnableStepped && m_activeRisk > 0)
+            if(InpEnableStepped && posRisk > 0)
             {
                double newSL = curSL;
-               if(m_peakR >= 9.9)
-                  newSL = MathMin(curSL, m_activeEntry - (9.0 * m_activeRisk));
-               else if(m_peakR >= 9.8)
-                  newSL = MathMin(curSL, m_activeEntry - (8.0 * m_activeRisk));
-               else if(m_peakR >= 9.7)
-                  newSL = MathMin(curSL, m_activeEntry - (7.0 * m_activeRisk));
-               else if(m_peakR >= 9.6)
-                  newSL = MathMin(curSL, m_activeEntry - (6.0 * m_activeRisk));
-               else if(m_peakR >= 9.5)
-                  newSL = MathMin(curSL, m_activeEntry - (5.0 * m_activeRisk));
+               if(currentR >= 9.9)
+                  newSL = MathMin(curSL, openPrice - (9.0 * posRisk));
+               else if(currentR >= 9.8)
+                  newSL = MathMin(curSL, openPrice - (8.0 * posRisk));
+               else if(currentR >= 9.7)
+                  newSL = MathMin(curSL, openPrice - (7.0 * posRisk));
+               else if(currentR >= 9.6)
+                  newSL = MathMin(curSL, openPrice - (6.0 * posRisk));
+               else if(currentR >= 9.5)
+                  newSL = MathMin(curSL, openPrice - (5.0 * posRisk));
 
                newSL = NormalizeDouble(newSL, _Digits);
-               if(newSL < curSL - _Point && curSL > 0)
+               if((curSL <= 0 || newSL < curSL - _Point) && newSL > 0)
                {
-                  PrintFormat("[STEPPED SL] Short #%d: Peak %.2fR -> Moving SL to %.5f", ticket, m_peakR, newSL);
+                  PrintFormat("[STEPPED SL] Short #%d: Current %.2fR -> Moving SL to %.5f", ticket, currentR, newSL);
                   m_trade.PositionModify(ticket, newSL, curTP);
                }
             }
@@ -578,7 +631,7 @@ void OnTick()
    {
       // Find origin lowest point between swing high and current bar
       double lowestVal = rates[1].low;
-      int searchLen = MathMin(30, copied - 1);
+      int searchLen = MathMin(30, (m_lastSwingHighShift > 1) ? (m_lastSwingHighShift - 1) : 10);
       for(int s = 1; s <= searchLen; s++)
       {
          if(rates[s].low < lowestVal)
@@ -614,7 +667,7 @@ void OnTick()
    {
       // Find origin highest point between swing low and current bar
       double highestVal = rates[1].high;
-      int searchLen = MathMin(30, copied - 1);
+      int searchLen = MathMin(30, (m_lastSwingLowShift > 1) ? (m_lastSwingLowShift - 1) : 10);
       for(int s = 1; s <= searchLen; s++)
       {
          if(rates[s].high > highestVal)
@@ -640,10 +693,12 @@ void OnTick()
       }
    }
 
+   bool canTakeTrade = (!InpOnlyOneTrade || OpenPositionsCount() == 0) && (InpMaxTradesPerDay == 0 || m_dailyTradesCount < InpMaxTradesPerDay) && !IsDailyHalted();
+
    // 12. Register Bullish Setup on Confirmed BOS
-   if(bullishBOS && OpenPositionsCount() == 0 && !IsDailyHalted())
+   if(bullishBOS && canTakeTrade)
    {
-      CancelPendingOrders();
+      CancelPendingOrders(); // Replace any waiting pending order with the fresh BOS setup
 
       bool hasFvg = false;
       double fvgEntryPrice = 0.0;
@@ -732,9 +787,9 @@ void OnTick()
    }
 
    // 13. Register Bearish Setup on Confirmed BOS
-   if(bearishBOS && OpenPositionsCount() == 0 && !IsDailyHalted())
+   if(bearishBOS && canTakeTrade)
    {
-      CancelPendingOrders();
+      CancelPendingOrders(); // Replace any waiting pending order with the fresh BOS setup
 
       bool hasFvg = false;
       double fvgEntryPrice = 0.0;

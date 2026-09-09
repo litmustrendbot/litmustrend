@@ -191,6 +191,10 @@ function selectAccount(accountId) {
     const openBar = document.getElementById('openPositionBar');
     if (acc.activeTrade) {
         openBar.classList.remove('hidden');
+        const openTagEl = document.getElementById('openTag');
+        if (openTagEl) {
+            openTagEl.innerText = acc.strategy.includes('1M') ? 'ACTIVE 1M TRADE' : 'ACTIVE 5M TRADE';
+        }
         document.getElementById('openSymbol').innerText = acc.activeTrade.symbol;
         document.getElementById('openType').innerText = acc.activeTrade.type;
         document.getElementById('openLots').innerText = acc.activeTrade.lots;

@@ -1,19 +1,19 @@
-//+------------------------------------------------------------------+
-//|                                     PDC_5M_BOS_FVG_EA.mq5        |
+﻿//+------------------------------------------------------------------+
+//|                                     P4H_1M_BOS_FVG_EA.mq5        |
 //|                        Copyright 2026, LitmusTrend Automated Bot |
 //|                                       https://litmustrend.com    |
 //+------------------------------------------------------------------+
 #property copyright "LitmusTrend 2026"
 #property link      "https://litmustrend.com"
 #property version   "1.00"
-#property description "PDC 5M BOS + FVG Strategy Expert Advisor for MetaTrader 5"
+#property description "P4H 1M BOS + FVG - Risk Taker (10% Risk) Expert Advisor"
 
 #include <Trade\Trade.mqh>
 
 enum ENUM_STRATEGY_TIER
 {
-   TIER_SAFE_HAVEN = 0, // Safe Haven (1.0% Equity Risk • Prop Firm Safe)
-   TIER_RISK_TAKER = 1, // Risk Taker (10.0% Equity Risk • High Growth)
+   TIER_SAFE_HAVEN = 0, // Safe Haven (1.0% Equity Risk â€¢ Prop Firm Safe)
+   TIER_RISK_TAKER = 1, // Risk Taker (10.0% Equity Risk â€¢ High Growth)
    TIER_CUSTOM     = 2  // Custom Risk ($10 Fixed USD or Custom %)
 };
 
@@ -25,34 +25,35 @@ enum ENUM_RISK_MODE
 
 //--- INPUT PARAMETERS
 input group "=== 1. Strategy Tier & Capital Risk ==="
-input ENUM_STRATEGY_TIER InpStrategyTier = TIER_SAFE_HAVEN; // Account Strategy Tier Profile
+input ENUM_STRATEGY_TIER InpStrategyTier = TIER_RISK_TAKER; // Default Risk Taker 10% Risk // Account Strategy Tier Profile
 input ENUM_RISK_MODE InpRiskMode    = RISK_MODE_PERCENT; // Custom Risk Mode (if Tier = Custom)
 input double   InpRiskUsd           = 10.0;           // Custom Risk Amount ($) (if Fixed USD)
 input double   InpRiskPercent       = 1.0;            // Custom Risk Percent (%) (if Percent)
 input double   InpTakeProfitR       = 10.0;           // Final Take Profit Target (R:R Multiple)
 input bool     InpEnableStepped     = true;           // Enable Stepped Trailing Stop (9.5R - 9.9R)
-input int      InpMaxConsecLossDay  = 3;              // Max Consecutive Losses Per Day (0 = Disabled)
+input int      InpMaxConsecLossDay  = 0;              // Max Consecutive Losses Per Day (0 = Disabled)
+input int      InpMaxConsecLoss4H   = 3;              // Max Consecutive Losses Per 4H (Pause until next 4H candle)
 input bool     InpOnlyOneTrade      = true;           // Do Not Open Another Trade While Running (true = strictly one trade)
 input int      InpMaxTradesPerDay   = 0;              // Max Trades Per Day (0 = Unlimited, 1 = One Trade/Day)
 
-input group "=== 2. Daily Session & Previous Day Close (PDC) Bias ==="
-input bool     InpUsePdcFilter      = true;           // Filter Trades by Previous Day Close
-input color    InpPdcColor          = clrBlack;       // Previous Day Close Line Color (2x thick)
+input group "=== 2. Higher Timeframe & Previous 4H Close (P4HC) Bias ==="
+input bool     InpUseP4hFilter      = true;           // Filter Trades by Previous 4H Close
+input color    InpP4hColor          = clrBlack;       // Previous 4H Close Line Color (2x thick)
 
-input group "=== 3. 5M Market Structure / BOS ==="
+input group "=== 3. 1M Market Structure / BOS ==="
 input int      InpPivotLookback     = 3;              // Internal Pivot Lookback (Bars left/right)
 input bool     InpConfirmCloseWick  = true;           // BOS Candle Close Beyond Initiating Wick
 input color    InpBosColor          = clrBlack;       // BOS Line Color (1x thick)
 
 input group "=== 4. Zone & Entry Refinement ==="
 input bool     InpUseFvgRefine      = true;           // Use FVG Entry Refinement
-input int      InpMaxBarsWait       = 25;             // Max Bars to Wait for Retracement
+input int      InpMaxBarsWait       = 25;             // Max Bars to Wait for Retracement (1M Bars)
 
 input group "=== 5. Chart Visuals & Styling (Matching TradingView) ==="
 input bool     InpShowZones         = true;           // Draw Entry Area Rectangle (FVG / Zone)
 input bool     InpShowPositionTool  = true;           // Draw Long/Short Position Tool (Blue/Grey)
 input bool     InpShowBosLine       = true;           // Draw BOS Horizontal Line
-input bool     InpShowPdcLine       = true;           // Draw Previous Day Close Line
+input bool     InpShowP4hLine       = true;           // Draw Previous 4H Close Line
 input bool     InpShowDashboard     = true;           // Show On-Chart Status Dashboard
 input int      InpPosWidth          = 10;             // Position Tool Width (Bars)
 input color    InpTargetColor       = C'33,150,243';  // Target Box Color (Sky Blue #2196F3)
@@ -64,26 +65,28 @@ input color    InpDemandColor       = clrDodgerBlue;  // Demand Zone Color
 input color    InpSupplyColor       = clrCrimson;     // Supply Zone Color
 
 input group "=== 6. EA Identification & Execution ==="
-input ulong    InpMagicNumber       = 55505;          // Unique EA Magic Number
+input ulong    InpMagicNumber       = 55501;          // Unique EA Magic Number (4H-1M)
 input ulong    InpSlippage          = 10;             // Allowed Slippage (Points)
 
 //--- DEFINITIONS & PREFIXES
-#define OBJ_PREFIX "PDC_BOS_"
+#define OBJ_PREFIX "P4H_BOS_"
 
 //--- GLOBAL VARIABLES
 CTrade         m_trade;
-datetime       m_last5MBarTime      = 0;
+datetime       m_last1MBarTime      = 0;
 datetime       m_lastDayTime        = 0;
-double         m_pdcPrice           = 0.0;
+datetime       m_last4HTime         = 0;
+double         m_p4hPrice           = 0.0;
 
 // Runtime Strategy Tier Variables
-ulong          g_magic              = 55501;
+ulong          g_magic              = 44401;
 ENUM_RISK_MODE g_riskMode           = RISK_MODE_PERCENT;
 double         g_riskPercent        = 1.0;
 double         g_riskUsd            = 10.0;
 string         g_tierName           = "Safe Haven (1% Risk)";
 
 int            m_dailyConsecLosses  = 0;
+int            m_4hConsecLosses     = 0;
 int            m_dailyTradesCount   = 0;
 datetime       m_lastHistoryCheck   = 0;
 
@@ -113,23 +116,37 @@ double         m_peakR              = 0.0;
 ulong          m_activeTicket       = 0;
 
 //+------------------------------------------------------------------+
-//| Check if Trading is Halted Today by Circuit Breaker              |
+//| Check if Trading is Halted Today by Circuit Breakers             |
 //+------------------------------------------------------------------+
 bool IsDailyHalted()
 {
    return (InpMaxConsecLossDay > 0 && m_dailyConsecLosses >= InpMaxConsecLossDay);
 }
 
+bool Is4hHalted()
+{
+   return (InpMaxConsecLoss4H > 0 && m_4hConsecLosses >= InpMaxConsecLoss4H);
+}
+
+bool IsTradingHalted()
+{
+   return (IsDailyHalted() || Is4hHalted());
+}
+
 //+------------------------------------------------------------------+
-//| Update Daily Consecutive Losses from Account Deal History        |
+//| Update Consecutive Losses (Daily & 4-Hour) from Deal History     |
 //+------------------------------------------------------------------+
-void UpdateDailyLosses()
+void UpdateLosses()
 {
    datetime dayStart = iTime(_Symbol, PERIOD_D1, 0);
+   datetime h4Start  = iTime(_Symbol, PERIOD_H4, 0);
+   
    if(HistorySelect(dayStart, TimeCurrent()))
    {
       int dealsTotal = HistoryDealsTotal();
-      int consec = 0;
+      int consecDay = 0;
+      int consec4H  = 0;
+      
       for(int i = 0; i < dealsTotal; i++)
       {
          ulong ticket = HistoryDealGetTicket(i);
@@ -142,37 +159,48 @@ void UpdateDailyLosses()
             if(sym == _Symbol && magic == g_magic && entryType == DEAL_ENTRY_OUT)
             {
                double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+               datetime dealTime = (datetime)HistoryDealGetInteger(ticket, DEAL_TIME);
+               
                if(profit < 0)
-                  consec++;
+                  consecDay++;
                else if(profit > 0)
-                  consec = 0; // Reset streak on a win
+                  consecDay = 0; // Reset daily streak on a win
+                  
+               if(dealTime >= h4Start)
+               {
+                  if(profit < 0)
+                     consec4H++;
+                  else if(profit > 0)
+                     consec4H = 0; // Reset 4H streak on a win
+               }
             }
          }
       }
-      m_dailyConsecLosses = consec;
+      m_dailyConsecLosses = consecDay;
+      m_4hConsecLosses    = consec4H;
    }
 }
 
 //+------------------------------------------------------------------+
-//| Update Previous Day Close Price and Render 2x Black Line         |
+//| Update Previous 4H Close Price and Render 2x Black Line          |
 //+------------------------------------------------------------------+
-void UpdatePDC()
+void UpdateP4H()
 {
-   MqlRates dailyRates[];
-   ArraySetAsSeries(dailyRates, true);
-   if(CopyRates(_Symbol, PERIOD_D1, 1, 2, dailyRates) >= 1)
+   MqlRates h4Rates[];
+   ArraySetAsSeries(h4Rates, true);
+   if(CopyRates(_Symbol, PERIOD_H4, 1, 2, h4Rates) >= 1)
    {
-      m_pdcPrice = dailyRates[0].close;
-      if(InpShowPdcLine)
+      m_p4hPrice = h4Rates[0].close;
+      if(InpShowP4hLine)
       {
-         string lineName = OBJ_PREFIX + "PDC_LINE";
+         string lineName = OBJ_PREFIX + "P4H_LINE";
          ObjectDelete(0, lineName);
-         if(ObjectCreate(0, lineName, OBJ_HLINE, 0, 0, m_pdcPrice))
+         if(ObjectCreate(0, lineName, OBJ_HLINE, 0, 0, m_p4hPrice))
          {
-            ObjectSetInteger(0, lineName, OBJPROP_COLOR, InpPdcColor);
+            ObjectSetInteger(0, lineName, OBJPROP_COLOR, InpP4hColor);
             ObjectSetInteger(0, lineName, OBJPROP_WIDTH, 2);
             ObjectSetInteger(0, lineName, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSetString(0, lineName, OBJPROP_TEXT, "Previous Day Close");
+            ObjectSetString(0, lineName, OBJPROP_TEXT, "Previous 4H Close");
             ObjectSetInteger(0, lineName, OBJPROP_SELECTABLE, false);
             ObjectSetInteger(0, lineName, OBJPROP_BACK, true);
          }
@@ -232,7 +260,6 @@ void DrawEntryLine(string name, datetime t1, double price, datetime t2, color cl
    }
 }
 
-//+------------------------------------------------------------------+
 //+------------------------------------------------------------------+
 //| Calculate Dynamic Lot Size for Exact 10% Account Equity Risk     |
 //+------------------------------------------------------------------+
@@ -335,8 +362,8 @@ void UpdateDashboard()
       curClose = rates[0].close;
 
    string biasStr = "NEUTRAL";
-   if(m_pdcPrice > 0)
-      biasStr = (curClose > m_pdcPrice) ? "BULLISH (Longs Only)" : "BEARISH (Shorts Only)";
+   if(m_p4hPrice > 0)
+      biasStr = (curClose > m_p4hPrice) ? "BULLISH (Longs Only)" : "BEARISH (Shorts Only)";
 
    string posStr = "FLAT";
    for(int i = PositionsTotal() - 1; i >= 0; i--)
@@ -353,21 +380,28 @@ void UpdateDashboard()
       posStr = (m_setupDir == 1) ? "PENDING BUY LIMIT" : "PENDING SELL LIMIT";
    }
 
-   string circuitStr = IsDailyHalted() ? "HALTED (3 Losses Hit)" : ("ACTIVE (" + IntegerToString(m_dailyConsecLosses) + "/" + IntegerToString(InpMaxConsecLossDay) + " Losses)");
+   string circuitStr = "ACTIVE";
+   if(IsDailyHalted())
+      circuitStr = "HALTED (Daily 3 Losses)";
+   else if(Is4hHalted())
+      circuitStr = "HALTED (4H 3 Losses)";
+   else
+      circuitStr = "ACTIVE (" + IntegerToString(m_dailyConsecLosses) + "/" + IntegerToString(InpMaxConsecLossDay) + " Day, " + IntegerToString(m_4hConsecLosses) + "/" + IntegerToString(InpMaxConsecLoss4H) + " 4H)";
 
    string text = "\n";
    text += "====================================================\n";
-   text += "   PDC 5M BOS + FVG STRATEGY (MQL5 EA)\n";
+   text += "   P4H 1M BOS + FVG STRATEGY (MQL5 EA)\n";
    text += "====================================================\n";
    double currentRiskUsd = (g_riskMode == RISK_MODE_FIXED_USD) ? g_riskUsd : (AccountInfoDouble(ACCOUNT_EQUITY) * (g_riskPercent / 100.0));
    string riskStr = (g_riskMode == RISK_MODE_FIXED_USD) ? ("$" + DoubleToString(g_riskUsd, 2) + " Fixed") : (DoubleToString(g_riskPercent, 1) + "% ($" + DoubleToString(currentRiskUsd, 2) + ")");
    text += " Strategy Tier Profile   : " + g_tierName + "\n";
    text += " Instrument / Broker     : " + _Symbol + " [" + TerminalInfoString(TERMINAL_COMPANY) + "]\n";
+   text += " Timeframe Setup         : 1M Execution / 4H Bias\n";
    text += " Account Equity          : $" + DoubleToString(AccountInfoDouble(ACCOUNT_EQUITY), 2) + "\n";
    text += " Risk per Trade          : " + riskStr + "\n";
    text += " Take Profit Target      : " + DoubleToString(InpTakeProfitR, 1) + "R\n";
-   text += " Daily Directional Bias  : " + biasStr + "\n";
-   text += " Previous Day Close (PDC): " + DoubleToString(m_pdcPrice, _Digits) + "\n";
+   text += " 4H Directional Bias     : " + biasStr + "\n";
+   text += " Previous 4H Close (P4HC): " + DoubleToString(m_p4hPrice, _Digits) + "\n";
    text += " Current Strategy State  : " + posStr + "\n";
    text += " Peak R:R Achieved       : " + DoubleToString(m_peakR, 2) + "R\n";
    text += " Daily Circuit Breaker   : " + circuitStr + "\n";
@@ -384,7 +418,6 @@ void UpdateSwingPoints(const MqlRates &rates[], int total)
    int lookback = InpPivotLookback;
    if(total < (lookback * 2 + 5)) return;
 
-   // Check if bar 4 (i = lookback + 1) was a pivot high/low
    int checkShift = lookback + 1;
 
    // Swing High Check
@@ -427,21 +460,21 @@ void UpdateSwingPoints(const MqlRates &rates[], int total)
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   Print("Initializing PDC 5M BOS + FVG Expert Advisor...");
+   Print("Initializing P4H 1M BOS + FVG Expert Advisor...");
 
    if(InpStrategyTier == TIER_SAFE_HAVEN)
    {
-      g_magic = 55501;
+      g_magic = 44401;
       g_riskMode = RISK_MODE_PERCENT;
       g_riskPercent = 1.0;
-      g_tierName = "Safe Haven (1% Risk • Prop Firm Safe)";
+      g_tierName = "Safe Haven (1% Risk â€¢ Prop Firm Safe)";
    }
    else if(InpStrategyTier == TIER_RISK_TAKER)
    {
-      g_magic = 55510;
+      g_magic = 44410;
       g_riskMode = RISK_MODE_PERCENT;
       g_riskPercent = 10.0;
-      g_tierName = "Risk Taker (10% Risk • High Growth)";
+      g_tierName = "Risk Taker (10% Risk â€¢ High Growth)";
    }
    else
    {
@@ -457,8 +490,8 @@ int OnInit()
    m_trade.SetTypeFillingBySymbol(_Symbol);
    m_trade.SetDeviationInPoints(InpSlippage);
 
-   UpdatePDC();
-   UpdateDailyLosses();
+   UpdateP4H();
+   UpdateLosses();
    UpdateDashboard();
 
    return(INIT_SUCCEEDED);
@@ -471,7 +504,7 @@ void OnDeinit(const int reason)
 {
    ObjectsDeleteAll(0, OBJ_PREFIX);
    Comment("");
-   Print("PDC 5M BOS + FVG EA deinitialized.");
+   Print("P4H 1M BOS + FVG EA deinitialized.");
 }
 
 //+------------------------------------------------------------------+
@@ -576,58 +609,66 @@ void OnTick()
    ManageActiveTrade();
    UpdateDashboard();
 
-   // 2. New Day Detection (Rollover PDC & Circuit Breaker)
+   // 2. New Day Detection (Rollover Circuit Breaker)
    datetime curDayTime = iTime(_Symbol, PERIOD_D1, 0);
    if(curDayTime != m_lastDayTime)
    {
       m_lastDayTime = curDayTime;
-      UpdatePDC();
       m_dailyConsecLosses = 0;
-      Print("[NEW DAY] Daily session reset. Previous Day Close updated to ", m_pdcPrice);
+      m_dailyTradesCount  = 0;
    }
 
-   // 3. New 5M Bar Check
-   datetime cur5MTime = iTime(_Symbol, PERIOD_M5, 0);
-   if(cur5MTime == m_last5MBarTime) return; // Only process strategy signals at bar close
-   m_last5MBarTime = cur5MTime;
+   // 3. New 4H Period Detection (Rollover 4H Bias & 4H Circuit Breaker)
+   datetime cur4HTime = iTime(_Symbol, PERIOD_H4, 0);
+   if(cur4HTime != m_last4HTime)
+   {
+      m_last4HTime = cur4HTime;
+      m_4hConsecLosses = 0;
+      UpdateP4H();
+   }
 
-   // 4. Update Closed Trades Status
-   UpdateDailyLosses();
+   // 4. New 1M Bar Check
+   datetime cur1MTime = iTime(_Symbol, PERIOD_M1, 0);
+   if(cur1MTime == m_last1MBarTime) return; // Only process strategy signals at bar close
+   m_last1MBarTime = cur1MTime;
 
-   // 5. Check Daily Circuit Breaker
-   if(IsDailyHalted())
+   // 5. Update Closed Trades Status
+   UpdateLosses();
+
+   // 6. Check Circuit Breakers (Daily & 4H)
+   if(IsTradingHalted())
    {
       if(m_setupPending)
          CancelPendingOrders();
       return;
    }
 
-   // 6. Copy 5M Rates (Completed bars: shift 1 is just-closed bar)
+   // 7. Copy 1M Rates (Completed bars: shift 1 is just-closed bar)
    MqlRates rates[];
    ArraySetAsSeries(rates, true);
-   int copied = CopyRates(_Symbol, PERIOD_M5, 0, 50, rates);
+   int copied = CopyRates(_Symbol, PERIOD_M1, 0, 50, rates);
    if(copied < 35) return;
 
-   // 7. Update Swing Points
+   // 8. Update Swing Points
    UpdateSwingPoints(rates, copied);
 
-   // 8. Bias Check
+   // 9. Bias Check
    double close1 = rates[1].close;
    double close2 = rates[2].close;
-   bool isBullishBias = !InpUsePdcFilter || (m_pdcPrice == 0.0) || (close1 > m_pdcPrice);
-   bool isBearishBias = !InpUsePdcFilter || (m_pdcPrice == 0.0) || (close1 < m_pdcPrice);
+   bool isBullishBias = !InpUseP4hFilter || (m_p4hPrice == 0.0) || (close1 > m_p4hPrice);
+   bool isBearishBias = !InpUseP4hFilter || (m_p4hPrice == 0.0) || (close1 < m_p4hPrice);
 
-   // 9. Minimum Zone Distance Filter
+   // 10. Minimum Zone Distance Filter
    double atr14 = (rates[1].high - rates[1].low);
    double minAllowedDist = MathMax(_Point * 5.0, atr14 * 0.15);
 
-   // 10. Bullish BOS Condition
+   // 11. Bullish BOS Condition
    bool bullishBOS = false;
    int bullOriginOffset = 1;
    double bullOriginHigh = rates[1].high;
    double bullOriginLow  = rates[1].low;
 
-   if(!IsDailyHalted() && m_lastSwingHigh > 0 && (close1 > m_lastSwingHigh) && (close2 <= m_lastSwingHigh) && isBullishBias)
+   if(!IsTradingHalted() && m_lastSwingHigh > 0 && (close1 > m_lastSwingHigh) && (close2 <= m_lastSwingHigh) && isBullishBias)
    {
       // Find origin lowest point between swing high and current bar
       double lowestVal = rates[1].low;
@@ -653,17 +694,17 @@ void OnTick()
             string bosName = OBJ_PREFIX + "BOS_BULL_" + TimeToString(rates[1].time);
             DrawBOSLine(bosName, m_lastSwingHighTime, m_lastSwingHigh, rates[1].time);
          }
-         PrintFormat("[BULLISH BOS] Confirmed at %.5f (Swing High: %.5f)", close1, m_lastSwingHigh);
+         PrintFormat("[BULLISH BOS 1M] Confirmed at %.5f (Swing High: %.5f)", close1, m_lastSwingHigh);
       }
    }
 
-   // 11. Bearish BOS Condition
+   // 12. Bearish BOS Condition
    bool bearishBOS = false;
    int bearOriginOffset = 1;
    double bearOriginHigh = rates[1].high;
    double bearOriginLow  = rates[1].low;
 
-   if(!IsDailyHalted() && m_lastSwingLow > 0 && (close1 < m_lastSwingLow) && (close2 >= m_lastSwingLow) && isBearishBias)
+   if(!IsTradingHalted() && m_lastSwingLow > 0 && (close1 < m_lastSwingLow) && (close2 >= m_lastSwingLow) && isBearishBias)
    {
       // Find origin highest point between swing low and current bar
       double highestVal = rates[1].high;
@@ -689,13 +730,13 @@ void OnTick()
             string bosName = OBJ_PREFIX + "BOS_BEAR_" + TimeToString(rates[1].time);
             DrawBOSLine(bosName, m_lastSwingLowTime, m_lastSwingLow, rates[1].time);
          }
-         PrintFormat("[BEARISH BOS] Confirmed at %.5f (Swing Low: %.5f)", close1, m_lastSwingLow);
+         PrintFormat("[BEARISH BOS 1M] Confirmed at %.5f (Swing Low: %.5f)", close1, m_lastSwingLow);
       }
    }
 
-   bool canTakeTrade = (!InpOnlyOneTrade || OpenPositionsCount() == 0) && (InpMaxTradesPerDay == 0 || m_dailyTradesCount < InpMaxTradesPerDay) && !IsDailyHalted();
+   bool canTakeTrade = (!InpOnlyOneTrade || OpenPositionsCount() == 0) && (InpMaxTradesPerDay == 0 || m_dailyTradesCount < InpMaxTradesPerDay) && !IsTradingHalted();
 
-   // 12. Register Bullish Setup on Confirmed BOS
+   // 13. Register Bullish Setup on Confirmed BOS
    if(bullishBOS && canTakeTrade)
    {
       CancelPendingOrders(); // Replace any waiting pending order with the fresh BOS setup
@@ -725,7 +766,7 @@ void OnTick()
       m_setupTime    = rates[1].time;
       m_setupBarShift= 1;
 
-      datetime widthTime = rates[1].time + (InpPosWidth * 300);
+      datetime widthTime = rates[1].time + (InpPosWidth * 60); // 1M bar = 60s
 
       if(hasFvg)
       {
@@ -778,7 +819,7 @@ void OnTick()
          m_setupSL    = NormalizeDouble(m_setupSL, _Digits);
          tpLevel      = NormalizeDouble(tpLevel, _Digits);
 
-         if(m_trade.BuyLimit(lots, m_setupEntry, _Symbol, m_setupSL, tpLevel, ORDER_TIME_GTC, 0, "PDC 5M Long"))
+         if(m_trade.BuyLimit(lots, m_setupEntry, _Symbol, m_setupSL, tpLevel, ORDER_TIME_GTC, 0, "P4H 1M Long"))
          {
             m_pendingOrderTicket = m_trade.ResultOrder();
             PrintFormat("[ORDER PLACED] Buy Limit #%d: %.2f lots at %.5f (SL: %.5f, TP: %.5f)", m_pendingOrderTicket, lots, m_setupEntry, m_setupSL, tpLevel);
@@ -786,10 +827,10 @@ void OnTick()
       }
    }
 
-   // 13. Register Bearish Setup on Confirmed BOS
+   // 14. Register Bearish Setup on Confirmed BOS
    if(bearishBOS && canTakeTrade)
    {
-      CancelPendingOrders(); // Replace any waiting pending order with the fresh BOS setup
+      if(InpOnlyOneTrade) CancelPendingOrders();
 
       bool hasFvg = false;
       double fvgEntryPrice = 0.0;
@@ -816,7 +857,7 @@ void OnTick()
       m_setupTime    = rates[1].time;
       m_setupBarShift= 1;
 
-      datetime widthTime = rates[1].time + (InpPosWidth * 300);
+      datetime widthTime = rates[1].time + (InpPosWidth * 60); // 1M bar = 60s
 
       if(hasFvg)
       {
@@ -869,7 +910,7 @@ void OnTick()
          m_setupSL    = NormalizeDouble(m_setupSL, _Digits);
          tpLevel      = NormalizeDouble(tpLevel, _Digits);
 
-         if(m_trade.SellLimit(lots, m_setupEntry, _Symbol, m_setupSL, tpLevel, ORDER_TIME_GTC, 0, "PDC 5M Short"))
+         if(m_trade.SellLimit(lots, m_setupEntry, _Symbol, m_setupSL, tpLevel, ORDER_TIME_GTC, 0, "P4H 1M Short"))
          {
             m_pendingOrderTicket = m_trade.ResultOrder();
             PrintFormat("[ORDER PLACED] Sell Limit #%d: %.2f lots at %.5f (SL: %.5f, TP: %.5f)", m_pendingOrderTicket, lots, m_setupEntry, m_setupSL, tpLevel);
@@ -877,10 +918,10 @@ void OnTick()
       }
    }
 
-   // 14. Invalidation Check for Pending Limit Orders
+   // 15. Invalidation Check for Pending Limit Orders (1M Bars)
    if(m_setupPending && OpenPositionsCount() == 0)
    {
-      int barsWaiting = iBarShift(_Symbol, PERIOD_M5, m_setupTime);
+      int barsWaiting = iBarShift(_Symbol, PERIOD_M1, m_setupTime);
       if(barsWaiting > InpMaxBarsWait)
       {
          PrintFormat("[CANCELLED] Pending setup expired after %d bars without retracement fill.", barsWaiting);

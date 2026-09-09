@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.trading_accounts (
     user_email VARCHAR(255) NOT NULL,
     account_number VARCHAR(50) NOT NULL,
     broker_server VARCHAR(100) NOT NULL,
-    risk_tier VARCHAR(10) NOT NULL CHECK (risk_tier IN ('10%', '5%', '1%')),
+    risk_tier VARCHAR(50) NOT NULL CHECK (risk_tier IN ('10%', '5%', '1%', 'Safe Haven', 'Risk Taker', '1% Risk', '10% Risk', 'PDC 5M — Safe Haven (1% Risk)', 'PDC 5M — Risk Taker (10% Risk)', 'P4H 1M — Safe Haven (1% Risk)', 'P4H 1M — Risk Taker (10% Risk)')),
     target_rr NUMERIC(5, 2) DEFAULT 10.0,
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'PAUSED', 'HALTED', 'DISCONNECTED')),
     current_equity NUMERIC(15, 2) DEFAULT 0.0,

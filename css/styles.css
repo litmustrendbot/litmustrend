@@ -112,10 +112,10 @@ body {
 /* PROFESSIONAL LITMUSTREND LOGO WATERMARK IN BOTTOM RIGHT */
 .bg-watermark-logo {
     position: fixed;
-    bottom: 24px;
-    right: 28px;
-    width: 140px;
-    height: 140px;
+    bottom: 28px;
+    right: 32px;
+    width: 150px;
+    height: 150px;
     background-image: url('../assets/litmus_logo.png');
     background-size: contain;
     background-repeat: no-repeat;
@@ -123,12 +123,12 @@ body {
     pointer-events: none;
     z-index: 1;
     user-select: none;
-    opacity: 0.06;
+    opacity: 0.085;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 body.dark-theme .bg-watermark-logo {
-    opacity: 0.045;
+    opacity: 0.07;
 }
 
 /* ====================================================================

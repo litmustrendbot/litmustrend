@@ -535,8 +535,11 @@ function syncManualServer(val) {
 document.addEventListener('click', (e) => {
     const wrap = document.getElementById('brokerSearchMode');
     const dropdown = document.getElementById('brokerSearchResults');
-    if (wrap && dropdown && !wrap.contains(e.target)) {
-        dropdown.classList.add('hidden');
+    const pillsWrap = document.querySelector('.broker-quick-pills-wrap');
+    if (wrap && dropdown) {
+        if (!wrap.contains(e.target) && (!pillsWrap || !pillsWrap.contains(e.target))) {
+            dropdown.classList.add('hidden');
+        }
     }
 });
 
@@ -651,7 +654,10 @@ function selectStrategyCard(strategyValue) {
     if (hiddenInput) hiddenInput.value = strategyValue;
 }
 
-function quickSelectBroker(brokerName) {
+function quickSelectBroker(brokerName, e) {
+    if (e) {
+        e.stopPropagation();
+    }
     document.querySelectorAll('.broker-pill').forEach(pill => {
         if (pill.getAttribute('data-broker') === brokerName) {
             pill.classList.add('active');
@@ -664,10 +670,13 @@ function quickSelectBroker(brokerName) {
         toggleManualServerInput();
     }
 
+    // Auto expand this broker's servers
+    expandedBrokerName = brokerName;
+
     const searchInput = document.getElementById('brokerSearchInput');
     if (searchInput) {
         searchInput.value = brokerName;
-        handleBrokerSearch(brokerName);
+        handleBrokerSearch(brokerName, false);
         searchInput.focus();
     }
 }

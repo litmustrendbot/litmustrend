@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LitmusTrend Bot</title>
-    <link rel="icon" type="image/png" href="assets/litmus_logo.png?v=3.8">
-    <link rel="stylesheet" href="css/styles.css?v=3.8">
+    <link rel="icon" type="image/png" href="assets/litmus_logo.png?v=3.9">
+    <link rel="stylesheet" href="css/styles.css?v=3.9">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,8 +49,18 @@
                     <span class="brand-name">LitmusTrend Bot</span>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center;">
-                    <button class="btn-icon" title="Toggle Theme (or Triple-Tap anywhere)" onclick="toggleTheme()">🌗</button>
-                    <button class="btn-icon" title="Lock Dashboard" onclick="lockPortal()">🔒</button>
+                    <button class="btn-icon" title="Toggle Theme (or Triple-Tap anywhere)" onclick="toggleTheme()" aria-label="Toggle Theme">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" title="Lock Dashboard" onclick="lockPortal()" aria-label="Lock Dashboard">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -349,8 +359,13 @@
                                     <label for="accPassword">MT5 Password</label>
                                     <div class="input-password-wrap">
                                         <input type="password" id="accPassword" class="form-input font-mono" placeholder="••••••••••••" required>
-                                        <button type="button" class="btn-password-toggle" onclick="togglePasswordVisibility()" title="Toggle password visibility">
-                                            <span id="togglePasswordIcon">👁️</span>
+                                        <button type="button" class="btn-password-toggle" onclick="togglePasswordVisibility()" title="Toggle password visibility" aria-label="Toggle password visibility">
+                                            <span id="togglePasswordIcon">
+                                                <svg class="svg-eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                </svg>
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
@@ -368,23 +383,41 @@
                                 <div class="instrument-selector-grid">
                                     <div class="instrument-card active" id="instCardXAU" onclick="selectInstrument('XAUUSD')">
                                         <div class="inst-left">
-                                            <div class="inst-icon-wrap">🟡</div>
+                                            <div class="inst-icon-wrap">
+                                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="12" r="9" stroke="#eab308" fill="rgba(234, 179, 8, 0.12)"></circle>
+                                                    <path d="M12 7v10M9.5 9.5h5a2.5 2.5 0 0 1 0 5h-5" stroke="#ca8a04"></path>
+                                                </svg>
+                                            </div>
                                             <div class="inst-details">
                                                 <div class="inst-symbol">XAUUSD</div>
                                                 <div class="inst-name">Gold / US Dollar</div>
                                             </div>
                                         </div>
-                                        <div class="inst-check">✓</div>
+                                        <div class="inst-check">
+                                            <svg class="svg-check" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
                                     </div>
                                     <div class="instrument-card" id="instCardNAS" onclick="selectInstrument('NAS100')">
                                         <div class="inst-left">
-                                            <div class="inst-icon-wrap">📈</div>
+                                            <div class="inst-icon-wrap">
+                                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="#16a34a"></polyline>
+                                                    <polyline points="16 7 22 7 22 13" stroke="#16a34a"></polyline>
+                                                </svg>
+                                            </div>
                                             <div class="inst-details">
                                                 <div class="inst-symbol">NAS100</div>
                                                 <div class="inst-name">Nasdaq 100 Index</div>
                                             </div>
                                         </div>
-                                        <div class="inst-check">✓</div>
+                                        <div class="inst-check">
+                                            <svg class="svg-check" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
                                 <input type="hidden" id="accInstrument" value="XAUUSD" required>
@@ -394,7 +427,18 @@
                             <div class="form-actions-row">
                                 <button type="button" class="btn btn-secondary btn-lg" onclick="goToWizardStep(2)">← Back</button>
                                 <button type="submit" class="btn btn-primary btn-lg btn-glow" id="btnSaveAcc">
-                                    Create Account & Start Bot →
+                                    <span class="btn-icon-symbol">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                        </svg>
+                                    </span>
+                                    <span class="btn-text">Create Account & Start Bot</span>
+                                    <span class="btn-arrow">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            <polyline points="12 5 19 12 12 19"></polyline>
+                                        </svg>
+                                    </span>
                                 </button>
                             </div>
 
@@ -409,9 +453,14 @@
     </section>
 
     <!-- TRIPLE-TAP THEME TOAST -->
-    <div id="themeToast" class="theme-toast">🌙 Dark Mode Activated</div>
+    <div id="themeToast" class="theme-toast">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <span>Dark Mode Activated</span>
+    </div>
 
     <script src="js/brokers_data.js?v=2.0"></script>
-    <script src="js/app.js?v=3.8"></script>
+    <script src="js/app.js?v=3.9"></script>
 </body>
 </html>

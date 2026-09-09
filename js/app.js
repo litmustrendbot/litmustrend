@@ -8,6 +8,19 @@ let accounts = [];
 let selectedAccountId = null;
 const DEFAULT_ACCOUNTS = [];
 
+// --- REUSABLE FINTECH SVG ICONS (ZERO EMOJIS) ---
+const SVG_ICONS = {
+    moon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+    sun: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    eye: '<svg class="svg-eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+    eyeSlash: '<svg class="svg-eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+    spinner: '<svg class="svg-spin" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>',
+    bolt: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+    arrowRight: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
+    chevronDown: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>',
+    chevronUp: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>'
+};
+
 // --- 1. PASSCODE VERIFICATION VIA SECURE BACKEND ---
 async function verifyPasscode(e) {
     e.preventDefault();
@@ -125,7 +138,8 @@ function setTheme(theme, showToast = false) {
     if (showToast) {
         const toast = document.getElementById('themeToast');
         if (toast) {
-            toast.innerText = isDark ? '🌙 Dark Mode Activated (Triple-Tap to switch)' : '☀️ Light Mode Activated (Triple-Tap to switch)';
+            toast.innerHTML = (isDark ? SVG_ICONS.moon : SVG_ICONS.sun) +
+                ' <span>' + (isDark ? 'Dark Mode Activated (Triple-Tap to switch)' : 'Light Mode Activated (Triple-Tap to switch)') + '</span>';
             toast.classList.add('visible');
             if (toastTimer) clearTimeout(toastTimer);
             toastTimer = setTimeout(() => {
@@ -561,7 +575,7 @@ function renderBrokerDropdown(query, brokers) {
                     <img src="${logoUrl}" class="broker-logo-img" alt="" onerror="this.style.display='none'">
                     <span>${escapeHtml(broker.name)}</span>
                 </div>
-                <span class="broker-server-count">${broker.servers.length} server${broker.servers.length === 1 ? '' : 's'} ${isExpanded ? '▲' : '▼'}</span>
+                <span class="broker-server-count">${broker.servers.length} server${broker.servers.length === 1 ? '' : 's'} ${isExpanded ? SVG_ICONS.chevronUp : SVG_ICONS.chevronDown}</span>
             </div>
             <div class="broker-servers-list ${isExpanded ? '' : 'hidden'}" id="servers-${escapeHtml(broker.name)}">
                 ${broker.servers.map(srv => {
@@ -822,10 +836,10 @@ function togglePasswordVisibility() {
 
     if (input.type === 'password') {
         input.type = 'text';
-        if (icon) icon.innerText = '🙈';
+        if (icon) icon.innerHTML = SVG_ICONS.eyeSlash;
     } else {
         input.type = 'password';
-        if (icon) icon.innerText = '👁️';
+        if (icon) icon.innerHTML = SVG_ICONS.eye;
     }
 }
 
@@ -856,7 +870,7 @@ function openAddAccountPage() {
     const passInput = document.getElementById('accPassword');
     if (passInput) passInput.type = 'password';
     const passIcon = document.getElementById('togglePasswordIcon');
-    if (passIcon) passIcon.innerText = '👁️';
+    if (passIcon) passIcon.innerHTML = SVG_ICONS.eye;
 
     // Reset broker pills
     document.querySelectorAll('.broker-pill').forEach(p => p.classList.remove('active'));
@@ -909,7 +923,7 @@ async function handleCreateAccount(e) {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="btn-icon-symbol">⏳</span> <span class="btn-text">Establishing MT5 Handshake...</span>';
+    btn.innerHTML = '<span class="btn-icon-symbol">' + SVG_ICONS.spinner + '</span> <span class="btn-text">Establishing MT5 Handshake...</span>';
     errEl.innerText = '';
 
     try {
@@ -1010,7 +1024,7 @@ async function handleCreateAccount(e) {
         selectAccount(newAcc.id);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span class="btn-icon-symbol">⚡</span> <span class="btn-text">Create Account & Start Bot</span> <span class="btn-arrow">→</span>';
+        btn.innerHTML = '<span class="btn-icon-symbol">' + SVG_ICONS.bolt + '</span> <span class="btn-text">Create Account & Start Bot</span> <span class="btn-arrow">' + SVG_ICONS.arrowRight + '</span>';
     }
 }
 

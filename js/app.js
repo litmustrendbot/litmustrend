@@ -100,15 +100,24 @@ function renderSidebar() {
         item.className = `account-list-item ${acc.id === selectedAccountId ? 'selected' : ''}`;
         item.onclick = () => selectAccount(acc.id);
 
-        const tradeCount = acc.trades ? acc.trades.length : 0;
+        const isSafe = (acc.strategy || '').includes('Safe Haven') || (acc.strategy || '').includes('1%');
+        const isWinning = (acc.strategy || '').includes('PDC 5M') || (acc.strategy || '').includes('Winning');
+
+        const riskBadgeClass = isSafe ? 'tag-safe' : 'tag-aggressive';
+        const riskBadgeText = isSafe ? '1% RISK' : '10% RISK';
+        const engineText = isWinning ? 'Winning (PDC 5M) • Daily' : 'Lower TF (P4H 1M) • Scalp';
 
         item.innerHTML = `
             <div class="item-top">
-                <span class="item-name">${escapeHtml(acc.name)}</span>
-                <span class="item-trades-badge">${tradeCount} trades</span>
+                <div class="item-title-wrap">
+                    <span class="item-live-dot" title="EA Connected & Active"></span>
+                    <span class="item-name">${escapeHtml(acc.name)}</span>
+                </div>
+                <span class="item-risk-tag ${riskBadgeClass}">${riskBadgeText}</span>
             </div>
+            <div class="item-strategy-label">${engineText}</div>
             <div class="item-sub">
-                <span>${escapeHtml(acc.strategy)}</span>
+                <span>${escapeHtml(acc.server || 'MT5 Server')}</span>
                 <span>&bull;</span>
                 <span>${escapeHtml(acc.login)}</span>
             </div>
@@ -531,30 +540,115 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// --- STRATEGY CARDS & UI CONTROLLERS ---
+// --- PROGRESSIVE 3-STEP WIZARD STATE & CONTROLLERS ---
+let wizardCurrentStep = 1;
+let wizardChosenRisk = 'Safe Haven'; // 'Safe Haven' (1%) or 'Risk Taker' (10%)
+let wizardChosenStrategy = 'Winning'; // 'Winning' (PDC 5M) or 'Lower Timeframe' (P4H 1M)
+
+function selectWizardRisk(riskType) {
+    wizardChosenRisk = riskType; // 'Safe Haven' or 'Risk Taker'
+    
+    // Update step 2 badge
+    const badge = document.getElementById('panel2SelectedRiskBadge');
+    if (badge) {
+        const riskLabel = (riskType === 'Safe Haven') ? 'Safe Haven (1% Risk)' : 'Risk Taker (10% Risk)';
+        badge.innerText = 'Selected: ' + riskLabel;
+    }
+    
+    goToWizardStep(2);
+}
+
+function selectWizardStrategy(strategyType) {
+    wizardChosenStrategy = strategyType; // 'Winning' or 'Lower Timeframe'
+    
+    // Construct official full strategy name
+    let fullStrategyName = '';
+    if (wizardChosenRisk === 'Safe Haven' && wizardChosenStrategy === 'Winning') {
+        fullStrategyName = 'PDC 5M — Safe Haven (1% Risk)';
+    } else if (wizardChosenRisk === 'Risk Taker' && wizardChosenStrategy === 'Winning') {
+        fullStrategyName = 'PDC 5M — Risk Taker (10% Risk)';
+    } else if (wizardChosenRisk === 'Safe Haven' && wizardChosenStrategy === 'Lower Timeframe') {
+        fullStrategyName = 'P4H 1M — Safe Haven (1% Risk)';
+    } else {
+        fullStrategyName = 'P4H 1M — Risk Taker (10% Risk)';
+    }
+
+    // Set hidden form input
+    const hiddenInput = document.getElementById('accStrategy');
+    if (hiddenInput) hiddenInput.value = fullStrategyName;
+
+    // Update panel 3 summary badge
+    const badgeText = document.getElementById('panel3StrategyName');
+    if (badgeText) badgeText.innerText = fullStrategyName;
+
+    goToWizardStep(3);
+}
+
+function goToWizardStep(stepNum) {
+    wizardCurrentStep = stepNum;
+
+    // Update panels visibility
+    const panel1 = document.getElementById('wizardPanel1');
+    const panel2 = document.getElementById('wizardPanel2');
+    const panel3 = document.getElementById('wizardPanel3');
+
+    if (panel1) panel1.classList.toggle('hidden', stepNum !== 1);
+    if (panel2) panel2.classList.toggle('hidden', stepNum !== 2);
+    if (panel3) panel3.classList.toggle('hidden', stepNum !== 3);
+
+    // Update stepper nodes
+    const node1 = document.getElementById('stepNode1');
+    const node2 = document.getElementById('stepNode2');
+    const node3 = document.getElementById('stepNode3');
+    const line1 = document.getElementById('stepLine1');
+    const line2 = document.getElementById('stepLine2');
+
+    if (node1) {
+        node1.className = `wizard-step-node ${stepNum === 1 ? 'active' : 'completed'}`;
+    }
+    if (node2) {
+        node2.className = `wizard-step-node ${stepNum === 2 ? 'active' : (stepNum > 2 ? 'completed' : '')}`;
+    }
+    if (node3) {
+        node3.className = `wizard-step-node ${stepNum === 3 ? 'active' : ''}`;
+    }
+    if (line1) {
+        line1.className = `stepper-line ${stepNum >= 2 ? 'active' : ''}`;
+    }
+    if (line2) {
+        line2.className = `stepper-line ${stepNum >= 3 ? 'active' : ''}`;
+    }
+
+    // Update headers and breadcrumb
+    const crumbText = document.getElementById('wizardCrumbText');
+    const headingText = document.getElementById('wizardHeadingText');
+    const subtitleText = document.getElementById('wizardSubtitleText');
+
+    if (stepNum === 1) {
+        if (crumbText) crumbText.innerText = 'Step 1: Risk Profile';
+        if (headingText) headingText.innerText = 'Choose Risk Profile';
+        if (subtitleText) subtitleText.innerText = 'Select your risk tolerance profile to configure algorithmic lot-sizing and drawdown guards.';
+    } else if (stepNum === 2) {
+        if (crumbText) crumbText.innerText = 'Step 2: Strategy Timeframe';
+        if (headingText) headingText.innerText = 'Select Strategy Timeframe';
+        if (subtitleText) subtitleText.innerText = 'Choose between the Daily Bias Winning Strategy and the 1-Minute Scalping Engine.';
+    } else if (stepNum === 3) {
+        if (crumbText) crumbText.innerText = 'Step 3: MT5 Logins';
+        if (headingText) headingText.innerText = 'Connect MT5 Account';
+        if (subtitleText) subtitleText.innerText = 'Enter your broker MT5 server, account login ID, and trading password.';
+        
+        const nameInput = document.getElementById('accName');
+        if (nameInput) setTimeout(() => nameInput.focus(), 80);
+    }
+
+    const viewport = document.querySelector('.analysis-viewport');
+    if (viewport) viewport.scrollTop = 0;
+}
+
+// Backward compatibility helper
 function selectStrategyCard(strategyValue) {
     const hiddenInput = document.getElementById('accStrategy');
     if (hiddenInput) hiddenInput.value = strategyValue;
-
-    document.querySelectorAll('.strategy-card').forEach(card => {
-        const isMatch = card.getAttribute('data-strategy') === strategyValue;
-        if (isMatch) {
-            card.classList.add('active');
-            const radio = card.querySelector('.radio-indicator');
-            if (radio) radio.classList.add('checked');
-            const hint = card.querySelector('.select-hint');
-            if (hint) hint.innerText = 'Active Profile';
-        } else {
-            card.classList.remove('active');
-            const radio = card.querySelector('.radio-indicator');
-            if (radio) radio.classList.remove('checked');
-            const hint = card.querySelector('.select-hint');
-            if (hint) hint.innerText = 'Click to Select';
-        }
-    });
-
-    const summaryName = document.getElementById('summaryStrategyName');
-    if (summaryName) summaryName.innerText = strategyValue;
 }
 
 function quickSelectBroker(brokerName) {
@@ -621,19 +715,13 @@ function openAddAccountPage() {
     const passIcon = document.getElementById('togglePasswordIcon');
     if (passIcon) passIcon.innerText = '👁️';
 
-    // Reset strategy selection to default
-    selectStrategyCard('PDC 5M — Safe Haven (1% Risk)');
-
     // Reset broker pills
     document.querySelectorAll('.broker-pill').forEach(p => p.classList.remove('active'));
 
     clearSelectedServer();
 
-    const viewport = document.querySelector('.analysis-viewport');
-    if (viewport) viewport.scrollTop = 0;
-
-    const nameInput = document.getElementById('accName');
-    if (nameInput) nameInput.focus();
+    // Reset progressive wizard to step 1
+    goToWizardStep(1);
 }
 
 function closeAddAccountPage() {
@@ -753,7 +841,7 @@ async function handleCreateAccount(e) {
         selectAccount(newAcc.id);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span class="btn-icon-symbol">⚡</span> <span class="btn-text">Verify & Connect MT5 Bot</span> <span class="btn-arrow">→</span>';
+        btn.innerHTML = '<span class="btn-icon-symbol">⚡</span> <span class="btn-text">Create Account & Start Bot</span> <span class="btn-arrow">→</span>';
     }
 }
 

@@ -531,6 +531,67 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// --- STRATEGY CARDS & UI CONTROLLERS ---
+function selectStrategyCard(strategyValue) {
+    const hiddenInput = document.getElementById('accStrategy');
+    if (hiddenInput) hiddenInput.value = strategyValue;
+
+    document.querySelectorAll('.strategy-card').forEach(card => {
+        const isMatch = card.getAttribute('data-strategy') === strategyValue;
+        if (isMatch) {
+            card.classList.add('active');
+            const radio = card.querySelector('.radio-indicator');
+            if (radio) radio.classList.add('checked');
+            const hint = card.querySelector('.select-hint');
+            if (hint) hint.innerText = 'Active Profile';
+        } else {
+            card.classList.remove('active');
+            const radio = card.querySelector('.radio-indicator');
+            if (radio) radio.classList.remove('checked');
+            const hint = card.querySelector('.select-hint');
+            if (hint) hint.innerText = 'Click to Select';
+        }
+    });
+
+    const summaryName = document.getElementById('summaryStrategyName');
+    if (summaryName) summaryName.innerText = strategyValue;
+}
+
+function quickSelectBroker(brokerName) {
+    document.querySelectorAll('.broker-pill').forEach(pill => {
+        if (pill.getAttribute('data-broker') === brokerName) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+
+    if (isManualServerMode) {
+        toggleManualServerInput();
+    }
+
+    const searchInput = document.getElementById('brokerSearchInput');
+    if (searchInput) {
+        searchInput.value = brokerName;
+        handleBrokerSearch(brokerName);
+        searchInput.focus();
+    }
+}
+
+function togglePasswordVisibility() {
+    const input = document.getElementById('accPassword');
+    const icon = document.getElementById('togglePasswordIcon');
+    if (!input) return;
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.innerText = '🙈';
+    } else {
+        input.type = 'password';
+        if (icon) icon.innerText = '👁️';
+    }
+}
+
 // --- 7. ADD ACCOUNT PAGE WORKFLOW (FULL PAGE IN WORKSPACE, NOT A POP-UP) ---
 function openAddAccountPage() {
     selectedAccountId = null;
@@ -553,6 +614,18 @@ function openAddAccountPage() {
 
     const errEl = document.getElementById('accModalError');
     if (errEl) errEl.innerText = '';
+
+    // Reset password visibility
+    const passInput = document.getElementById('accPassword');
+    if (passInput) passInput.type = 'password';
+    const passIcon = document.getElementById('togglePasswordIcon');
+    if (passIcon) passIcon.innerText = '👁️';
+
+    // Reset strategy selection to default
+    selectStrategyCard('PDC 5M — Safe Haven (1% Risk)');
+
+    // Reset broker pills
+    document.querySelectorAll('.broker-pill').forEach(p => p.classList.remove('active'));
 
     clearSelectedServer();
 
@@ -597,10 +670,13 @@ async function handleCreateAccount(e) {
     const btn = document.getElementById('btnSaveAcc');
     const errEl = document.getElementById('accModalError');
 
-    if (!name || !server || !login || !password) return;
+    if (!name || !server || !login || !password) {
+        if (errEl) errEl.innerText = 'Please select a broker server and fill in all required credentials.';
+        return;
+    }
 
     btn.disabled = true;
-    btn.innerText = 'Verifying with MT5 Broker...';
+    btn.innerHTML = '<span class="btn-icon-symbol">⏳</span> <span class="btn-text">Establishing MT5 Handshake...</span>';
     errEl.innerText = '';
 
     try {
@@ -677,7 +753,7 @@ async function handleCreateAccount(e) {
         selectAccount(newAcc.id);
     } finally {
         btn.disabled = false;
-        btn.innerText = 'Verify & Start Bot';
+        btn.innerHTML = '<span class="btn-icon-symbol">⚡</span> <span class="btn-text">Verify & Connect MT5 Bot</span> <span class="btn-arrow">→</span>';
     }
 }
 

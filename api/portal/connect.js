@@ -77,7 +77,7 @@ module.exports = async (req, res) => {
         let magic = 55510; // Default PDC 5M Risk Taker
         if (strategy) {
             const stratLower = strategy.toLowerCase();
-            if (stratLower.includes('p4h') || stratLower.includes('1m')) {
+            if (stratLower.includes('p4h') || stratLower.includes('1m') || stratLower.includes('big boys')) {
                 magic = (stratLower.includes('safe') || stratLower.includes('1%')) ? 44401 : 44410;
             } else {
                 magic = (stratLower.includes('safe') || stratLower.includes('1%')) ? 55501 : 55510;

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LitmusTrend Bot</title>
-    <link rel="stylesheet" href="css/styles.css?v=3.5">
+    <link rel="stylesheet" href="css/styles.css?v=3.6">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -239,24 +239,24 @@
 
                     <div class="minimal-choice-grid">
                         
-                        <!-- OPTION 1: WINNING STRATEGY (PDC 5M) -->
-                        <div class="minimal-choice-card opt-winning" onclick="selectWizardStrategy('Winning')">
+                        <!-- OPTION 1: THE GAME -->
+                        <div class="minimal-choice-card opt-winning" onclick="selectWizardStrategy('The game')">
                             <div class="choice-main-row">
                                 <div class="choice-meta">
                                     <span class="choice-tag tag-winning">5-MINUTE</span>
-                                    <h3 class="choice-title">Winning Strategy (PDC 5M)</h3>
+                                    <h3 class="choice-title">The game</h3>
                                     <span class="choice-sub">Previous daily candle momentum · 5M trend execution</span>
                                 </div>
                                 <span class="choice-arrow">→</span>
                             </div>
                         </div>
 
-                        <!-- OPTION 2: LOWER TIMEFRAME (P4H 1M) -->
-                        <div class="minimal-choice-card opt-scalper" onclick="selectWizardStrategy('Lower Timeframe')">
+                        <!-- OPTION 2: THE BIG BOYS GAME -->
+                        <div class="minimal-choice-card opt-scalper" onclick="selectWizardStrategy('The big boys game')">
                             <div class="choice-main-row">
                                 <div class="choice-meta">
                                     <span class="choice-tag tag-scalper">1-MINUTE</span>
-                                    <h3 class="choice-title">Lower Timeframe (P4H 1M)</h3>
+                                    <h3 class="choice-title">The big boys game</h3>
                                     <span class="choice-sub">4-Hour directional market flow · 1M micro scalping</span>
                                 </div>
                                 <span class="choice-arrow">→</span>
@@ -275,14 +275,14 @@
                         <button type="button" class="btn-step-back" onclick="goToWizardStep(2)">← Back</button>
                         <span class="active-choice-chip" id="panel3StrategyBadge">
                             <span class="dot-indicator"></span>
-                            <span id="panel3StrategyName">PDC 5M — Safe Haven (1% Risk)</span>
+                            <span id="panel3StrategyName">The game — Safe Haven (1% Risk)</span>
                         </span>
                     </div>
 
                     <div class="seamless-form-wrap">
                         <form id="addAccountForm" onsubmit="handleCreateAccount(event)">
                             
-                            <input type="hidden" id="accStrategy" value="PDC 5M — Safe Haven (1% Risk)" required>
+                            <input type="hidden" id="accStrategy" value="The game — Safe Haven (1% Risk)" required>
 
                             <!-- ACCOUNT NAME -->
                             <div class="form-group">
@@ -366,6 +366,6 @@
     </section>
 
     <script src="js/brokers_data.js?v=2.0"></script>
-    <script src="js/app.js?v=3.5"></script>
+    <script src="js/app.js?v=3.6"></script>
 </body>
 </html>

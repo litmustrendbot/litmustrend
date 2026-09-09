@@ -101,11 +101,11 @@ function renderSidebar() {
         item.onclick = () => selectAccount(acc.id);
 
         const isSafe = (acc.strategy || '').includes('Safe Haven') || (acc.strategy || '').includes('1%');
-        const isWinning = (acc.strategy || '').includes('PDC 5M') || (acc.strategy || '').includes('Winning');
+        const isGame = (acc.strategy || '').includes('The game') || (acc.strategy || '').includes('The Game') || (acc.strategy || '').includes('PDC 5M') || (acc.strategy || '').includes('Winning');
 
         const riskBadgeClass = isSafe ? 'tag-safe' : 'tag-aggressive';
         const riskBadgeText = isSafe ? '1% RISK' : '10% RISK';
-        const engineText = isWinning ? 'Winning (PDC 5M) • Daily' : 'Lower TF (P4H 1M) • Scalp';
+        const engineText = isGame ? 'The Game • Daily' : 'The Big Boys Game • Scalp';
 
         item.innerHTML = `
             <div class="item-top">
@@ -560,7 +560,7 @@ document.addEventListener('click', (e) => {
 // --- PROGRESSIVE 3-STEP WIZARD STATE & CONTROLLERS ---
 let wizardCurrentStep = 1;
 let wizardChosenRisk = 'Safe Haven'; // 'Safe Haven' (1%) or 'Risk Taker' (10%)
-let wizardChosenStrategy = 'Winning'; // 'Winning' (PDC 5M) or 'Lower Timeframe' (P4H 1M)
+let wizardChosenStrategy = 'The game'; // 'The game' or 'The big boys game'
 
 function selectWizardRisk(riskType) {
     wizardChosenRisk = riskType; // 'Safe Haven' or 'Risk Taker'
@@ -576,19 +576,14 @@ function selectWizardRisk(riskType) {
 }
 
 function selectWizardStrategy(strategyType) {
-    wizardChosenStrategy = strategyType; // 'Winning' or 'Lower Timeframe'
+    wizardChosenStrategy = strategyType;
     
-    // Construct official full strategy name
-    let fullStrategyName = '';
-    if (wizardChosenRisk === 'Safe Haven' && wizardChosenStrategy === 'Winning') {
-        fullStrategyName = 'PDC 5M — Safe Haven (1% Risk)';
-    } else if (wizardChosenRisk === 'Risk Taker' && wizardChosenStrategy === 'Winning') {
-        fullStrategyName = 'PDC 5M — Risk Taker (10% Risk)';
-    } else if (wizardChosenRisk === 'Safe Haven' && wizardChosenStrategy === 'Lower Timeframe') {
-        fullStrategyName = 'P4H 1M — Safe Haven (1% Risk)';
-    } else {
-        fullStrategyName = 'P4H 1M — Risk Taker (10% Risk)';
-    }
+    const isGame = (strategyType || '').toLowerCase().includes('the game') || (strategyType || '').toLowerCase().includes('winning');
+    const strategyLabel = isGame ? 'The game' : 'The big boys game';
+
+    const fullStrategyName = (wizardChosenRisk === 'Safe Haven')
+        ? `${strategyLabel} — Safe Haven (1% Risk)`
+        : `${strategyLabel} — Risk Taker (10% Risk)`;
 
     // Set hidden form input
     const hiddenInput = document.getElementById('accStrategy');

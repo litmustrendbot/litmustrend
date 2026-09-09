@@ -434,7 +434,7 @@ function renderBrokerDropdown(query, brokers) {
         group.innerHTML = `
             <div class="broker-group-header" onclick="toggleBrokerExpand('${escapeHtml(broker.name)}')">
                 <div class="broker-identity">
-                    <img src="${logoUrl}" class="broker-logo-img" alt="" onerror="this.outerHTML='<span class=\"broker-logo-fallback\">🏛️</span>'">
+                    <img src="${logoUrl}" class="broker-logo-img" alt="" onerror="this.style.display='none'">
                     <span>${escapeHtml(broker.name)}</span>
                 </div>
                 <span class="broker-server-count">${broker.servers.length} server${broker.servers.length === 1 ? '' : 's'} ${isExpanded ? '▲' : '▼'}</span>

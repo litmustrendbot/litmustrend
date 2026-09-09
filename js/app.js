@@ -627,15 +627,15 @@ function goToWizardStep(stepNum) {
     if (stepNum === 1) {
         if (crumbText) crumbText.innerText = 'Step 1: Risk Profile';
         if (headingText) headingText.innerText = 'Choose Risk Profile';
-        if (subtitleText) subtitleText.innerText = 'Select your risk tolerance profile to configure algorithmic lot-sizing and drawdown guards.';
+        if (subtitleText) subtitleText.innerText = '';
     } else if (stepNum === 2) {
-        if (crumbText) crumbText.innerText = 'Step 2: Strategy Timeframe';
-        if (headingText) headingText.innerText = 'Select Strategy Timeframe';
-        if (subtitleText) subtitleText.innerText = 'Choose between the Daily Bias Winning Strategy and the 1-Minute Scalping Engine.';
+        if (crumbText) crumbText.innerText = 'Step 2: Strategy';
+        if (headingText) headingText.innerText = 'Choose Strategy';
+        if (subtitleText) subtitleText.innerText = '';
     } else if (stepNum === 3) {
         if (crumbText) crumbText.innerText = 'Step 3: MT5 Logins';
-        if (headingText) headingText.innerText = 'Connect MT5 Account';
-        if (subtitleText) subtitleText.innerText = 'Enter your broker MT5 server, account login ID, and trading password.';
+        if (headingText) headingText.innerText = 'Enter MT5 Logins';
+        if (subtitleText) subtitleText.innerText = '';
         
         const nameInput = document.getElementById('accName');
         if (nameInput) setTimeout(() => nameInput.focus(), 80);

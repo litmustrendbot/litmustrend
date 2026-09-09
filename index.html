@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LitmusTrend Bot</title>
-    <link rel="stylesheet" href="css/styles.css?v=3.1">
+    <link rel="stylesheet" href="css/styles.css?v=3.2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -168,18 +168,12 @@
                  ============================================================== -->
             <div id="addAccountPage" class="account-page-view">
                 
-                <!-- TOP HEADER WITH BREADCRUMB -->
+                <!-- TOP HEADER -->
                 <div class="page-top-bar">
                     <div>
-                        <div class="page-breadcrumb">
-                            <span class="crumb-root">LitmusTrend Terminal</span>
-                            <span class="crumb-sep">/</span>
-                            <span class="crumb-current" id="wizardCrumbText">Step 1: Risk Profile</span>
-                        </div>
                         <h2 id="wizardHeadingText">Choose Risk Profile</h2>
-                        <p class="page-subtitle" id="wizardSubtitleText">Select your risk tolerance profile to configure algorithmic lot-sizing and drawdown guards.</p>
                     </div>
-                    <button type="button" class="btn-action" id="btnCancelAddPage" onclick="closeAddAccountPage()">← Exit to Dashboard</button>
+                    <button type="button" class="btn-action" id="btnCancelAddPage" onclick="closeAddAccountPage()">← Back to Dashboard</button>
                 </div>
 
                 <!-- PROGRESS STEPPER BAR -->
@@ -208,62 +202,20 @@
                         
                         <!-- CARD A: SAFE HAVEN -->
                         <div class="wizard-large-card card-safe" onclick="selectWizardRisk('Safe Haven')">
-                            <div class="card-glow-pill pill-safe">1% EQUITY RISK</div>
+                            <div class="card-glow-pill pill-safe">1% RISK</div>
                             <div class="card-icon-hero">🛡️</div>
                             <h3 class="card-hero-title">Safe Haven</h3>
-                            <p class="card-hero-subtitle">Capital Preservation & Prop Firm Shield</p>
-                            <div class="card-hero-desc">
-                                Engineered for traders who prioritize steady compounding and strict capital protection. Ideal for FTMO, FundedNext, and personal accounts requiring maximum drawdown safety.
-                            </div>
-                            <div class="card-hero-features">
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>1.0% Risk</strong> per trade with automated lot sizing</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>3-Loss Hard Stop</strong> daily circuit breaker</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>Target 1:10 R:R</strong> asymmetric risk-to-reward</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>Prop Firm Compliant</strong> (FTMO, MFF, etc.)</span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-secondary btn-block card-action-btn">Select Safe Haven →</button>
+                            <p class="card-hero-subtitle">1% Risk per trade</p>
+                            <button type="button" class="btn btn-secondary btn-block card-action-btn">Select Safe Haven</button>
                         </div>
 
                         <!-- CARD B: RISK TAKER -->
                         <div class="wizard-large-card card-aggressive" onclick="selectWizardRisk('Risk Taker')">
-                            <div class="card-glow-pill pill-aggressive">10% EQUITY RISK</div>
+                            <div class="card-glow-pill pill-aggressive">10% RISK</div>
                             <div class="card-icon-hero">⚡</div>
                             <h3 class="card-hero-title">Risk Taker</h3>
-                            <p class="card-hero-subtitle">Maximum Compounding & Alpha Growth</p>
-                            <div class="card-hero-desc">
-                                Calibrated for high-velocity account scaling and aggressive capital acceleration. Uses maximum risk compounding to capture explosive account growth.
-                            </div>
-                            <div class="card-hero-features">
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>10.0% Risk</strong> per trade for maximum growth</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>+100% Account Growth</strong> on winning 1:10 run</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>3-Loss Hard Stop</strong> daily equity safeguard</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>High-Yield Scaling</strong> for personal accounts</span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-primary btn-block card-action-btn btn-glow">Select Risk Taker →</button>
+                            <p class="card-hero-subtitle">10% Risk per trade</p>
+                            <button type="button" class="btn btn-primary btn-block card-action-btn btn-glow">Select Risk Taker</button>
                         </div>
 
                     </div>
@@ -275,70 +227,28 @@
                 <div id="wizardPanel2" class="wizard-panel hidden">
                     
                     <div class="step-nav-bar">
-                        <button type="button" class="btn-step-back" onclick="goToWizardStep(1)">← Back to Risk Profile</button>
-                        <div class="selected-risk-chip" id="panel2SelectedRiskBadge">Selected: Safe Haven (1% Risk)</div>
+                        <button type="button" class="btn-step-back" onclick="goToWizardStep(1)">← Back</button>
+                        <div class="selected-risk-chip" id="panel2SelectedRiskBadge">Safe Haven (1% Risk)</div>
                     </div>
 
                     <div class="wizard-choice-grid">
                         
                         <!-- CARD 1: WINNING STRATEGY (PDC 5M) -->
                         <div class="wizard-large-card card-winning" onclick="selectWizardStrategy('Winning')">
-                            <div class="card-glow-pill pill-winning">CORE WINNING STRATEGY</div>
+                            <div class="card-glow-pill pill-winning">5M TIMEFRAME</div>
                             <div class="card-icon-hero">🏆</div>
-                            <h3 class="card-hero-title">Winning Strategy (PDC 5M)</h3>
-                            <p class="card-hero-subtitle">Daily Candle Bias · 5-Minute BOS + FVG</p>
-                            <div class="card-hero-desc">
-                                Institutional trend continuity model. Filters direction using the Previous Daily Candle (PDC) and executes high-probability 5-minute Market Structure Breaks and Fair Value Gaps.
-                            </div>
-                            <div class="card-hero-features">
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>Highest Historical Win Rate</strong> across US30 & NAS100</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>Daily Candle Directional Filter</strong> (Zero counter-trend trades)</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>5-Minute Execution</strong> (Clean structure & spread protection)</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>Tested across EURUSD, GBPUSD, NAS100, US30</strong></span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-primary btn-block card-action-btn btn-glow">Select Winning Strategy →</button>
+                            <h3 class="card-hero-title">Winning Strategy</h3>
+                            <p class="card-hero-subtitle">PDC 5M Trend</p>
+                            <button type="button" class="btn btn-primary btn-block card-action-btn btn-glow">Select Winning Strategy</button>
                         </div>
 
                         <!-- CARD 2: LOWER TIMEFRAME (P4H 1M) -->
                         <div class="wizard-large-card card-scalper" onclick="selectWizardStrategy('Lower Timeframe')">
-                            <div class="card-glow-pill pill-scalper">HIGH-FREQUENCY SCALPER</div>
+                            <div class="card-glow-pill pill-scalper">1M TIMEFRAME</div>
                             <div class="card-icon-hero">⏱️</div>
-                            <h3 class="card-hero-title">Lower Timeframe (P4H 1M)</h3>
-                            <p class="card-hero-subtitle">4-Hour Candle Bias · 1-Minute Micro Scalp</p>
-                            <div class="card-hero-desc">
-                                High-frequency execution engine. Evaluates 4-Hour directional market flow and hunts rapid 1-minute order blocks for traders wanting more daily trade action.
-                            </div>
-                            <div class="card-hero-features">
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>High-Frequency Trade Flow</strong> (More frequent setups)</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>4-Hour Bias Filter</strong> (Tracks intraday trend swings)</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>1-Minute Micro Execution</strong> (Fast in-and-out positions)</span>
-                                </div>
-                                <div class="hero-feature-item">
-                                    <span class="feature-icon">✓</span>
-                                    <span><strong>Recommended on Raw / Zero Spread Brokers</strong></span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-secondary btn-block card-action-btn">Select Lower Timeframe →</button>
+                            <h3 class="card-hero-title">Lower Timeframe</h3>
+                            <p class="card-hero-subtitle">P4H 1M Scalp</p>
+                            <button type="button" class="btn btn-secondary btn-block card-action-btn">Select Lower Timeframe</button>
                         </div>
 
                     </div>
@@ -350,7 +260,7 @@
                 <div id="wizardPanel3" class="wizard-panel hidden">
                     
                     <div class="step-nav-bar">
-                        <button type="button" class="btn-step-back" onclick="goToWizardStep(2)">← Back to Strategy</button>
+                        <button type="button" class="btn-step-back" onclick="goToWizardStep(2)">← Back</button>
                         <div class="selected-strategy-badge-pill" id="panel3StrategyBadge">
                             <span class="dot-indicator"></span>
                             <span id="panel3StrategyName">PDC 5M — Safe Haven (1% Risk)</span>
@@ -362,36 +272,21 @@
                             
                             <input type="hidden" id="accStrategy" value="PDC 5M — Safe Haven (1% Risk)" required>
 
-                            <!-- SECTION 1: ACCOUNT LABEL -->
+                            <!-- ACCOUNT LABEL -->
                             <div class="form-section">
-                                <div class="section-badge-header">
-                                    <span class="step-num">01</span>
-                                    <div>
-                                        <div class="step-title">Account Label / Nickname</div>
-                                        <div class="step-subtitle">How this account will appear in your sidebar and trade history</div>
-                                    </div>
-                                </div>
                                 <div class="form-group">
+                                    <label for="accName">Account Name</label>
                                     <div class="input-with-icon">
                                         <span class="input-icon">🏷️</span>
-                                        <input type="text" id="accName" class="form-input" placeholder="e.g. FTMO 100k Challenge, Exness Growth Real, Personal Alpha" required>
+                                        <input type="text" id="accName" class="form-input" placeholder="e.g. My Trading Account" required>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- SECTION 2: BROKER & MT5 SERVER -->
+                            <!-- BROKER & MT5 SERVER -->
                             <div class="form-section">
-                                <div class="section-badge-header">
-                                    <span class="step-num">02</span>
-                                    <div>
-                                        <div class="step-title">Broker & MT5 Server</div>
-                                        <div class="step-subtitle">Select your broker to route orders directly to low-latency execution servers</div>
-                                    </div>
-                                </div>
-
-                                <!-- Popular Broker Quick Pills -->
                                 <div class="broker-quick-pills-wrap">
-                                    <span class="quick-pills-label">Popular Brokers:</span>
+                                    <span class="quick-pills-label">Quick Select:</span>
                                     <div class="broker-pills">
                                         <button type="button" class="broker-pill" data-broker="Exness" onclick="quickSelectBroker('Exness')">Exness</button>
                                         <button type="button" class="broker-pill" data-broker="FTMO" onclick="quickSelectBroker('FTMO')">FTMO</button>
@@ -405,26 +300,24 @@
 
                                 <div class="form-group">
                                     <div class="field-label-row">
-                                        <label for="brokerSearchInput">Broker MT5 Server</label>
+                                        <label for="brokerSearchInput">MT5 Server</label>
                                         <button type="button" class="btn-text-link" id="btnToggleManualServer" onclick="toggleManualServerInput()">Enter Manually</button>
                                     </div>
 
                                     <div id="brokerSearchMode" class="broker-search-wrap">
                                         <div class="input-with-icon">
                                             <span class="input-icon">🔍</span>
-                                            <input type="text" id="brokerSearchInput" class="form-input search-input" placeholder="Type broker name (e.g. Exness, FTMO, FBS, Octa, IC Markets...)" autocomplete="off" oninput="handleBrokerSearch(this.value)" onfocus="handleBrokerFocus()">
+                                            <input type="text" id="brokerSearchInput" class="form-input search-input" placeholder="Search broker or server (e.g. Exness, FTMO)..." autocomplete="off" oninput="handleBrokerSearch(this.value)" onfocus="handleBrokerFocus()">
                                         </div>
                                         
                                         <div id="selectedServerDisplay" class="selected-server-chip hidden">
                                             <div class="selected-server-info">
                                                 <img id="selectedServerLogo" class="broker-logo-img" src="" alt="" onerror="this.style.display='none'">
                                                 <div>
-                                                    <span class="chip-label">CONNECTED MT5 SERVER:</span>
                                                     <strong id="selectedServerName"></strong>
-                                                    <span class="verified-dot-tag"><span class="pulse-dot"></span> Live Route Ready</span>
                                                 </div>
                                             </div>
-                                            <button type="button" class="chip-clear" onclick="clearSelectedServer()">✎ Change Server</button>
+                                            <button type="button" class="chip-clear" onclick="clearSelectedServer()">Change</button>
                                         </div>
 
                                         <div id="brokerSearchResults" class="broker-dropdown hidden"></div>
@@ -434,31 +327,21 @@
                                     <div id="brokerManualMode" class="hidden">
                                         <div class="input-with-icon">
                                             <span class="input-icon">🖥️</span>
-                                            <input type="text" id="accServerManual" class="form-input font-mono" placeholder="e.g. Exness-MT5Real7, FTMO-Server" oninput="syncManualServer(this.value)">
+                                            <input type="text" id="accServerManual" class="form-input font-mono" placeholder="e.g. Exness-MT5Real7" oninput="syncManualServer(this.value)">
                                         </div>
-                                        <div class="field-hint">Must match the exact server name in your broker credentials email.</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- SECTION 3: MT5 CREDENTIALS -->
+                            <!-- MT5 CREDENTIALS -->
                             <div class="form-section">
-                                <div class="section-badge-header">
-                                    <span class="step-num">03</span>
-                                    <div>
-                                        <div class="step-title">MetaTrader 5 Account Logins</div>
-                                        <div class="step-subtitle">Enter your MT5 numeric login ID and trading password</div>
-                                    </div>
-                                </div>
-
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="accLogin">MT5 Login ID (Account Number)</label>
+                                        <label for="accLogin">MT5 Login ID</label>
                                         <div class="input-with-icon">
                                             <span class="input-icon">👤</span>
                                             <input type="text" id="accLogin" class="form-input font-mono" placeholder="e.g. 2108930" required>
                                         </div>
-                                        <div class="field-hint">Your numeric MT5 account number</div>
                                     </div>
 
                                     <div class="form-group">
@@ -470,43 +353,15 @@
                                                 <span id="togglePasswordIcon">👁️</span>
                                             </button>
                                         </div>
-                                        <div class="field-hint">Master trading password for automated execution</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SECURITY SAFEGUARDS STRIP -->
-                            <div class="security-guarantee-strip">
-                                <div class="security-badge-item">
-                                    <div class="badge-icon-box">🛡️</div>
-                                    <div>
-                                        <div class="badge-heading">Zero Capital Withdrawal Rights</div>
-                                        <div class="badge-text">LitmusTrend Bot holds trade execution permissions only. Funds can never be withdrawn.</div>
-                                    </div>
-                                </div>
-                                <div class="security-badge-item">
-                                    <div class="badge-icon-box">🔒</div>
-                                    <div>
-                                        <div class="badge-heading">AES-256 TLS 1.3 Encryption</div>
-                                        <div class="badge-text">Credentials are transmitted through an encrypted TLS 1.3 tunnel. Never logged in plaintext.</div>
-                                    </div>
-                                </div>
-                                <div class="security-badge-item">
-                                    <div class="badge-icon-box">⚡</div>
-                                    <div>
-                                        <div class="badge-heading">Daily Circuit Breaker Protection</div>
-                                        <div class="badge-text">Automatic trading halt after 3 consecutive losses protects your equity from drawdown spikes.</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- FORM ACTIONS -->
                             <div class="form-actions-row">
-                                <button type="button" class="btn btn-secondary btn-lg" onclick="goToWizardStep(2)">← Back to Strategy</button>
+                                <button type="button" class="btn btn-secondary btn-lg" onclick="goToWizardStep(2)">← Back</button>
                                 <button type="submit" class="btn btn-primary btn-lg btn-glow" id="btnSaveAcc">
-                                    <span class="btn-icon-symbol">⚡</span>
-                                    <span class="btn-text">Create Account & Start Bot</span>
-                                    <span class="btn-arrow">→</span>
+                                    Create Account & Start Bot →
                                 </button>
                             </div>
 
@@ -521,6 +376,6 @@
     </section>
 
     <script src="js/brokers_data.js?v=2.0"></script>
-    <script src="js/app.js?v=3.1"></script>
+    <script src="js/app.js?v=3.2"></script>
 </body>
 </html>

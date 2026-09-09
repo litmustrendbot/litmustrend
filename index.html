@@ -4,21 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LitmusTrend Bot</title>
-    <link rel="stylesheet" href="css/styles.css?v=3.6">
+    <link rel="icon" type="image/png" href="assets/litmus_logo.png">
+    <link rel="stylesheet" href="css/styles.css?v=3.7">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="dark-theme">
+<body class="light-theme">
 
     <!-- SUBTLE BACKGROUND -->
     <div class="ambient-glow"></div>
+    <div class="bg-watermark-logo" aria-hidden="true"></div>
 
     <!-- ==============================================================
          1. PASSCODE SCREEN (HOMEPAGE)
          ============================================================== -->
     <section id="passcodeScreen" class="screen active-screen">
         <div class="passcode-panel">
+            <div class="brand-badge-row">
+                <img src="assets/litmus_logo.png" class="brand-hero-logo" alt="LitmusTrend">
+            </div>
             <h1 class="brand-title">LitmusTrend Bot</h1>
             <p class="brand-subtitle">Enter passcode to access your auto-trading accounts</p>
 
@@ -39,10 +44,14 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-brand">
+                    <img src="assets/litmus_logo.png" class="brand-sidebar-logo" alt="LitmusTrend">
                     <span class="live-dot"></span>
                     <span class="brand-name">LitmusTrend Bot</span>
                 </div>
-                <button class="btn-icon" title="Lock Dashboard" onclick="lockPortal()">🔒</button>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <button class="btn-icon" title="Toggle Theme (or Triple-Tap anywhere)" onclick="toggleTheme()">🌗</button>
+                    <button class="btn-icon" title="Lock Dashboard" onclick="lockPortal()">🔒</button>
+                </div>
             </div>
 
             <div class="sidebar-action">
@@ -347,6 +356,40 @@
                                 </div>
                             </div>
 
+                            <!-- INSTRUMENT SELECTION (XAUUSD vs NAS100 with broker sync) -->
+                            <div class="form-group">
+                                <div class="field-label-row">
+                                    <label>Trading Instrument</label>
+                                    <span class="instrument-sync-badge" id="instrumentSyncBadge">
+                                        <span class="sync-dot"></span>
+                                        <span id="instrumentSyncText">Broker Symbol: XAUUSD (Auto-Synced)</span>
+                                    </span>
+                                </div>
+                                <div class="instrument-selector-grid">
+                                    <div class="instrument-card active" id="instCardXAU" onclick="selectInstrument('XAUUSD')">
+                                        <div class="inst-left">
+                                            <div class="inst-icon-wrap">🟡</div>
+                                            <div class="inst-details">
+                                                <div class="inst-symbol">XAUUSD</div>
+                                                <div class="inst-name">Gold / US Dollar</div>
+                                            </div>
+                                        </div>
+                                        <div class="inst-check">✓</div>
+                                    </div>
+                                    <div class="instrument-card" id="instCardNAS" onclick="selectInstrument('NAS100')">
+                                        <div class="inst-left">
+                                            <div class="inst-icon-wrap">📈</div>
+                                            <div class="inst-details">
+                                                <div class="inst-symbol">NAS100</div>
+                                                <div class="inst-name">Nasdaq 100 Index</div>
+                                            </div>
+                                        </div>
+                                        <div class="inst-check">✓</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="accInstrument" value="XAUUSD" required>
+                            </div>
+
                             <!-- FORM ACTIONS -->
                             <div class="form-actions-row">
                                 <button type="button" class="btn btn-secondary btn-lg" onclick="goToWizardStep(2)">← Back</button>
@@ -365,7 +408,10 @@
         </main>
     </section>
 
+    <!-- TRIPLE-TAP THEME TOAST -->
+    <div id="themeToast" class="theme-toast">🌙 Dark Mode Activated</div>
+
     <script src="js/brokers_data.js?v=2.0"></script>
-    <script src="js/app.js?v=3.6"></script>
+    <script src="js/app.js?v=3.7"></script>
 </body>
 </html>

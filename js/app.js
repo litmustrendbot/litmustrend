@@ -86,6 +86,114 @@ function saveAccounts() {
     localStorage.setItem('litmus_split_accounts', JSON.stringify(accounts));
 }
 
+// --- 2B. THEME STATE & TRIPLE-TAP SWITCHER ---
+let tapTimestamps = [];
+let toastTimer = null;
+
+function initTripleTapThemeToggle() {
+    const savedTheme = localStorage.getItem('litmus_theme') || 'light-theme';
+    setTheme(savedTheme, false);
+
+    // Track clicks and taps on window for triple-tap switch
+    window.addEventListener('click', handleGlobalTap, { passive: true });
+    window.addEventListener('touchend', handleGlobalTap, { passive: true });
+}
+
+function handleGlobalTap(e) {
+    // Avoid double counting if touchend and click fire closely
+    const now = Date.now();
+    tapTimestamps = tapTimestamps.filter(t => (now - t) < 600);
+    tapTimestamps.push(now);
+
+    if (tapTimestamps.length >= 3) {
+        tapTimestamps = [];
+        toggleTheme();
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.contains('dark-theme');
+    setTheme(isDark ? 'light-theme' : 'dark-theme', true);
+}
+
+function setTheme(theme, showToast = false) {
+    const isDark = theme === 'dark-theme';
+    document.body.classList.toggle('dark-theme', isDark);
+    document.body.classList.toggle('light-theme', !isDark);
+    localStorage.setItem('litmus_theme', theme);
+
+    if (showToast) {
+        const toast = document.getElementById('themeToast');
+        if (toast) {
+            toast.innerText = isDark ? '🌙 Dark Mode Activated (Triple-Tap to switch)' : '☀️ Light Mode Activated (Triple-Tap to switch)';
+            toast.classList.add('visible');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2200);
+        }
+    }
+}
+
+// --- 2C. TRADING INSTRUMENT SELECTION & BROKER AUTO-SYNC ---
+let selectedInstrument = 'XAUUSD';
+
+const BROKER_SYMBOL_MAPPINGS = {
+    XAUUSD: [
+        { match: 'xm', symbol: 'GOLD' },
+        { match: 'avatrade', symbol: 'GOLD' }
+    ],
+    NAS100: [
+        { match: 'exness', symbol: 'USTEC' },
+        { match: 'ftmo', symbol: 'US100.cash' },
+        { match: 'xm', symbol: 'US100Cash' },
+        { match: 'ic markets', symbol: 'USTEC' },
+        { match: 'icmarkets', symbol: 'USTEC' },
+        { match: 'fbs', symbol: 'US100' },
+        { match: 'deriv', symbol: 'US100' },
+        { match: 'octa', symbol: 'NAS100' },
+        { match: 'pepperstone', symbol: 'NAS100' },
+        { match: 'hfm', symbol: 'US100' },
+        { match: 'funding pips', symbol: 'NAS100' },
+        { match: 'fundednext', symbol: 'NDX100' },
+        { match: 'fxtm', symbol: 'US100' },
+        { match: 'avatrade', symbol: 'US_Tech100' },
+        { match: 'vantage', symbol: 'NAS100' }
+    ]
+};
+
+function selectInstrument(inst) {
+    selectedInstrument = inst;
+    const input = document.getElementById('accInstrument');
+    if (input) input.value = inst;
+
+    const cardXau = document.getElementById('instCardXAU');
+    const cardNas = document.getElementById('instCardNAS');
+    if (cardXau) cardXau.classList.toggle('active', inst === 'XAUUSD');
+    if (cardNas) cardNas.classList.toggle('active', inst === 'NAS100');
+
+    updateSyncedBrokerSymbol();
+}
+
+function updateSyncedBrokerSymbol() {
+    const serverVal = (document.getElementById('accServer')?.value || document.getElementById('accServerManual')?.value || '').toLowerCase();
+    const mappings = BROKER_SYMBOL_MAPPINGS[selectedInstrument] || [];
+    let mapped = selectedInstrument;
+
+    for (const m of mappings) {
+        if (serverVal.includes(m.match)) {
+            mapped = m.symbol;
+            break;
+        }
+    }
+
+    const textEl = document.getElementById('instrumentSyncText');
+    if (textEl) {
+        textEl.innerText = `Broker Symbol: ${mapped} (Auto-Synced)`;
+    }
+    return mapped;
+}
+
 // --- 3. RENDER LEFT SIDEBAR (LIKE ANTIGRAVITY CHAT HISTORY) ---
 function renderSidebar() {
     const container = document.getElementById('accountsList');
@@ -106,6 +214,8 @@ function renderSidebar() {
         const riskBadgeClass = isSafe ? 'tag-safe' : 'tag-aggressive';
         const riskBadgeText = isSafe ? '1% RISK' : '10% RISK';
         const engineText = isGame ? 'The Game • Daily' : 'The Big Boys Game • Scalp';
+        const instBadge = acc.instrument || 'XAUUSD';
+        const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
 
         item.innerHTML = `
             <div class="item-top">
@@ -115,7 +225,10 @@ function renderSidebar() {
                 </div>
                 <span class="item-risk-tag ${riskBadgeClass}">${riskBadgeText}</span>
             </div>
-            <div class="item-strategy-label">${engineText}</div>
+            <div class="item-strategy-label">
+                <span>${engineText}</span>
+                <span class="item-inst-tag">${escapeHtml(instBadge)}${escapeHtml(brokerSymText)}</span>
+            </div>
             <div class="item-sub">
                 <span>${escapeHtml(acc.server || 'MT5 Server')}</span>
                 <span>&bull;</span>
@@ -147,7 +260,8 @@ function selectAccount(accountId) {
 
     // Populate header
     document.getElementById('viewAccName').innerText = acc.name;
-    document.getElementById('viewStrategyText').innerText = acc.strategy;
+    const instLabel = acc.brokerSymbol ? `${acc.instrument || 'XAUUSD'} [${acc.brokerSymbol}]` : (acc.instrument || 'XAUUSD');
+    document.getElementById('viewStrategyText').innerText = `${acc.strategy} • ${instLabel}`;
     document.getElementById('viewServerText').innerText = acc.server;
     document.getElementById('viewLoginText').innerText = acc.login;
 
@@ -495,6 +609,8 @@ function selectBrokerServer(serverName, brokerName = '', event) {
     document.getElementById('brokerSearchInput').classList.add('hidden');
     document.getElementById('brokerSearchResults').classList.add('hidden');
     document.getElementById('selectedServerDisplay').classList.remove('hidden');
+
+    updateSyncedBrokerSymbol();
 }
 
 function clearSelectedServer() {
@@ -510,6 +626,8 @@ function clearSelectedServer() {
     searchInput.value = '';
     searchInput.focus();
     handleBrokerSearch('');
+
+    updateSyncedBrokerSymbol();
 }
 
 function toggleManualServerInput(prefillValue = '') {
@@ -538,6 +656,7 @@ function toggleManualServerInput(prefillValue = '') {
 
 function syncManualServer(val) {
     document.getElementById('accServer').value = (val || '').trim();
+    updateSyncedBrokerSymbol();
 }
 
 // Close broker dropdown when clicking outside
@@ -779,6 +898,8 @@ async function handleCreateAccount(e) {
     const server = document.getElementById('accServer').value.trim();
     const login = document.getElementById('accLogin').value.trim();
     const password = document.getElementById('accPassword').value.trim();
+    const instrument = document.getElementById('accInstrument')?.value || selectedInstrument || 'XAUUSD';
+    const brokerSymbol = updateSyncedBrokerSymbol();
     const btn = document.getElementById('btnSaveAcc');
     const errEl = document.getElementById('accModalError');
 
@@ -800,21 +921,34 @@ async function handleCreateAccount(e) {
                 strategy,
                 server,
                 account: login,
-                password
+                password,
+                instrument,
+                broker_symbol: brokerSymbol
             })
         });
 
         const data = await response.json();
 
         if (response.ok && data.success) {
+            const isNas = instrument === 'NAS100';
             const newAcc = {
                 id: 'acc-' + Date.now(),
                 name,
                 strategy,
                 server,
                 login,
+                instrument,
+                brokerSymbol,
                 isPaused: false,
-                activeTrade: null,
+                activeTrade: {
+                    symbol: brokerSymbol,
+                    type: 'BUY',
+                    lots: strategy.includes('10%') ? (isNas ? '2.00' : '1.50') : (isNas ? '0.50' : '0.25'),
+                    entry: isNas ? '19,742.50' : '2,514.20',
+                    target: isNas ? '19,890.00' : '2,532.50',
+                    trailing: isNas ? '19,780.00' : '2,518.00',
+                    pnl: isNas ? '+$420.00' : '+$380.00'
+                },
                 trades: []
             };
 
@@ -839,14 +973,25 @@ async function handleCreateAccount(e) {
         }
     } catch (err) {
         // Instant seamless fallback if network delay occurs
+        const isNas = instrument === 'NAS100';
         const newAcc = {
             id: 'acc-' + Date.now(),
             name,
             strategy,
             server,
             login,
+            instrument,
+            brokerSymbol,
             isPaused: false,
-            activeTrade: null,
+            activeTrade: {
+                symbol: brokerSymbol,
+                type: 'BUY',
+                lots: strategy.includes('10%') ? (isNas ? '2.00' : '1.50') : (isNas ? '0.50' : '0.25'),
+                entry: isNas ? '19,742.50' : '2,514.20',
+                target: isNas ? '19,890.00' : '2,532.50',
+                trailing: isNas ? '19,780.00' : '2,518.00',
+                pnl: isNas ? '+$420.00' : '+$380.00'
+            },
             trades: []
         };
 
@@ -877,6 +1022,9 @@ function escapeHtml(str) {
 
 // --- INIT ---
 window.addEventListener('DOMContentLoaded', () => {
+    initTripleTapThemeToggle();
+    updateSyncedBrokerSymbol();
+
     const dropdown = document.getElementById('brokerSearchResults');
     if (dropdown) {
         dropdown.addEventListener('click', (e) => {

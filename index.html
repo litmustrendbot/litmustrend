@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LitmusTrend Bot</title>
-    <link rel="stylesheet" href="css/styles.css?v=3.2">
+    <link rel="stylesheet" href="css/styles.css?v=3.3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -198,24 +198,30 @@
                      PANEL 1: RISK TAKER vs SAFE HAVEN
                      ============================================================== -->
                 <div id="wizardPanel1" class="wizard-panel active-panel">
-                    <div class="wizard-choice-grid">
+                    <div class="minimal-choice-grid">
                         
-                        <!-- CARD A: SAFE HAVEN -->
-                        <div class="wizard-large-card card-safe" onclick="selectWizardRisk('Safe Haven')">
-                            <div class="card-glow-pill pill-safe">1% RISK</div>
-                            <div class="card-icon-hero">🛡️</div>
-                            <h3 class="card-hero-title">Safe Haven</h3>
-                            <p class="card-hero-subtitle">1% Risk per trade</p>
-                            <button type="button" class="btn btn-secondary btn-block card-action-btn">Select Safe Haven</button>
+                        <!-- OPTION A: SAFE HAVEN -->
+                        <div class="minimal-choice-card opt-safe" onclick="selectWizardRisk('Safe Haven')">
+                            <div class="choice-main-row">
+                                <div class="choice-meta">
+                                    <span class="choice-tag tag-safe">1% RISK</span>
+                                    <h3 class="choice-title">Safe Haven</h3>
+                                    <span class="choice-sub">Conservative 1% equity risk · Maximum capital protection</span>
+                                </div>
+                                <span class="choice-arrow">→</span>
+                            </div>
                         </div>
 
-                        <!-- CARD B: RISK TAKER -->
-                        <div class="wizard-large-card card-aggressive" onclick="selectWizardRisk('Risk Taker')">
-                            <div class="card-glow-pill pill-aggressive">10% RISK</div>
-                            <div class="card-icon-hero">⚡</div>
-                            <h3 class="card-hero-title">Risk Taker</h3>
-                            <p class="card-hero-subtitle">10% Risk per trade</p>
-                            <button type="button" class="btn btn-primary btn-block card-action-btn btn-glow">Select Risk Taker</button>
+                        <!-- OPTION B: RISK TAKER -->
+                        <div class="minimal-choice-card opt-aggressive" onclick="selectWizardRisk('Risk Taker')">
+                            <div class="choice-main-row">
+                                <div class="choice-meta">
+                                    <span class="choice-tag tag-aggressive">10% RISK</span>
+                                    <h3 class="choice-title">Risk Taker</h3>
+                                    <span class="choice-sub">Aggressive 10% equity risk · Maximum yield compounding</span>
+                                </div>
+                                <span class="choice-arrow">→</span>
+                            </div>
                         </div>
 
                     </div>
@@ -228,27 +234,33 @@
                     
                     <div class="step-nav-bar">
                         <button type="button" class="btn-step-back" onclick="goToWizardStep(1)">← Back</button>
-                        <div class="selected-risk-chip" id="panel2SelectedRiskBadge">Safe Haven (1% Risk)</div>
+                        <span class="active-choice-chip" id="panel2SelectedRiskBadge">Safe Haven (1% Risk)</span>
                     </div>
 
-                    <div class="wizard-choice-grid">
+                    <div class="minimal-choice-grid">
                         
-                        <!-- CARD 1: WINNING STRATEGY (PDC 5M) -->
-                        <div class="wizard-large-card card-winning" onclick="selectWizardStrategy('Winning')">
-                            <div class="card-glow-pill pill-winning">5M TIMEFRAME</div>
-                            <div class="card-icon-hero">🏆</div>
-                            <h3 class="card-hero-title">Winning Strategy</h3>
-                            <p class="card-hero-subtitle">PDC 5M Trend</p>
-                            <button type="button" class="btn btn-primary btn-block card-action-btn btn-glow">Select Winning Strategy</button>
+                        <!-- OPTION 1: WINNING STRATEGY (PDC 5M) -->
+                        <div class="minimal-choice-card opt-winning" onclick="selectWizardStrategy('Winning')">
+                            <div class="choice-main-row">
+                                <div class="choice-meta">
+                                    <span class="choice-tag tag-winning">5-MINUTE</span>
+                                    <h3 class="choice-title">Winning Strategy (PDC 5M)</h3>
+                                    <span class="choice-sub">Previous daily candle momentum · 5M trend execution</span>
+                                </div>
+                                <span class="choice-arrow">→</span>
+                            </div>
                         </div>
 
-                        <!-- CARD 2: LOWER TIMEFRAME (P4H 1M) -->
-                        <div class="wizard-large-card card-scalper" onclick="selectWizardStrategy('Lower Timeframe')">
-                            <div class="card-glow-pill pill-scalper">1M TIMEFRAME</div>
-                            <div class="card-icon-hero">⏱️</div>
-                            <h3 class="card-hero-title">Lower Timeframe</h3>
-                            <p class="card-hero-subtitle">P4H 1M Scalp</p>
-                            <button type="button" class="btn btn-secondary btn-block card-action-btn">Select Lower Timeframe</button>
+                        <!-- OPTION 2: LOWER TIMEFRAME (P4H 1M) -->
+                        <div class="minimal-choice-card opt-scalper" onclick="selectWizardStrategy('Lower Timeframe')">
+                            <div class="choice-main-row">
+                                <div class="choice-meta">
+                                    <span class="choice-tag tag-scalper">1-MINUTE</span>
+                                    <h3 class="choice-title">Lower Timeframe (P4H 1M)</h3>
+                                    <span class="choice-sub">4-Hour directional market flow · 1M micro scalping</span>
+                                </div>
+                                <span class="choice-arrow">→</span>
+                            </div>
                         </div>
 
                     </div>
@@ -261,32 +273,31 @@
                     
                     <div class="step-nav-bar">
                         <button type="button" class="btn-step-back" onclick="goToWizardStep(2)">← Back</button>
-                        <div class="selected-strategy-badge-pill" id="panel3StrategyBadge">
+                        <span class="active-choice-chip" id="panel3StrategyBadge">
                             <span class="dot-indicator"></span>
                             <span id="panel3StrategyName">PDC 5M — Safe Haven (1% Risk)</span>
-                        </div>
+                        </span>
                     </div>
 
-                    <div class="account-form-card">
+                    <div class="seamless-form-wrap">
                         <form id="addAccountForm" onsubmit="handleCreateAccount(event)">
                             
                             <input type="hidden" id="accStrategy" value="PDC 5M — Safe Haven (1% Risk)" required>
 
-                            <!-- ACCOUNT LABEL -->
-                            <div class="form-section">
-                                <div class="form-group">
-                                    <label for="accName">Account Name</label>
-                                    <div class="input-with-icon">
-                                        <span class="input-icon">🏷️</span>
-                                        <input type="text" id="accName" class="form-input" placeholder="e.g. My Trading Account" required>
-                                    </div>
-                                </div>
+                            <!-- ACCOUNT NAME -->
+                            <div class="form-group">
+                                <label for="accName">Account Name</label>
+                                <input type="text" id="accName" class="form-input" placeholder="e.g. My Trading Account" required>
                             </div>
 
                             <!-- BROKER & MT5 SERVER -->
-                            <div class="form-section">
+                            <div class="form-group">
+                                <div class="field-label-row">
+                                    <label for="brokerSearchInput">Broker MT5 Server</label>
+                                    <button type="button" class="btn-text-link" id="btnToggleManualServer" onclick="toggleManualServerInput()">Enter Manually</button>
+                                </div>
+
                                 <div class="broker-quick-pills-wrap">
-                                    <span class="quick-pills-label">Quick Select:</span>
                                     <div class="broker-pills">
                                         <button type="button" class="broker-pill" data-broker="Exness" onclick="quickSelectBroker('Exness')">Exness</button>
                                         <button type="button" class="broker-pill" data-broker="FTMO" onclick="quickSelectBroker('FTMO')">FTMO</button>
@@ -298,61 +309,40 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <div class="field-label-row">
-                                        <label for="brokerSearchInput">MT5 Server</label>
-                                        <button type="button" class="btn-text-link" id="btnToggleManualServer" onclick="toggleManualServerInput()">Enter Manually</button>
+                                <div id="brokerSearchMode" class="broker-search-wrap">
+                                    <input type="text" id="brokerSearchInput" class="form-input search-input" placeholder="Search broker or server (e.g. Exness, FTMO)..." autocomplete="off" oninput="handleBrokerSearch(this.value)" onfocus="handleBrokerFocus()">
+                                    
+                                    <div id="selectedServerDisplay" class="selected-server-chip hidden">
+                                        <div class="selected-server-info">
+                                            <img id="selectedServerLogo" class="broker-logo-img" src="" alt="" onerror="this.style.display='none'">
+                                            <strong id="selectedServerName"></strong>
+                                        </div>
+                                        <button type="button" class="chip-clear" onclick="clearSelectedServer()">Change</button>
                                     </div>
 
-                                    <div id="brokerSearchMode" class="broker-search-wrap">
-                                        <div class="input-with-icon">
-                                            <span class="input-icon">🔍</span>
-                                            <input type="text" id="brokerSearchInput" class="form-input search-input" placeholder="Search broker or server (e.g. Exness, FTMO)..." autocomplete="off" oninput="handleBrokerSearch(this.value)" onfocus="handleBrokerFocus()">
-                                        </div>
-                                        
-                                        <div id="selectedServerDisplay" class="selected-server-chip hidden">
-                                            <div class="selected-server-info">
-                                                <img id="selectedServerLogo" class="broker-logo-img" src="" alt="" onerror="this.style.display='none'">
-                                                <div>
-                                                    <strong id="selectedServerName"></strong>
-                                                </div>
-                                            </div>
-                                            <button type="button" class="chip-clear" onclick="clearSelectedServer()">Change</button>
-                                        </div>
+                                    <div id="brokerSearchResults" class="broker-dropdown hidden"></div>
+                                    <input type="hidden" id="accServer" required>
+                                </div>
 
-                                        <div id="brokerSearchResults" class="broker-dropdown hidden"></div>
-                                        <input type="hidden" id="accServer" required>
-                                    </div>
-
-                                    <div id="brokerManualMode" class="hidden">
-                                        <div class="input-with-icon">
-                                            <span class="input-icon">🖥️</span>
-                                            <input type="text" id="accServerManual" class="form-input font-mono" placeholder="e.g. Exness-MT5Real7" oninput="syncManualServer(this.value)">
-                                        </div>
-                                    </div>
+                                <div id="brokerManualMode" class="hidden">
+                                    <input type="text" id="accServerManual" class="form-input font-mono" placeholder="e.g. Exness-MT5Real7" oninput="syncManualServer(this.value)">
                                 </div>
                             </div>
 
-                            <!-- MT5 CREDENTIALS -->
-                            <div class="form-section">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="accLogin">MT5 Login ID</label>
-                                        <div class="input-with-icon">
-                                            <span class="input-icon">👤</span>
-                                            <input type="text" id="accLogin" class="form-input font-mono" placeholder="e.g. 2108930" required>
-                                        </div>
-                                    </div>
+                            <!-- MT5 CREDENTIALS ROW -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="accLogin">MT5 Login ID</label>
+                                    <input type="text" id="accLogin" class="form-input font-mono" placeholder="e.g. 2108930" required>
+                                </div>
 
-                                    <div class="form-group">
-                                        <label for="accPassword">MT5 Password</label>
-                                        <div class="input-with-icon input-password-wrap">
-                                            <span class="input-icon">🔑</span>
-                                            <input type="password" id="accPassword" class="form-input font-mono" placeholder="••••••••••••" required>
-                                            <button type="button" class="btn-password-toggle" onclick="togglePasswordVisibility()" title="Toggle password visibility">
-                                                <span id="togglePasswordIcon">👁️</span>
-                                            </button>
-                                        </div>
+                                <div class="form-group">
+                                    <label for="accPassword">MT5 Password</label>
+                                    <div class="input-password-wrap">
+                                        <input type="password" id="accPassword" class="form-input font-mono" placeholder="••••••••••••" required>
+                                        <button type="button" class="btn-password-toggle" onclick="togglePasswordVisibility()" title="Toggle password visibility">
+                                            <span id="togglePasswordIcon">👁️</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -376,6 +366,6 @@
     </section>
 
     <script src="js/brokers_data.js?v=2.0"></script>
-    <script src="js/app.js?v=3.2"></script>
+    <script src="js/app.js?v=3.3"></script>
 </body>
 </html>

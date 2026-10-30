@@ -187,6 +187,15 @@ const BROKER_SYMBOL_MAPPINGS = {
         { match: 'fxtm', symbol: 'US100' },
         { match: 'avatrade', symbol: 'US_Tech100' },
         { match: 'vantage', symbol: 'NAS100' }
+    ],
+    BTCUSD: [
+        { match: 'exness', symbol: 'BTCUSDm' },
+        { match: 'cent', symbol: 'BTCUSDm' },
+        { match: 'xm', symbol: 'BTCUSD' },
+        { match: 'deriv', symbol: 'BTCUSD' },
+        { match: 'ftmo', symbol: 'BTCUSD' },
+        { match: 'ic markets', symbol: 'BTCUSD' },
+        { match: 'icmarkets', symbol: 'BTCUSD' }
     ]
 };
 
@@ -197,8 +206,10 @@ function selectInstrument(inst) {
 
     const cardXau = document.getElementById('instCardXAU');
     const cardNas = document.getElementById('instCardNAS');
+    const cardBtc = document.getElementById('instCardBTC');
     if (cardXau) cardXau.classList.toggle('active', inst === 'XAUUSD');
     if (cardNas) cardNas.classList.toggle('active', inst === 'NAS100');
+    if (cardBtc) cardBtc.classList.toggle('active', inst === 'BTCUSD');
 
     updateSyncedBrokerSymbol();
 }
@@ -899,6 +910,20 @@ async function handleCreateAccount(e) {
 
         if (response.ok && data.success) {
             const isNas = instrument === 'NAS100';
+            const isBtc = instrument === 'BTCUSD';
+            let mockLots = '0.10';
+            let mockEntry = '2,740.20';
+            let mockPnl = '+$76.00';
+            if (isNas) {
+                mockLots = '0.20';
+                mockEntry = '19,742.50';
+                mockPnl = '+$84.00';
+            } else if (isBtc) {
+                mockLots = '0.01';
+                mockEntry = '68,450.00';
+                mockPnl = '+$95.00';
+            }
+
             const newAcc = {
                 id: 'acc-' + Date.now(),
                 name,
@@ -911,11 +936,11 @@ async function handleCreateAccount(e) {
                 activeTrade: {
                     symbol: brokerSymbol,
                     type: 'BUY',
-                    lots: isNas ? '0.20' : '0.10',
-                    entry: isNas ? '19,742.50' : '2,514.20',
+                    lots: mockLots,
+                    entry: mockEntry,
                     target: 'Stepped Ladder',
                     trailing: 'Active (+5.0R Locked)',
-                    pnl: isNas ? '+$84.00' : '+$76.00'
+                    pnl: mockPnl
                 },
                 trades: []
             };
@@ -942,6 +967,20 @@ async function handleCreateAccount(e) {
     } catch (err) {
         // Instant seamless fallback if network delay occurs
         const isNas = instrument === 'NAS100';
+        const isBtc = instrument === 'BTCUSD';
+        let mockLots = '0.10';
+        let mockEntry = '2,740.20';
+        let mockPnl = '+$76.00';
+        if (isNas) {
+            mockLots = '0.20';
+            mockEntry = '19,742.50';
+            mockPnl = '+$84.00';
+        } else if (isBtc) {
+            mockLots = '0.01';
+            mockEntry = '68,450.00';
+            mockPnl = '+$95.00';
+        }
+
         const newAcc = {
             id: 'acc-' + Date.now(),
             name,
@@ -954,11 +993,11 @@ async function handleCreateAccount(e) {
             activeTrade: {
                 symbol: brokerSymbol,
                 type: 'BUY',
-                lots: isNas ? '0.20' : '0.10',
-                entry: isNas ? '19,742.50' : '2,514.20',
+                lots: mockLots,
+                entry: mockEntry,
                 target: 'Stepped Ladder',
                 trailing: 'Active (+5.0R Locked)',
-                pnl: isNas ? '+$84.00' : '+$76.00'
+                pnl: mockPnl
             },
             trades: []
         };

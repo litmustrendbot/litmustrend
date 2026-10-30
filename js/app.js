@@ -86,6 +86,20 @@ function loadAccounts() {
     if (saved) {
         try {
             accounts = JSON.parse(saved);
+            // Migrate all accounts strictly to New Strategy
+            let changed = false;
+            accounts.forEach(acc => {
+                if (acc.strategy !== 'New Strategy (5% Dynamic Risk)') {
+                    acc.strategy = 'New Strategy (5% Dynamic Risk)';
+                    changed = true;
+                }
+                if (acc.activeTrade) {
+                    acc.activeTrade.target = 'Stepped Ladder';
+                    acc.activeTrade.trailing = 'Active (+5.0R Locked)';
+                    changed = true;
+                }
+            });
+            if (changed) saveAccounts();
         } catch (e) {
             accounts = DEFAULT_ACCOUNTS;
         }
@@ -222,12 +236,9 @@ function renderSidebar() {
         item.className = `account-list-item ${acc.id === selectedAccountId ? 'selected' : ''}`;
         item.onclick = () => selectAccount(acc.id);
 
-        const isSafe = (acc.strategy || '').includes('Safe Haven') || (acc.strategy || '').includes('1%');
-        const isGame = (acc.strategy || '').includes('The game') || (acc.strategy || '').includes('The Game') || (acc.strategy || '').includes('PDC 5M') || (acc.strategy || '').includes('Winning');
-
-        const riskBadgeClass = isSafe ? 'tag-safe' : 'tag-aggressive';
-        const riskBadgeText = isSafe ? '1% RISK' : '10% RISK';
-        const engineText = isGame ? 'The Game • Daily' : 'The Big Boys Game • Scalp';
+        const riskBadgeClass = 'tag-newstrategy';
+        const riskBadgeText = '5% RISK';
+        const engineText = 'New Strategy • 15M FVG + 5M';
         const instBadge = acc.instrument || 'XAUUSD';
         const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
 
@@ -275,7 +286,7 @@ function selectAccount(accountId) {
     // Populate header
     document.getElementById('viewAccName').innerText = acc.name;
     const instLabel = acc.brokerSymbol ? `${acc.instrument || 'XAUUSD'} [${acc.brokerSymbol}]` : (acc.instrument || 'XAUUSD');
-    document.getElementById('viewStrategyText').innerText = `${acc.strategy} • ${instLabel}`;
+    document.getElementById('viewStrategyText').innerText = `New Strategy (15M FVG + 5M Confirmation) • ${instLabel}`;
     document.getElementById('viewServerText').innerText = acc.server;
     document.getElementById('viewLoginText').innerText = acc.login;
 
@@ -313,7 +324,7 @@ function selectAccount(accountId) {
     profitEl.innerText = `${gainSign}$${absGain}.00`;
     profitEl.className = `metric-val ${netGain >= 0 ? 'text-green' : 'text-red'}`;
 
-    const gainPercent = acc.strategy.includes('10%') ? (netGain / 10).toFixed(1) : (netGain / 100).toFixed(1);
+    const gainPercent = (netGain / 20).toFixed(1);
     document.getElementById('metricGainPercent').innerText = `${gainSign}${gainPercent}% Total Return`;
 
     // Profit Factor (Total Win Sum / Total Loss Sum)
@@ -330,7 +341,7 @@ function selectAccount(accountId) {
         openBar.classList.remove('hidden');
         const openTagEl = document.getElementById('openTag');
         if (openTagEl) {
-            openTagEl.innerText = acc.strategy.includes('1M') ? 'ACTIVE 1M TRADE' : 'ACTIVE 5M TRADE';
+            openTagEl.innerText = 'ACTIVE 5M CONFIRMATION TRADE';
         }
         document.getElementById('openSymbol').innerText = acc.activeTrade.symbol;
         document.getElementById('openType').innerText = acc.activeTrade.type;
@@ -690,44 +701,8 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// --- PROGRESSIVE 3-STEP WIZARD STATE & CONTROLLERS ---
+// --- 2-STEP WIZARD STATE & CONTROLLERS (NEW STRATEGY ONLY) ---
 let wizardCurrentStep = 1;
-let wizardChosenRisk = 'Safe Haven'; // 'Safe Haven' (1%) or 'Risk Taker' (10%)
-let wizardChosenStrategy = 'The game'; // 'The game' or 'The big boys game'
-
-function selectWizardRisk(riskType) {
-    wizardChosenRisk = riskType; // 'Safe Haven' or 'Risk Taker'
-    
-    // Update step 2 badge
-    const badge = document.getElementById('panel2SelectedRiskBadge');
-    if (badge) {
-        const riskLabel = (riskType === 'Safe Haven') ? 'Safe Haven (1% Risk)' : 'Risk Taker (10% Risk)';
-        badge.innerText = 'Selected: ' + riskLabel;
-    }
-    
-    goToWizardStep(2);
-}
-
-function selectWizardStrategy(strategyType) {
-    wizardChosenStrategy = strategyType;
-    
-    const isGame = (strategyType || '').toLowerCase().includes('the game') || (strategyType || '').toLowerCase().includes('winning');
-    const strategyLabel = isGame ? 'The game' : 'The big boys game';
-
-    const fullStrategyName = (wizardChosenRisk === 'Safe Haven')
-        ? `${strategyLabel} — Safe Haven (1% Risk)`
-        : `${strategyLabel} — Risk Taker (10% Risk)`;
-
-    // Set hidden form input
-    const hiddenInput = document.getElementById('accStrategy');
-    if (hiddenInput) hiddenInput.value = fullStrategyName;
-
-    // Update panel 3 summary badge
-    const badgeText = document.getElementById('panel3StrategyName');
-    if (badgeText) badgeText.innerText = fullStrategyName;
-
-    goToWizardStep(3);
-}
 
 function goToWizardStep(stepNum) {
     wizardCurrentStep = stepNum;
@@ -735,53 +710,32 @@ function goToWizardStep(stepNum) {
     // Update panels visibility
     const panel1 = document.getElementById('wizardPanel1');
     const panel2 = document.getElementById('wizardPanel2');
-    const panel3 = document.getElementById('wizardPanel3');
 
     if (panel1) panel1.classList.toggle('hidden', stepNum !== 1);
     if (panel2) panel2.classList.toggle('hidden', stepNum !== 2);
-    if (panel3) panel3.classList.toggle('hidden', stepNum !== 3);
 
     // Update stepper nodes
     const node1 = document.getElementById('stepNode1');
     const node2 = document.getElementById('stepNode2');
-    const node3 = document.getElementById('stepNode3');
     const line1 = document.getElementById('stepLine1');
-    const line2 = document.getElementById('stepLine2');
 
     if (node1) {
         node1.className = `wizard-step-node ${stepNum === 1 ? 'active' : 'completed'}`;
     }
     if (node2) {
-        node2.className = `wizard-step-node ${stepNum === 2 ? 'active' : (stepNum > 2 ? 'completed' : '')}`;
-    }
-    if (node3) {
-        node3.className = `wizard-step-node ${stepNum === 3 ? 'active' : ''}`;
+        node2.className = `wizard-step-node ${stepNum === 2 ? 'active' : ''}`;
     }
     if (line1) {
         line1.className = `stepper-line ${stepNum >= 2 ? 'active' : ''}`;
     }
-    if (line2) {
-        line2.className = `stepper-line ${stepNum >= 3 ? 'active' : ''}`;
+
+    // Update headers
+    const headingText = document.getElementById('wizardHeadingText');
+    if (headingText) {
+        headingText.innerText = (stepNum === 1) ? 'New Strategy Engine' : 'Connect MT5 Account';
     }
 
-    // Update headers and breadcrumb
-    const crumbText = document.getElementById('wizardCrumbText');
-    const headingText = document.getElementById('wizardHeadingText');
-    const subtitleText = document.getElementById('wizardSubtitleText');
-
-    if (stepNum === 1) {
-        if (crumbText) crumbText.innerText = 'Step 1: Risk Profile';
-        if (headingText) headingText.innerText = 'Choose Risk Profile';
-        if (subtitleText) subtitleText.innerText = '';
-    } else if (stepNum === 2) {
-        if (crumbText) crumbText.innerText = 'Step 2: Strategy';
-        if (headingText) headingText.innerText = 'Choose Strategy';
-        if (subtitleText) subtitleText.innerText = '';
-    } else if (stepNum === 3) {
-        if (crumbText) crumbText.innerText = 'Step 3: MT5 Logins';
-        if (headingText) headingText.innerText = 'Enter MT5 Logins';
-        if (subtitleText) subtitleText.innerText = '';
-        
+    if (stepNum === 2) {
         const nameInput = document.getElementById('accName');
         if (nameInput) setTimeout(() => nameInput.focus({ preventScroll: true }), 80);
     }
@@ -908,7 +862,7 @@ async function handleCreateAccount(e) {
     e.preventDefault();
 
     const name = document.getElementById('accName').value.trim();
-    const strategy = document.getElementById('accStrategy').value;
+    const strategy = 'New Strategy (5% Dynamic Risk)';
     const server = document.getElementById('accServer').value.trim();
     const login = document.getElementById('accLogin').value.trim();
     const password = document.getElementById('accPassword').value.trim();
@@ -957,10 +911,10 @@ async function handleCreateAccount(e) {
                 activeTrade: {
                     symbol: brokerSymbol,
                     type: 'BUY',
-                    lots: strategy.includes('10%') ? (isNas ? '2.00' : '1.50') : (isNas ? '0.50' : '0.25'),
+                    lots: isNas ? '1.00' : '0.50',
                     entry: isNas ? '19,742.50' : '2,514.20',
-                    target: isNas ? '19,890.00' : '2,532.50',
-                    trailing: isNas ? '19,780.00' : '2,518.00',
+                    target: 'Stepped Ladder',
+                    trailing: 'Active (+5.0R Locked)',
                     pnl: isNas ? '+$420.00' : '+$380.00'
                 },
                 trades: []
@@ -1000,10 +954,10 @@ async function handleCreateAccount(e) {
             activeTrade: {
                 symbol: brokerSymbol,
                 type: 'BUY',
-                lots: strategy.includes('10%') ? (isNas ? '2.00' : '1.50') : (isNas ? '0.50' : '0.25'),
+                lots: isNas ? '1.00' : '0.50',
                 entry: isNas ? '19,742.50' : '2,514.20',
-                target: isNas ? '19,890.00' : '2,532.50',
-                trailing: isNas ? '19,780.00' : '2,518.00',
+                target: 'Stepped Ladder',
+                trailing: 'Active (+5.0R Locked)',
                 pnl: isNas ? '+$420.00' : '+$380.00'
             },
             trades: []

@@ -89,8 +89,8 @@ function loadAccounts() {
             // Migrate all accounts strictly to New Strategy
             let changed = false;
             accounts.forEach(acc => {
-                if (acc.strategy !== 'New Strategy (5% Dynamic Risk)') {
-                    acc.strategy = 'New Strategy (5% Dynamic Risk)';
+                if (acc.strategy !== 'New Strategy (1% Dynamic Risk)') {
+                    acc.strategy = 'New Strategy (1% Dynamic Risk)';
                     changed = true;
                 }
                 if (acc.activeTrade) {
@@ -237,7 +237,7 @@ function renderSidebar() {
         item.onclick = () => selectAccount(acc.id);
 
         const riskBadgeClass = 'tag-newstrategy';
-        const riskBadgeText = '5% RISK';
+        const riskBadgeText = '1% RISK';
         const engineText = 'New Strategy • 15M FVG + 5M';
         const instBadge = acc.instrument || 'XAUUSD';
         const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
@@ -324,7 +324,7 @@ function selectAccount(accountId) {
     profitEl.innerText = `${gainSign}$${absGain}.00`;
     profitEl.className = `metric-val ${netGain >= 0 ? 'text-green' : 'text-red'}`;
 
-    const gainPercent = (netGain / 20).toFixed(1);
+    const gainPercent = (netGain / 100).toFixed(1);
     document.getElementById('metricGainPercent').innerText = `${gainSign}${gainPercent}% Total Return`;
 
     // Profit Factor (Total Win Sum / Total Loss Sum)
@@ -862,7 +862,7 @@ async function handleCreateAccount(e) {
     e.preventDefault();
 
     const name = document.getElementById('accName').value.trim();
-    const strategy = 'New Strategy (5% Dynamic Risk)';
+    const strategy = 'New Strategy (1% Dynamic Risk)';
     const server = document.getElementById('accServer').value.trim();
     const login = document.getElementById('accLogin').value.trim();
     const password = document.getElementById('accPassword').value.trim();
@@ -911,11 +911,11 @@ async function handleCreateAccount(e) {
                 activeTrade: {
                     symbol: brokerSymbol,
                     type: 'BUY',
-                    lots: isNas ? '1.00' : '0.50',
+                    lots: isNas ? '0.20' : '0.10',
                     entry: isNas ? '19,742.50' : '2,514.20',
                     target: 'Stepped Ladder',
                     trailing: 'Active (+5.0R Locked)',
-                    pnl: isNas ? '+$420.00' : '+$380.00'
+                    pnl: isNas ? '+$84.00' : '+$76.00'
                 },
                 trades: []
             };
@@ -954,11 +954,11 @@ async function handleCreateAccount(e) {
             activeTrade: {
                 symbol: brokerSymbol,
                 type: 'BUY',
-                lots: isNas ? '1.00' : '0.50',
+                lots: isNas ? '0.20' : '0.10',
                 entry: isNas ? '19,742.50' : '2,514.20',
                 target: 'Stepped Ladder',
                 trailing: 'Active (+5.0R Locked)',
-                pnl: isNas ? '+$420.00' : '+$380.00'
+                pnl: isNas ? '+$84.00' : '+$76.00'
             },
             trades: []
         };

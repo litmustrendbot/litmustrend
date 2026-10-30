@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
 
         // Official New Strategy Magic Number & Definition
         const magic = 155025;
-        const officialStrategy = 'New Strategy (5% Dynamic Risk)';
+        const officialStrategy = 'New Strategy (1% Dynamic Risk)';
 
         if (metaApiToken) {
             // Send provisioning request to MetaApi to verify broker credentials

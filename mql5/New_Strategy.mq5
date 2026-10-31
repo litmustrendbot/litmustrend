@@ -26,6 +26,10 @@ input int      InpZoneExpiryBars5M       = 150;                // 5M Bars before
 input group "=== 3. Expert Advisor Identity ==="
 input ulong    InpMagicNumber            = 155025;             // EA Magic Number
 
+input group "=== 4. Cloud Webhook Synchronization ==="
+input string   InpWebhookUrl             = "https://litmustrend.vercel.app/api/portal/sync"; // Portal Webhook Sync URL
+input bool     InpEnableWebSync          = true;               // Send Live Events to Web Dashboard
+
 //--- Structural POI Zone Definition
 struct SFvgZone
 {
@@ -52,6 +56,47 @@ datetime       m_last5MBarTime      = 0;
 
 double         m_last15mSwingHigh   = 0.0;
 double         m_last15mSwingLow    = 0.0;
+
+//+------------------------------------------------------------------+
+//| Send Live Telemetry / Event directly to Web Portal               |
+//+------------------------------------------------------------------+
+void SendWebsiteSync(string eventType, string activeTradeJson = "null", string closedTradeJson = "null")
+{
+   if(!InpEnableWebSync || StringLen(InpWebhookUrl) == 0) return;
+
+   string login   = IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN));
+   string server  = AccountInfoString(ACCOUNT_SERVER);
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+   double equity  = AccountInfoDouble(ACCOUNT_EQUITY);
+
+   string jsonPayload = StringFormat(
+      "{\"login\":\"%s\",\"server\":\"%s\",\"balance\":%.2f,\"equity\":%.2f,\"event\":\"%s\",\"activeTrade\":%s,\"closedTrade\":%s}",
+      login, server, balance, equity, eventType, activeTradeJson, closedTradeJson
+   );
+
+   char postData[];
+   char result[];
+   string resultHeaders;
+   StringToCharArray(jsonPayload, postData, 0, WHOLE_ARRAY, CP_UTF8);
+   int dataSize = ArraySize(postData) - 1;
+   if(dataSize <= 0) return;
+   ArrayResize(postData, dataSize);
+
+   string headers = "Content-Type: application/json\r\n";
+
+   ResetLastError();
+   int res = WebRequest("POST", InpWebhookUrl, headers, 3000, postData, result, resultHeaders);
+   if(res == -1)
+   {
+      int err = GetLastError();
+      static bool warned = false;
+      if(!warned && err == 4014)
+      {
+         PrintFormat("[WEB SYNC WARNING] Error 4014: Please add '%s' to MT5 allowed URLs in Tools -> Options -> Expert Advisors -> Allow WebRequest for listed URL", InpWebhookUrl);
+         warned = true;
+      }
+   }
+}
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -152,6 +197,15 @@ void ManageOpenPositions()
                m_trade.SetExpertMagicNumber(InpMagicNumber);
                m_trade.PositionModify(ticket, targetSL, 0.0);
                PrintFormat("[BUY SL TRAIL UPDATED] Ticket #%I64u | Max R: %.2f | New SL: %.5f (Locked: +%.1fR)", ticket, curR, targetSL, lockedR);
+
+               string trailDesc = StringFormat("+%.1fR Locked", lockedR);
+               double pnl = PositionGetDouble(POSITION_PROFIT);
+               string pnlStr = StringFormat("%s$%.2f", (pnl >= 0 ? "+" : "-"), MathAbs(pnl));
+               string actTrade = StringFormat(
+                  "{\"symbol\":\"%s\",\"type\":\"BUY\",\"lots\":%.2f,\"entry\":\"%.5f\",\"target\":\"Stepped Ladder\",\"trailing\":\"%s\",\"pnl\":\"%s\"}",
+                  _Symbol, PositionGetDouble(POSITION_VOLUME), openPrice, trailDesc, pnlStr
+               );
+               SendWebsiteSync("TRAILING", actTrade, "null");
             }
          }
       }
@@ -167,6 +221,15 @@ void ManageOpenPositions()
                m_trade.SetExpertMagicNumber(InpMagicNumber);
                m_trade.PositionModify(ticket, targetSL, 0.0);
                PrintFormat("[SELL SL TRAIL UPDATED] Ticket #%I64u | Max R: %.2f | New SL: %.5f (Locked: +%.1fR)", ticket, curR, targetSL, lockedR);
+
+               string trailDesc = StringFormat("+%.1fR Locked", lockedR);
+               double pnl = PositionGetDouble(POSITION_PROFIT);
+               string pnlStr = StringFormat("%s$%.2f", (pnl >= 0 ? "+" : "-"), MathAbs(pnl));
+               string actTrade = StringFormat(
+                  "{\"symbol\":\"%s\",\"type\":\"SELL\",\"lots\":%.2f,\"entry\":\"%.5f\",\"target\":\"Stepped Ladder\",\"trailing\":\"%s\",\"pnl\":\"%s\"}",
+                  _Symbol, PositionGetDouble(POSITION_VOLUME), openPrice, trailDesc, pnlStr
+               );
+               SendWebsiteSync("TRAILING", actTrade, "null");
             }
          }
       }
@@ -388,6 +451,11 @@ void Check5MConfirmation()
                if(m_trade.Sell(lots, _Symbol, entryPrice, slPrice, 0.0, orderComment))
                {
                   PrintFormat("[SELL ENTERED] Lots: %.2f @ %.5f | Structural SL: %.5f | Stepped Ladder Active", lots, entryPrice, slPrice);
+                  string actTrade = StringFormat(
+                     "{\"symbol\":\"%s\",\"type\":\"SELL\",\"lots\":%.2f,\"entry\":\"%.5f\",\"target\":\"Stepped Ladder\",\"trailing\":\"Initial SL\",\"pnl\":\"+$0.00\"}",
+                     _Symbol, lots, entryPrice
+                  );
+                  SendWebsiteSync("OPEN", actTrade, "null");
                }
 
                m_zones[i].isActive = false;
@@ -437,6 +505,11 @@ void Check5MConfirmation()
                if(m_trade.Buy(lots, _Symbol, entryPrice, slPrice, 0.0, orderComment))
                {
                   PrintFormat("[BUY ENTERED] Lots: %.2f @ %.5f | Structural SL: %.5f | Stepped Ladder Active", lots, entryPrice, slPrice);
+                  string actTrade = StringFormat(
+                     "{\"symbol\":\"%s\",\"type\":\"BUY\",\"lots\":%.2f,\"entry\":\"%.5f\",\"target\":\"Stepped Ladder\",\"trailing\":\"Initial SL\",\"pnl\":\"+$0.00\"}",
+                     _Symbol, lots, entryPrice
+                  );
+                  SendWebsiteSync("OPEN", actTrade, "null");
                }
 
                m_zones[i].isActive = false;
@@ -490,5 +563,72 @@ void OnTick()
 
    // 3. Scan for 5M Reversal Confirmations
    Check5MConfirmation();
+
+   // 4. Periodic Dashboard Heartbeat (Every 15 Seconds)
+   static datetime lastHeartbeat = 0;
+   datetime now = TimeCurrent();
+   if(now - lastHeartbeat >= 15)
+   {
+      lastHeartbeat = now;
+      string actTrade = "null";
+      for(int i = PositionsTotal() - 1; i >= 0; i--)
+      {
+         ulong ticket = PositionGetTicket(i);
+         if(ticket == 0 || !PositionSelectByTicket(ticket)) continue;
+         if(PositionGetInteger(POSITION_MAGIC) != InpMagicNumber) continue;
+
+         long posType = PositionGetInteger(POSITION_TYPE);
+         double pnl = PositionGetDouble(POSITION_PROFIT);
+         string pnlStr = StringFormat("%s$%.2f", (pnl >= 0 ? "+" : "-"), MathAbs(pnl));
+         string sym = PositionGetString(POSITION_SYMBOL);
+         double vol = PositionGetDouble(POSITION_VOLUME);
+         double op  = PositionGetDouble(POSITION_PRICE_OPEN);
+
+         actTrade = StringFormat("{\"symbol\":\"%s\",\"type\":\"%s\",\"lots\":%.2f,\"entry\":\"%.5f\",\"target\":\"Stepped Ladder\",\"trailing\":\"Trailing Active\",\"pnl\":\"%s\"}",
+            sym, (posType == POSITION_TYPE_BUY ? "BUY" : "SELL"), vol, op, pnlStr);
+         break;
+      }
+      SendWebsiteSync("HEARTBEAT", actTrade, "null");
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Trade Transaction Event Handler (Detects Position Closures)      |
+//+------------------------------------------------------------------+
+void OnTradeTransaction(const MqlTradeTransaction &trans,
+                        const MqlTradeRequest &request,
+                        const MqlTradeResult &result)
+{
+   if(trans.type == TRADE_TRANSACTION_DEAL_ADD)
+   {
+      ulong dealTicket = trans.deal;
+      if(HistoryDealSelect(dealTicket))
+      {
+         long dealEntry = HistoryDealGetInteger(dealTicket, DEAL_ENTRY);
+         long dealMagic = HistoryDealGetInteger(dealTicket, DEAL_MAGIC);
+         if(dealMagic == InpMagicNumber && dealEntry == DEAL_ENTRY_OUT)
+         {
+            double profit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
+            double volume = HistoryDealGetDouble(dealTicket, DEAL_VOLUME);
+            double price  = HistoryDealGetDouble(dealTicket, DEAL_PRICE);
+            long   type   = HistoryDealGetInteger(dealTicket, DEAL_TYPE);
+            string sym    = HistoryDealGetString(dealTicket, DEAL_SYMBOL);
+
+            string resType = (profit >= 0) ? "WIN" : "LOSS";
+            string pnlStr  = StringFormat("%s$%.2f", (profit >= 0 ? "+" : "-"), MathAbs(profit));
+            string typeStr = (type == DEAL_TYPE_BUY) ? "BUY" : "SELL";
+
+            datetime dTime = (datetime)HistoryDealGetInteger(dealTicket, DEAL_TIME);
+            string timeStr = TimeToString(dTime, TIME_DATE|TIME_MINUTES);
+
+            string closedTrade = StringFormat(
+               "{\"id\":%I64u,\"time\":\"%s\",\"symbol\":\"%s\",\"type\":\"%s\",\"lots\":%.2f,\"entry\":\"-\",\"exit\":\"%.5f\",\"target\":\"Stepped Ladder\",\"result\":\"%s\",\"profit\":\"%s\"}",
+               dealTicket, timeStr, sym, typeStr, volume, price, resType, pnlStr
+            );
+
+            SendWebsiteSync("CLOSE", "null", closedTrade);
+         }
+      }
+   }
 }
 //+------------------------------------------------------------------+

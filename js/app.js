@@ -78,6 +78,7 @@ function unlockPortal() {
     } else {
         openAddAccountPage();
     }
+    startLiveSync();
 }
 
 // --- 2. ACCOUNTS DATA MANAGEMENT ---
@@ -301,6 +302,11 @@ function selectAccount(accountId) {
     document.getElementById('viewServerText').innerText = acc.server;
     document.getElementById('viewLoginText').innerText = acc.login;
 
+    const eqEl = document.getElementById('viewEquityText');
+    if (eqEl) {
+        eqEl.innerText = acc.equity ? `$${Number(acc.equity).toFixed(2)}` : '--';
+    }
+
     const pauseBtn = document.getElementById('btnTogglePause');
     if (pauseBtn) {
         pauseBtn.innerText = acc.isPaused ? 'Resume EA' : 'Pause EA';
@@ -401,6 +407,54 @@ function selectAccount(accountId) {
 
 function showEmptyAnalysis() {
     openAddAccountPage();
+}
+
+// --- 4B. REAL-TIME MT5 VPS WEB-SYNC POLLER ---
+let liveSyncInterval = null;
+
+function startLiveSync() {
+    if (liveSyncInterval) clearInterval(liveSyncInterval);
+    liveSyncInterval = setInterval(async () => {
+        const acc = accounts.find(a => a.id === selectedAccountId);
+        if (!acc || !acc.login) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/portal/sync?login=${encodeURIComponent(acc.login)}`);
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json && json.success && json.data) {
+                const live = json.data;
+                let modified = false;
+
+                if (live.balance !== undefined && live.balance !== acc.balance) {
+                    acc.balance = live.balance;
+                    modified = true;
+                }
+                if (live.equity !== undefined && live.equity !== acc.equity) {
+                    acc.equity = live.equity;
+                    modified = true;
+                }
+                if (JSON.stringify(acc.activeTrade) !== JSON.stringify(live.activeTrade)) {
+                    acc.activeTrade = live.activeTrade;
+                    modified = true;
+                }
+                if (live.trades && Array.isArray(live.trades) && live.trades.length > 0) {
+                    if (JSON.stringify(acc.trades) !== JSON.stringify(live.trades)) {
+                        acc.trades = live.trades;
+                        modified = true;
+                    }
+                }
+
+                if (modified) {
+                    saveAccounts();
+                    renderSidebar();
+                    selectAccount(acc.id);
+                }
+            }
+        } catch (e) {
+            // Silently ignore network hiccup
+        }
+    }, 3000);
 }
 
 // --- 5. ACCOUNT ACTIONS (PAUSE / REMOVE) ---

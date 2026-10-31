@@ -1,8 +1,8 @@
 /**
  * LITMUSTREND CLOUD TRADING ENGINE
- * Powered by MetaApi.cloud REST & Streaming API
+ * Powered by MetaApi.cloud REST & Streaming RPC API
  * Strategy: Option C (15M FVG + 5M Reversal Confirmation + Stepped Trailing Stop Ladder + 1% Dynamic Risk)
- * Supports: XAUUSD (Gold), BTCUSD (Bitcoin 24/7), NAS100 (Nasdaq)
+ * Multi-Symbol Support: BTCUSD (Bitcoin 24/7), XAUUSD (Gold), NAS100 (Nasdaq)
  */
 
 const MetaApi = require('metaapi.cloud-sdk').default;
@@ -14,8 +14,10 @@ const SYMBOLS = (process.env.TRADING_SYMBOLS || process.env.TRADING_SYMBOL || 'B
     .filter(Boolean);
 const RISK_PERCENT = parseFloat(process.env.RISK_PERCENT || '1.0');
 const PRE_CLOSE_SECONDS = 5;
+const MAGIC_NUMBER = 155025;
+const MAX_CONCURRENT_POSITIONS = 10;
 
-// Stepped Trailing Stop Ladder Function
+// User Stepped Trailing Stop Ladder Function
 function getLadderLockedR(maxR) {
     if (maxR >= 40.0) return Math.floor(maxR - 4.0);
     else if (maxR >= 39.0) return 35.0;
@@ -32,7 +34,7 @@ function getLadderLockedR(maxR) {
     else if (maxR >= 10.0) return 6.0;
     else if (maxR >= 9.0)  return 5.0;
     else if (maxR >= 5.0)  return 1.0;
-    else if (maxR >= 3.0)  return 0.0; // Break-Even
+    else if (maxR >= 3.0)  return 0.0; // 1:3 Break-Even
     return -1.0;
 }
 
@@ -41,8 +43,13 @@ class LitmusCloudEngine {
         this.token = token;
         this.accountId = accountId;
         this.metaApi = new MetaApi(token);
-        this.zones = [];
-        this.lastTraded5MTime = null;
+        this.zones = {}; // Per-symbol FVG POI zones
+        this.dailyClose = {}; // Per-symbol Previous Day Close (PDC)
+        this.swingHigh = {};
+        this.swingLow = {};
+        this.lastTraded5MTime = {};
+        this.last15MTime = {};
+        this.isScanning = false;
     }
 
     async start() {
@@ -55,10 +62,15 @@ class LitmusCloudEngine {
             await connection.waitSynchronized();
             console.log(`[LitmusTrend Cloud Engine] Synchronized with Broker! Multi-symbol scanning active on: ${SYMBOLS.join(', ')}...`);
 
-            // Start Market Structure Scanner Loop
+            // Initialize symbol zones
+            for (const sym of SYMBOLS) {
+                this.zones[sym] = [];
+            }
+
+            // Start Market Structure & Signal Evaluation Loop (Runs every 1000ms)
             setInterval(() => this.scanMarket(connection), 1000);
             
-            // Start Stepped Ladder Trailing Loop
+            // Start Stepped Ladder Trailing Loop (Runs every 2000ms)
             setInterval(() => this.manageOpenPositions(connection), 2000);
 
         } catch (err) {
@@ -66,51 +78,294 @@ class LitmusCloudEngine {
         }
     }
 
+    // Dynamic 1.0% Lot Sizing
+    calculateLotSize(connection, symbol, entryPrice, slPrice, riskPercent) {
+        const riskDist = Math.abs(entryPrice - slPrice);
+        if (riskDist <= 0) return 0.01;
+
+        const terminalState = connection.terminalState;
+        const accountInfo = terminalState ? terminalState.accountInformation : null;
+        const equity = accountInfo && accountInfo.equity > 0 ? accountInfo.equity : 100.0;
+
+        const spec = terminalState ? terminalState.specification(symbol) : null;
+        const tickSize = spec && spec.tickSize > 0 ? spec.tickSize : 0.01;
+        const tickValue = spec && spec.tickValue > 0 ? spec.tickValue : 1.0;
+        const minLot = spec && spec.minVolume > 0 ? spec.minVolume : 0.01;
+        const maxLot = spec && spec.maxVolume > 0 ? Math.min(spec.maxVolume, 10.0) : 10.0;
+        const lotStep = spec && spec.volumeStep > 0 ? spec.volumeStep : 0.01;
+
+        const lossPerLot = (riskDist / tickSize) * tickValue;
+        if (lossPerLot <= 0) return minLot;
+
+        const riskAmount = equity * (riskPercent / 100.0);
+        let lot = riskAmount / lossPerLot;
+        lot = Math.max(minLot, Math.min(maxLot, lot));
+        lot = Math.floor(lot / lotStep) * lotStep;
+
+        return parseFloat(lot.toFixed(2));
+    }
+
+    // Update D1 Macro Filter (Previous Day Close)
+    async updateMacroD1Filter(connection, symbol) {
+        try {
+            const candles = await connection.getHistoricalCandles(symbol, '1d', null, 2);
+            if (candles && candles.length >= 2) {
+                this.dailyClose[symbol] = candles[candles.length - 2].close;
+            }
+        } catch (e) {
+            // Quiet fallback
+        }
+    }
+
+    // Update 15M Structure & Fair Value Gaps
+    async update15MStructure(connection, symbol) {
+        try {
+            const r15 = await connection.getHistoricalCandles(symbol, '15m', null, 30);
+            if (!r15 || r15.length < 25) return;
+
+            const n = r15.length;
+            const lastClosed = r15[n - 2];
+            const prevClosed = r15[n - 3];
+            const c1 = lastClosed.close;
+            const c2 = prevClosed.close;
+
+            // 1. Fractal Swings (Lookback = 3)
+            const lookback = 3;
+            for (let i = n - 2; i >= lookback + 2; i--) {
+                let isHigh = true;
+                let isLow = true;
+                for (let k = 1; k <= lookback; k++) {
+                    if (r15[i].high <= r15[i - k].high || r15[i].high < r15[i + k].high) isHigh = false;
+                    if (r15[i].low >= r15[i - k].low || r15[i].low > r15[i + k].low) isLow = false;
+                }
+                if (isHigh && !this.swingHigh[symbol]) this.swingHigh[symbol] = r15[i].high;
+                if (isLow && !this.swingLow[symbol]) this.swingLow[symbol] = r15[i].low;
+                if (this.swingHigh[symbol] && this.swingLow[symbol]) break;
+            }
+
+            // 2. Trend & BOS Check
+            const pdc = this.dailyClose[symbol] || 0;
+            const macroBull = (pdc === 0) || (c1 > pdc);
+            const macroBear = (pdc === 0) || (c1 < pdc);
+
+            const bullishBOS = macroBull && (this.swingHigh[symbol] > 0) && (c1 > this.swingHigh[symbol]) && (c2 <= this.swingHigh[symbol]);
+            const bearishBOS = macroBear && (this.swingLow[symbol] > 0) && (c1 < this.swingLow[symbol]) && (c2 >= this.swingLow[symbol]);
+
+            if (bullishBOS || bearishBOS) {
+                if (!this.zones[symbol]) this.zones[symbol] = [];
+                let fvgCount = 0;
+
+                for (let k = n - 2; k >= n - 15 && fvgCount < 2; k--) {
+                    if (bullishBOS && r15[k] && r15[k - 2]) {
+                        if (r15[k].low > r15[k - 2].high) {
+                            this.zones[symbol].push({
+                                direction: 1, // Bullish
+                                zoneTop: r15[k].low,
+                                zoneBottom: r15[k - 1].low,
+                                isActive: true,
+                                ageBars: 0,
+                                lastOppHigh: 0,
+                                cand1Seen: false
+                            });
+                            fvgCount++;
+                        }
+                    } else if (bearishBOS && r15[k] && r15[k - 2]) {
+                        if (r15[k].high < r15[k - 2].low) {
+                            this.zones[symbol].push({
+                                direction: -1, // Bearish
+                                zoneBottom: r15[k].high,
+                                zoneTop: r15[k - 1].high,
+                                isActive: true,
+                                ageBars: 0,
+                                lastOppLow: 0,
+                                cand1Seen: false
+                            });
+                            fvgCount++;
+                        }
+                    }
+                }
+
+                if (bullishBOS) this.swingHigh[symbol] = lastClosed.high;
+                if (bearishBOS) this.swingLow[symbol] = lastClosed.low;
+            }
+        } catch (e) {
+            // Handle streaming data quietly
+        }
+    }
+
     async scanMarket(connection) {
+        if (this.isScanning) return;
+        this.isScanning = true;
+
         try {
             const terminalState = connection.terminalState;
+
             for (const sym of SYMBOLS) {
-                const price = terminalState.price(sym);
-                if (!price) continue;
+                const price = terminalState ? terminalState.price(sym) : null;
+                if (!price || !price.bid || !price.ask) continue;
 
                 const now = new Date();
                 const secondsIn5M = (now.getMinutes() % 5) * 60 + now.getSeconds();
                 const secondsRemaining = 300 - secondsIn5M;
 
-                // Pre-close trigger: check within final 5 seconds of the 5M candle
+                // 1. Maintain 15M Structure periodically (once per minute)
+                if (now.getSeconds() === 0) {
+                    await this.updateMacroD1Filter(connection, sym);
+                    await this.update15MStructure(connection, sym);
+                }
+
+                // 2. Pre-close trigger: check within final 5 seconds of the 5M candle
                 if (secondsRemaining <= PRE_CLOSE_SECONDS) {
                     const currentBarKey = `${sym}-${now.getUTCHours()}:${Math.floor(now.getUTCMinutes() / 5) * 5}`;
-                    if (this.lastTraded5MTime === currentBarKey) continue;
-                    this.lastTraded5MTime = currentBarKey;
+                    if (this.lastTraded5MTime[sym] === currentBarKey) continue;
+                    this.lastTraded5MTime[sym] = currentBarKey;
 
-                    // Evaluate 15M FVG + 5M confirmation setup
+                    // Evaluate and execute 5M confirmation trade inside active FVG
                     await this.evaluateSetup(connection, sym, price);
                 }
             }
         } catch (e) {
             console.error('Scan error:', e.message);
+        } finally {
+            this.isScanning = false;
         }
     }
 
     async evaluateSetup(connection, symbol, currentPrice) {
-        // Implementation executes 1% dynamic risk order on MetaApi
-        console.log(`[LitmusTrend Signal Scanner] Checking 5s pre-close confirmation on ${symbol}... Current Price: Bid=${currentPrice.bid}, Ask=${currentPrice.ask}`);
+        try {
+            const zones = this.zones[symbol] || [];
+            if (zones.length === 0) return;
+
+            // Check current open positions count
+            const positions = connection.terminalState ? connection.terminalState.positions : [];
+            const openCount = positions ? positions.filter(p => p.symbol === symbol && p.magic === MAGIC_NUMBER).length : 0;
+            if (openCount >= MAX_CONCURRENT_POSITIONS) return;
+
+            // Fetch last 3 5M candles
+            const r5 = await connection.getHistoricalCandles(symbol, '5m', null, 4);
+            if (!r5 || r5.length < 3) return;
+
+            const c5 = r5[r5.length - 1]; // Forming candle (within final 5s of close)
+            const o1 = c5.open, h1 = c5.high, l1 = c5.low, cl1 = c5.close;
+            const isBull5M = cl1 > o1;
+            const isBear5M = cl1 < o1;
+
+            for (const zone of zones) {
+                if (!zone.isActive) continue;
+
+                zone.ageBars = (zone.ageBars || 0) + 1;
+                if (zone.ageBars > 150) {
+                    zone.isActive = false;
+                    continue;
+                }
+
+                // --- BEARISH SETUP (Waiting for 5M reversal inside Bearish FVG) ---
+                if (zone.direction === -1) {
+                    const inZone = (h1 >= zone.zoneBottom);
+                    if (!inZone && (!zone.lastOppLow || zone.lastOppLow === 0)) continue;
+
+                    if (isBull5M) {
+                        zone.lastOppLow = l1;
+                        zone.cand1Seen = false;
+                        continue;
+                    } else if (isBear5M && zone.lastOppLow > 0) {
+                        let trigger = false;
+                        if (cl1 < zone.lastOppLow) trigger = true;
+                        else if (!zone.cand1Seen) {
+                            zone.cand1Seen = true;
+                            continue;
+                        } else if (zone.cand1Seen) {
+                            trigger = true;
+                        }
+
+                        if (trigger) {
+                            const entryPrice = currentPrice.bid;
+                            let slPrice = zone.zoneTop;
+                            const minSlDist = (symbol.includes('BTC') || symbol.includes('NAS')) ? 5.0 : 0.50;
+                            if (slPrice < entryPrice + minSlDist) slPrice = entryPrice + minSlDist;
+
+                            const riskDist = slPrice - entryPrice;
+                            const lots = this.calculateLotSize(connection, symbol, entryPrice, slPrice, RISK_PERCENT);
+
+                            console.log(`[ORDER EXECUTION] Placing SELL on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
+                            const result = await connection.createMarketSellOrder(symbol, lots, slPrice, 0, {
+                                comment: `Ladder5M Risk:${riskDist.toFixed(2)}`,
+                                magic: MAGIC_NUMBER
+                            });
+
+                            console.log(`[SELL ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
+                            zone.isActive = false;
+                            break;
+                        }
+                    }
+                }
+                // --- BULLISH SETUP (Waiting for 5M reversal inside Bullish FVG) ---
+                else if (zone.direction === 1) {
+                    const inZone = (l1 <= zone.zoneTop);
+                    if (!inZone && (!zone.lastOppHigh || zone.lastOppHigh === 0)) continue;
+
+                    if (isBear5M) {
+                        zone.lastOppHigh = h1;
+                        zone.cand1Seen = false;
+                        continue;
+                    } else if (isBull5M && zone.lastOppHigh > 0) {
+                        let trigger = false;
+                        if (cl1 > zone.lastOppHigh) trigger = true;
+                        else if (!zone.cand1Seen) {
+                            zone.cand1Seen = true;
+                            continue;
+                        } else if (zone.cand1Seen) {
+                            trigger = true;
+                        }
+
+                        if (trigger) {
+                            const entryPrice = currentPrice.ask;
+                            let slPrice = zone.zoneBottom;
+                            const minSlDist = (symbol.includes('BTC') || symbol.includes('NAS')) ? 5.0 : 0.50;
+                            if (slPrice > entryPrice - minSlDist) slPrice = entryPrice - minSlDist;
+
+                            const riskDist = entryPrice - slPrice;
+                            const lots = this.calculateLotSize(connection, symbol, entryPrice, slPrice, RISK_PERCENT);
+
+                            console.log(`[ORDER EXECUTION] Placing BUY on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
+                            const result = await connection.createMarketBuyOrder(symbol, lots, slPrice, 0, {
+                                comment: `Ladder5M Risk:${riskDist.toFixed(2)}`,
+                                magic: MAGIC_NUMBER
+                            });
+
+                            console.log(`[BUY ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
+                            zone.isActive = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(`[Trade Execution Error] on ${symbol}:`, e.message);
+        }
     }
 
     async manageOpenPositions(connection) {
         try {
-            const positions = connection.terminalState.positions;
+            const positions = connection.terminalState ? connection.terminalState.positions : [];
             if (!positions || positions.length === 0) return;
 
             for (const pos of positions) {
-                if (!SYMBOLS.some(s => s.toLowerCase() === pos.symbol.toLowerCase())) continue;
+                if (pos.magic !== MAGIC_NUMBER) continue;
 
                 const openPrice = pos.openPrice;
                 const currentPrice = pos.currentPrice;
                 const sl = pos.stopLoss;
 
-                // Extract risk distance from comment or initial SL
-                const riskDist = Math.abs(openPrice - sl);
+                // Extract risk distance from comment: "Ladder5M Risk:1.25"
+                let riskDist = 0;
+                if (pos.comment && pos.comment.includes('Risk:')) {
+                    const match = pos.comment.match(/Risk:([0-9.]+)/);
+                    if (match && match[1]) riskDist = parseFloat(match[1]);
+                }
+                if (riskDist <= 0 && sl > 0) {
+                    riskDist = Math.abs(openPrice - sl);
+                }
                 if (riskDist <= 0) continue;
 
                 let curR = 0;
@@ -126,13 +381,13 @@ class LitmusCloudEngine {
                     if (pos.type === 'POSITION_TYPE_BUY') {
                         targetSL = openPrice + (lockedR * riskDist);
                         if (targetSL > sl + 0.05) {
-                            console.log(`[Ladder Trail] Moving BUY SL to Lock +${lockedR}R (Target SL: ${targetSL})`);
+                            console.log(`[Ladder Trail] Moving BUY SL on ${pos.symbol} to Lock +${lockedR}R (New SL: ${targetSL.toFixed(2)})`);
                             await connection.modifyPosition(pos.id, targetSL, pos.takeProfit);
                         }
                     } else if (pos.type === 'POSITION_TYPE_SELL') {
                         targetSL = openPrice - (lockedR * riskDist);
                         if (targetSL < sl - 0.05 || sl === 0) {
-                            console.log(`[Ladder Trail] Moving SELL SL to Lock +${lockedR}R (Target SL: ${targetSL})`);
+                            console.log(`[Ladder Trail] Moving SELL SL on ${pos.symbol} to Lock +${lockedR}R (New SL: ${targetSL.toFixed(2)})`);
                             await connection.modifyPosition(pos.id, targetSL, pos.takeProfit);
                         }
                     }
@@ -147,7 +402,7 @@ class LitmusCloudEngine {
 module.exports = LitmusCloudEngine;
 
 if (require.main === module) {
-    // Lightweight HTTP health check listener for Railway / Cloud deployment
+    // Lightweight HTTP health check listener for Render / Cloud deployment
     const http = require('http');
     const port = process.env.PORT || 3000;
     http.createServer((req, res) => {
@@ -155,7 +410,9 @@ if (require.main === module) {
         res.end(JSON.stringify({
             status: 'online',
             service: 'LitmusTrend Cloud Engine',
+            strategy: 'Option C (1% Dynamic Risk + Stepped Ladder)',
             symbols: SYMBOLS,
+            magicNumber: MAGIC_NUMBER,
             riskPercent: RISK_PERCENT,
             uptime: process.uptime()
         }));

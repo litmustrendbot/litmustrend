@@ -54,27 +54,41 @@ class LitmusCloudEngine {
 
     async start() {
         console.log(`[LitmusTrend Cloud Engine] Starting for Account: ${this.accountId}...`);
-        try {
-            const account = await this.metaApi.metatraderAccountApi.getAccount(this.accountId);
-            await account.waitConnected();
-            const connection = account.getStreamingConnection();
-            await connection.connect();
-            await connection.waitSynchronized();
-            console.log(`[LitmusTrend Cloud Engine] Synchronized with Broker! Multi-symbol scanning active on: ${SYMBOLS.join(', ')}...`);
+        
+        let connected = false;
+        while (!connected) {
+            try {
+                const account = await this.metaApi.metatraderAccountApi.getAccount(this.accountId);
+                
+                // If account state is undeployed, deploy it
+                if (account.state !== 'DEPLOYED') {
+                    console.log(`[LitmusTrend] Account state: ${account.state}. Requesting deployment...`);
+                    try { await account.deploy(); } catch (e) {}
+                }
 
-            // Initialize symbol zones
-            for (const sym of SYMBOLS) {
-                this.zones[sym] = [];
+                await account.waitConnected();
+                const connection = account.getStreamingConnection();
+                await connection.connect();
+                await connection.waitSynchronized();
+                console.log(`[LitmusTrend Cloud Engine] Synchronized with Broker! Multi-symbol scanning active on: ${SYMBOLS.join(', ')}...`);
+
+                connected = true;
+
+                // Initialize symbol zones
+                for (const sym of SYMBOLS) {
+                    this.zones[sym] = [];
+                }
+
+                // Start Market Structure & Signal Evaluation Loop (Runs every 1000ms)
+                setInterval(() => this.scanMarket(connection), 1000);
+                
+                // Start Stepped Ladder Trailing Loop (Runs every 2000ms)
+                setInterval(() => this.manageOpenPositions(connection), 2000);
+
+            } catch (err) {
+                console.log(`[LitmusTrend Cloud Engine Waiting] Waiting for MetaApi cloud activation (${err.message}). Retrying in 15 seconds...`);
+                await new Promise(r => setTimeout(r, 15000));
             }
-
-            // Start Market Structure & Signal Evaluation Loop (Runs every 1000ms)
-            setInterval(() => this.scanMarket(connection), 1000);
-            
-            // Start Stepped Ladder Trailing Loop (Runs every 2000ms)
-            setInterval(() => this.manageOpenPositions(connection), 2000);
-
-        } catch (err) {
-            console.error('[LitmusTrend Cloud Engine Error]:', err.message);
         }
     }
 

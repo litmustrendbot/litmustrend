@@ -11,7 +11,7 @@ function callMetaApi(path, method, payload, token) {
             port: 443,
             path: path,
             method: method,
-            timeout: 3500,
+            timeout: 12000,
             headers: {
                 'auth-token': token,
                 'Content-Type': 'application/json',
@@ -35,11 +35,11 @@ function callMetaApi(path, method, payload, token) {
 
         req.on('timeout', () => {
             try { req.destroy(); } catch (e) {}
-            resolve({ status: 200, data: { message: 'Cloud proxy active' } });
+            resolve({ status: 504, data: { message: 'Broker connection timed out. Please check your MT5 server name.' } });
         });
 
         req.on('error', (err) => {
-            resolve({ status: 200, data: { message: 'Gateway connected' } });
+            resolve({ status: 502, data: { message: 'Failed to contact broker gateway: ' + (err.message || 'Network error') } });
         });
 
         if (bodyStr) req.write(bodyStr);
@@ -95,12 +95,12 @@ module.exports = async (req, res) => {
             const metaRes = await callMetaApi('/users/current/accounts', 'POST', provisionPayload, metaApiToken);
             const errMsg = metaRes.data && metaRes.data.message ? metaRes.data.message : '';
 
-            // If MetaApi returns a cloud provider billing / top-up quota notice, gracefully register account
-            if (errMsg.toLowerCase().includes('top up') || errMsg.toLowerCase().includes('reliability') || metaRes.status === 403) {
+            // MetaApi returns 200, 201, or 202 on valid broker credentials
+            if (metaRes.status === 200 || metaRes.status === 201 || metaRes.status === 202) {
                 return res.status(200).json({
                     success: true,
                     verified: true,
-                    accountId: `acc-${Date.now()}`,
+                    accountId: metaRes.data ? metaRes.data.id : account,
                     account: account,
                     server: server,
                     strategy: officialStrategy,
@@ -110,40 +110,17 @@ module.exports = async (req, res) => {
                 });
             }
 
-            // If MetaApi rejects invalid broker server or credentials
-            if (metaRes.status === 400 || metaRes.status === 401) {
-                const displayErr = errMsg || 'Invalid broker server or account credentials';
-                return res.status(400).json({
-                    success: false,
-                    verified: false,
-                    error: `Broker Verification Failed: ${displayErr}. Please verify your MT5 server and login.`
-                });
-            }
-
-            // MetaApi returns 200 or 202 (validation accepted/in progress)
-            return res.status(200).json({
-                success: true,
-                verified: true,
-                accountId: metaRes.data ? metaRes.data.id : account,
-                account: account,
-                server: server,
-                strategy: officialStrategy,
-                instrument: selectedInst,
-                broker_symbol: selectedBrokerSymbol,
-                message: 'MT5 account verified and attached to New Strategy execution engine'
+            // Real broker rejection: return 400 with the exact error from MetaApi / broker
+            return res.status(400).json({
+                success: false,
+                verified: false,
+                error: `Broker Connection Failed: ${errMsg || 'Invalid server, login, or password'}. The broker rejected this connection.`
             });
         }
 
-        // Standard verification fallback if token environment is not injected
-        return res.status(200).json({
-            success: true,
-            verified: true,
-            account: account,
-            server: server,
-            strategy: officialStrategy,
-            instrument: selectedInst,
-            broker_symbol: selectedBrokerSymbol,
-            message: 'MT5 credentials accepted and registered under New Strategy'
+        return res.status(500).json({
+            success: false,
+            error: 'MetaApi connection token is not configured on server'
         });
 
     } catch (err) {

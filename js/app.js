@@ -942,33 +942,9 @@ async function handleCreateAccount(e) {
             errEl.innerText = data.error || 'Authentication Failed: Broker rejected credentials. Please check your MT5 server and login.';
         }
     } catch (err) {
-        // Instant seamless fallback if network delay occurs
-        const newAcc = {
-            id: 'acc-' + Date.now(),
-            name,
-            strategy,
-            server,
-            login,
-            instrument,
-            brokerSymbol,
-            isPaused: false,
-            activeTrade: null,
-            trades: []
-        };
-
-        accounts.push(newAcc);
-        saveAccounts();
-
-        const form = document.getElementById('addAccountForm');
-        if (form) form.reset();
-        clearSelectedServer();
-
-        const addPage = document.getElementById('addAccountPage');
-        if (addPage) addPage.classList.add('hidden');
-        const activeEl = document.getElementById('activeAnalysis');
-        if (activeEl) activeEl.classList.remove('hidden');
-
-        selectAccount(newAcc.id);
+        if (errEl) {
+            errEl.innerText = 'Connection error: Unable to verify MT5 account with broker (' + (err.message || 'Network error') + '). Account was NOT added.';
+        }
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<span class="btn-icon-symbol">' + SVG_ICONS.bolt + '</span> <span class="btn-text">Create Account & Start Bot</span> <span class="btn-arrow">' + SVG_ICONS.arrowRight + '</span>';

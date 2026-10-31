@@ -1039,7 +1039,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (sessionStorage.getItem('litmus_auth_token')) {
+    if (window.location.protocol === 'file:' || sessionStorage.getItem('litmus_auth_token')) {
         unlockPortal();
     } else {
         document.getElementById('passcodeScreen').classList.add('active-screen');

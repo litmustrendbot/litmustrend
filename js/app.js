@@ -93,9 +93,9 @@ function loadAccounts() {
                     acc.strategy = 'New Strategy 1%';
                     changed = true;
                 }
-                if (acc.activeTrade) {
-                    acc.activeTrade.target = 'Stepped Ladder';
-                    acc.activeTrade.trailing = 'Active (+5.0R Locked)';
+                // Clear any mock placeholder trades so only real trades show
+                if (acc.activeTrade && (acc.activeTrade.entry === '68,450.00' || acc.activeTrade.entry === '2,740.20' || acc.activeTrade.entry === '19,742.50' || acc.activeTrade.entry === '2,740.10')) {
+                    acc.activeTrade = null;
                     changed = true;
                 }
             });
@@ -909,21 +909,6 @@ async function handleCreateAccount(e) {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            const isNas = instrument === 'NAS100';
-            const isBtc = instrument === 'BTCUSD';
-            let mockLots = '0.10';
-            let mockEntry = '2,740.20';
-            let mockPnl = '+$76.00';
-            if (isNas) {
-                mockLots = '0.20';
-                mockEntry = '19,742.50';
-                mockPnl = '+$84.00';
-            } else if (isBtc) {
-                mockLots = '0.01';
-                mockEntry = '68,450.00';
-                mockPnl = '+$95.00';
-            }
-
             const newAcc = {
                 id: 'acc-' + Date.now(),
                 name,
@@ -933,15 +918,7 @@ async function handleCreateAccount(e) {
                 instrument,
                 brokerSymbol,
                 isPaused: false,
-                activeTrade: {
-                    symbol: brokerSymbol,
-                    type: 'BUY',
-                    lots: mockLots,
-                    entry: mockEntry,
-                    target: 'Stepped Ladder',
-                    trailing: 'Active (+5.0R Locked)',
-                    pnl: mockPnl
-                },
+                activeTrade: null,
                 trades: []
             };
 
@@ -966,21 +943,6 @@ async function handleCreateAccount(e) {
         }
     } catch (err) {
         // Instant seamless fallback if network delay occurs
-        const isNas = instrument === 'NAS100';
-        const isBtc = instrument === 'BTCUSD';
-        let mockLots = '0.10';
-        let mockEntry = '2,740.20';
-        let mockPnl = '+$76.00';
-        if (isNas) {
-            mockLots = '0.20';
-            mockEntry = '19,742.50';
-            mockPnl = '+$84.00';
-        } else if (isBtc) {
-            mockLots = '0.01';
-            mockEntry = '68,450.00';
-            mockPnl = '+$95.00';
-        }
-
         const newAcc = {
             id: 'acc-' + Date.now(),
             name,
@@ -990,15 +952,7 @@ async function handleCreateAccount(e) {
             instrument,
             brokerSymbol,
             isPaused: false,
-            activeTrade: {
-                symbol: brokerSymbol,
-                type: 'BUY',
-                lots: mockLots,
-                entry: mockEntry,
-                target: 'Stepped Ladder',
-                trailing: 'Active (+5.0R Locked)',
-                pnl: mockPnl
-            },
+            activeTrade: null,
             trades: []
         };
 

@@ -87,7 +87,7 @@
                     <div>
                         <h2 id="viewAccName">Account Name</h2>
                         <div class="analysis-meta">
-                            <span id="viewStrategyText">New Strategy (15M FVG + 5M Confirmation)</span>
+                            <span id="viewStrategyText">New Strategy 1%</span>
                             <span class="meta-sep">&bull;</span>
                             <span id="viewServerText">Exness-MT5Real7</span>
                             <span class="meta-sep">&bull;</span>
@@ -189,7 +189,7 @@
                 <!-- TOP HEADER -->
                 <div class="page-top-bar">
                     <div>
-                        <h2 id="wizardHeadingText">New Strategy Engine</h2>
+                        <h2 id="wizardHeadingText">New Strategy 1%</h2>
                     </div>
                     <button type="button" class="btn-action" id="btnCancelAddPage" onclick="closeAddAccountPage()">← Back to Dashboard</button>
                 </div>
@@ -198,7 +198,7 @@
                 <div class="wizard-stepper">
                     <div class="wizard-step-node active" id="stepNode1" onclick="goToWizardStep(1)">
                         <span class="step-circle">1</span>
-                        <span class="step-label">Strategy Specifications</span>
+                        <span class="step-label">New Strategy 1%</span>
                     </div>
                     <div class="stepper-line" id="stepLine1"></div>
                     <div class="wizard-step-node" id="stepNode2" onclick="goToWizardStep(2)">
@@ -208,49 +208,13 @@
                 </div>
 
                 <!-- ==============================================================
-                     PANEL 1: NEW STRATEGY SHOWCASE
+                     PANEL 1: NEW STRATEGY 1%
                      ============================================================== -->
                 <div id="wizardPanel1" class="wizard-panel active-panel">
                     <div class="new-strategy-hero-card">
                         <div class="new-strategy-header-row">
                             <div class="new-strategy-title-group">
-                                <span class="choice-tag tag-newstrategy">OFFICIAL STRATEGY · 1% DYNAMIC RISK</span>
-                                <h3>New Strategy (Option C)</h3>
-                                <p>15-Minute Impulse FVG + 5-Minute Reversal Candle Confirmation</p>
-                            </div>
-                        </div>
-
-                        <div class="strategy-spec-grid">
-                            <div class="spec-box">
-                                <div class="spec-box-title">Market Structure</div>
-                                <div class="spec-box-val">15M Fractal BOS + PDC Macro Filter</div>
-                            </div>
-                            <div class="spec-box">
-                                <div class="spec-box-title">Entry Trigger</div>
-                                <div class="spec-box-val">5M Reversal Confirmation inside FVG</div>
-                            </div>
-                            <div class="spec-box">
-                                <div class="spec-box-title">Risk Sizing</div>
-                                <div class="spec-box-val">Dynamic 5.0% Equity Compounding</div>
-                            </div>
-                            <div class="spec-box">
-                                <div class="spec-box-title">Stop Loss</div>
-                                <div class="spec-box-val">Structural FVG Boundary (Option C)</div>
-                            </div>
-                        </div>
-
-                        <div class="ladder-tiers-wrap">
-                            <div class="ladder-tiers-label">User Stepped Trailing Stop Ladder:</div>
-                            <div class="ladder-pills-row">
-                                <span class="ladder-pill highlight">1:3 Break-Even (0R)</span>
-                                <span class="ladder-pill highlight">1:5 → Locks +1R</span>
-                                <span class="ladder-pill highlight">1:9 → Locks +5R</span>
-                                <span class="ladder-pill highlight">1:10 → Locks +6R</span>
-                                <span class="ladder-pill highlight">1:13 → Locks +10R</span>
-                                <span class="ladder-pill highlight">1:15 → Locks +11R</span>
-                                <span class="ladder-pill highlight">1:19 → Locks +15R</span>
-                                <span class="ladder-pill highlight">1:20 → Locks +16R</span>
-                                <span class="ladder-pill">Mega-Runners (Trail -4R)</span>
+                                <h3>New Strategy 1%</h3>
                             </div>
                         </div>
 
@@ -269,17 +233,17 @@
                 <div id="wizardPanel2" class="wizard-panel hidden">
                     
                     <div class="step-nav-bar">
-                        <button type="button" class="btn-step-back" onclick="goToWizardStep(1)">← Back to Strategy</button>
+                        <button type="button" class="btn-step-back" onclick="goToWizardStep(1)">← Back</button>
                         <span class="active-choice-chip" id="panel2StrategyBadge">
                             <span class="dot-indicator"></span>
-                            <span id="panel2StrategyName">New Strategy (1% Dynamic Risk)</span>
+                            <span id="panel2StrategyName">New Strategy 1%</span>
                         </span>
                     </div>
 
                     <div class="seamless-form-wrap">
                         <form id="addAccountForm" onsubmit="handleCreateAccount(event)">
                             
-                            <input type="hidden" id="accStrategy" value="New Strategy (1% Dynamic Risk)" required>
+                            <input type="hidden" id="accStrategy" value="New Strategy 1%" required>
 
                             <!-- ACCOUNT NAME -->
                             <div class="form-group">

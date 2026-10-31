@@ -89,8 +89,8 @@ function loadAccounts() {
             // Migrate all accounts strictly to New Strategy
             let changed = false;
             accounts.forEach(acc => {
-                if (acc.strategy !== 'New Strategy (1% Dynamic Risk)') {
-                    acc.strategy = 'New Strategy (1% Dynamic Risk)';
+                if (acc.strategy !== 'New Strategy 1%') {
+                    acc.strategy = 'New Strategy 1%';
                     changed = true;
                 }
                 if (acc.activeTrade) {
@@ -297,7 +297,7 @@ function selectAccount(accountId) {
     // Populate header
     document.getElementById('viewAccName').innerText = acc.name;
     const instLabel = acc.brokerSymbol ? `${acc.instrument || 'XAUUSD'} [${acc.brokerSymbol}]` : (acc.instrument || 'XAUUSD');
-    document.getElementById('viewStrategyText').innerText = `New Strategy (15M FVG + 5M Confirmation) • ${instLabel}`;
+    document.getElementById('viewStrategyText').innerText = `New Strategy 1% • ${instLabel}`;
     document.getElementById('viewServerText').innerText = acc.server;
     document.getElementById('viewLoginText').innerText = acc.login;
 
@@ -743,7 +743,7 @@ function goToWizardStep(stepNum) {
     // Update headers
     const headingText = document.getElementById('wizardHeadingText');
     if (headingText) {
-        headingText.innerText = (stepNum === 1) ? 'New Strategy Engine' : 'Connect MT5 Account';
+        headingText.innerText = (stepNum === 1) ? 'New Strategy 1%' : 'Connect MT5 Account';
     }
 
     if (stepNum === 2) {
@@ -873,7 +873,7 @@ async function handleCreateAccount(e) {
     e.preventDefault();
 
     const name = document.getElementById('accName').value.trim();
-    const strategy = 'New Strategy (1% Dynamic Risk)';
+    const strategy = 'New Strategy 1%';
     const server = document.getElementById('accServer').value.trim();
     const login = document.getElementById('accLogin').value.trim();
     const password = document.getElementById('accPassword').value.trim();

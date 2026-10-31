@@ -142,10 +142,27 @@ class LitmusCloudEngine {
 module.exports = LitmusCloudEngine;
 
 if (require.main === module) {
+    // Lightweight HTTP health check listener for Railway / Cloud deployment
+    const http = require('http');
+    const port = process.env.PORT || 3000;
+    http.createServer((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            status: 'online',
+            service: 'LitmusTrend Cloud Engine',
+            symbol: SYMBOL,
+            riskPercent: RISK_PERCENT,
+            uptime: process.uptime()
+        }));
+    }).listen(port, () => {
+        console.log(`[LitmusTrend Cloud Engine] Health server listening on port ${port}`);
+    });
+
+    const activeAccountId = process.env.METAAPI_ACCOUNT_ID || '3b5afbf5-6e0f-43c5-9865-778b26e34d64';
     if (!METAAPI_TOKEN) {
         console.log('[Notice] Set METAAPI_TOKEN in environment to start live cloud trading.');
     } else {
-        const engine = new LitmusCloudEngine(METAAPI_TOKEN, process.env.METAAPI_ACCOUNT_ID);
+        const engine = new LitmusCloudEngine(METAAPI_TOKEN, activeAccountId);
         engine.start();
     }
 }

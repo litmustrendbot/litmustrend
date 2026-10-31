@@ -1,0 +1,15 @@
+{
+  "name": "litmustrend-engine",
+  "version": "1.0.0",
+  "description": "LitmusTrend 24/7 Cloud Trading Engine",
+  "main": "cloud_trading_engine.js",
+  "scripts": {
+    "start": "node cloud_trading_engine.js"
+  },
+  "dependencies": {
+    "metaapi.cloud-sdk": "^27.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

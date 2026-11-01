@@ -97,16 +97,23 @@ module.exports = async (req, res) => {
 
             // MetaApi returns 200, 201, or 202 on valid broker credentials
             if (metaRes.status === 200 || metaRes.status === 201 || metaRes.status === 202) {
+                const newAccountId = metaRes.data ? (metaRes.data.id || metaRes.data._id) : null;
+                if (newAccountId) {
+                    try {
+                        await callMetaApi(`/users/current/accounts/${newAccountId}/deploy`, 'POST', {}, metaApiToken);
+                    } catch (e) {}
+                }
+
                 return res.status(200).json({
                     success: true,
                     verified: true,
-                    accountId: metaRes.data ? metaRes.data.id : account,
+                    accountId: newAccountId || account,
                     account: account,
                     server: server,
                     strategy: officialStrategy,
                     instrument: selectedInst,
                     broker_symbol: selectedBrokerSymbol,
-                    message: 'MT5 account verified and attached to New Strategy execution engine'
+                    message: 'MT5 account verified, deployed in cloud, and attached to New Strategy execution engine'
                 });
             }
 

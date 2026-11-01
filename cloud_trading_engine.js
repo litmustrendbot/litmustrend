@@ -43,6 +43,7 @@ class LitmusCloudEngine {
         this.token = token;
         this.accountId = accountId;
         this.metaApi = new MetaApi(token);
+        this.activeEngines = new Map();
         this.zones = {}; // Per-symbol FVG POI zones
         this.dailyClose = {}; // Per-symbol Previous Day Close (PDC)
         this.swingHigh = {};
@@ -53,46 +54,71 @@ class LitmusCloudEngine {
     }
 
     async start() {
-        console.log(`[LitmusTrend Cloud Engine] Starting for Account: ${this.accountId}...`);
-        
-        let connected = false;
-        while (!connected) {
-            try {
-                const account = await this.metaApi.metatraderAccountApi.getAccount(this.accountId);
-                
-                // If account state is undeployed, deploy it
-                if (account.state !== 'DEPLOYED') {
-                    console.log(`[LitmusTrend] Account state: ${account.state}. Requesting deployment...`);
-                    try { await account.deploy(); } catch (e) {}
+        console.log(`[LitmusTrend Cloud Engine] Starting Multi-Account Cloud Engine Coordinator...`);
+
+        const attachAccount = async (accId) => {
+            if (this.activeEngines.has(accId)) return;
+            this.activeEngines.set(accId, true);
+
+            let connected = false;
+            while (!connected) {
+                try {
+                    const account = await this.metaApi.metatraderAccountApi.getAccount(accId);
+
+                    // If account state is undeployed, deploy it
+                    if (account.state !== 'DEPLOYED') {
+                        console.log(`[LitmusTrend] Account ${accId} state: ${account.state}. Requesting deployment...`);
+                        try { await account.deploy(); } catch (e) {}
+                    }
+
+                    await account.waitConnected();
+                    const connection = account.getStreamingConnection();
+                    await connection.connect();
+                    await connection.waitSynchronized();
+                    console.log(`[LitmusTrend Cloud Engine] Account ${account.login || accId} Synchronized with Broker! Scanning active on: ${SYMBOLS.join(', ')}...`);
+
+                    connected = true;
+
+                    // Initialize symbol zones
+                    for (const sym of SYMBOLS) {
+                        if (!this.zones[sym]) this.zones[sym] = [];
+                    }
+
+                    // Start Market Structure & Signal Evaluation Loop (Runs every 1000ms)
+                    setInterval(() => this.scanMarket(connection), 1000);
+
+                    // Start Stepped Ladder Trailing Loop (Runs every 2000ms)
+                    setInterval(() => this.manageOpenPositions(connection), 2000);
+
+                    // Start Web Dashboard Sync Telemetry Loop (Runs every 8000ms)
+                    setInterval(() => this.syncHeartbeat(connection), 8000);
+
+                } catch (err) {
+                    console.log(`[LitmusTrend Cloud Engine Waiting] Account ${accId} waiting (${err.message}). Retrying in 15 seconds...`);
+                    await new Promise(r => setTimeout(r, 15000));
                 }
-
-                await account.waitConnected();
-                const connection = account.getStreamingConnection();
-                await connection.connect();
-                await connection.waitSynchronized();
-                console.log(`[LitmusTrend Cloud Engine] Synchronized with Broker! Multi-symbol scanning active on: ${SYMBOLS.join(', ')}...`);
-
-                connected = true;
-
-                // Initialize symbol zones
-                for (const sym of SYMBOLS) {
-                    this.zones[sym] = [];
-                }
-
-                // Start Market Structure & Signal Evaluation Loop (Runs every 1000ms)
-                setInterval(() => this.scanMarket(connection), 1000);
-                
-                // Start Stepped Ladder Trailing Loop (Runs every 2000ms)
-                setInterval(() => this.manageOpenPositions(connection), 2000);
-
-                // Start Web Dashboard Sync Telemetry Loop (Runs every 8000ms)
-                setInterval(() => this.syncHeartbeat(connection), 8000);
-
-            } catch (err) {
-                console.log(`[LitmusTrend Cloud Engine Waiting] Waiting for MetaApi cloud activation (${err.message}). Retrying in 15 seconds...`);
-                await new Promise(r => setTimeout(r, 15000));
             }
+        };
+
+        // Attach primary account immediately
+        if (this.accountId) {
+            attachAccount(this.accountId);
         }
+
+        // Periodically discover any new accounts added through the web dashboard
+        setInterval(async () => {
+            try {
+                const accounts = await this.metaApi.metatraderAccountApi.getAccounts();
+                for (const acc of accounts) {
+                    if ((acc.state === 'DEPLOYED' || acc.connectionStatus === 'CONNECTED') && !this.activeEngines.has(acc.id)) {
+                        console.log(`[LitmusTrend] Discovered new active account from Dashboard: ${acc.login} (${acc.id})! Attaching trading engine...`);
+                        attachAccount(acc.id);
+                    }
+                }
+            } catch (pollErr) {
+                // Silently keep polling
+            }
+        }, 30000);
     }
 
     async syncHeartbeat(connection) {

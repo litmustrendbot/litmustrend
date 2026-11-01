@@ -476,6 +476,13 @@ function deleteCurrentAccount() {
     if (!acc) return;
 
     if (confirm(`Remove "${acc.name}" from the trading workspace?`)) {
+        // Fire-and-forget backend undeploy from MetaApi cloud container
+        fetch('/api/portal/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accountId: acc.metaAccountId || acc.id, login: acc.login })
+        }).catch(err => console.warn('MetaApi cloud cleanup notice:', err));
+
         accounts = accounts.filter(a => a.id !== selectedAccountId);
         saveAccounts();
         selectedAccountId = accounts.length > 0 ? accounts[0].id : null;

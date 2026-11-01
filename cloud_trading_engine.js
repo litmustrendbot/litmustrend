@@ -38,6 +38,14 @@ function getLadderLockedR(maxR) {
     return -1.0;
 }
 
+const engineLogs = [];
+function addEngineLog(msg) {
+    const entry = `[${new Date().toISOString()}] ${msg}`;
+    console.log(entry);
+    engineLogs.push(entry);
+    if (engineLogs.length > 50) engineLogs.shift();
+}
+
 class LitmusCloudEngine {
     constructor(token, accountId) {
         this.token = token;
@@ -55,29 +63,34 @@ class LitmusCloudEngine {
     }
 
     async start() {
-        console.log(`[LitmusTrend Cloud Engine] Starting Multi-Account Cloud Engine Coordinator...`);
+        addEngineLog(`Starting Multi-Account Cloud Engine Coordinator...`);
 
         const attachAccount = async (accId) => {
             if (this.activeEngines.has(accId)) return;
             this.activeEngines.set(accId, true);
+            addEngineLog(`Attempting to attach account: ${accId}...`);
 
             let retries = 0;
             while (retries < 15) {
                 try {
                     const account = await this.metaApi.metatraderAccountApi.getAccount(accId);
-                    if (!account) break;
+                    if (!account) {
+                        addEngineLog(`Account ${accId} not found in MetaApi`);
+                        break;
+                    }
 
                     // If account state is undeployed, deploy it
                     if (account.state !== 'DEPLOYED') {
-                        console.log(`[LitmusTrend] Account ${accId} state: ${account.state}. Requesting deployment...`);
+                        addEngineLog(`Account ${accId} state: ${account.state}. Requesting deployment...`);
                         try { await account.deploy(); } catch (e) {}
                     }
 
+                    addEngineLog(`Waiting for account ${account.login || accId} to connect to broker...`);
                     await account.waitConnected();
                     const connection = account.getStreamingConnection();
                     await connection.connect();
                     await connection.waitSynchronized();
-                    console.log(`[LitmusTrend Cloud Engine] Account ${account.login || accId} Synchronized with Broker! Scanning active on: ${SYMBOLS.join(', ')}...`);
+                    addEngineLog(`Account ${account.login || accId} Synchronized with Broker! Scanning active on: ${SYMBOLS.join(', ')}...`);
 
                     this.attachedAccounts.push({
                         id: account.id,
@@ -105,7 +118,7 @@ class LitmusCloudEngine {
 
                 } catch (err) {
                     retries++;
-                    console.log(`[LitmusTrend Cloud Engine Waiting] Account ${accId} waiting (${err.message}). Retrying in 15 seconds (attempt ${retries}/15)...`);
+                    addEngineLog(`Account ${accId} waiting (${err.message}). Retrying in 15 seconds (attempt ${retries}/15)...`);
                     await new Promise(r => setTimeout(r, 15000));
                 }
             }
@@ -114,14 +127,15 @@ class LitmusCloudEngine {
         const discoverAccounts = async () => {
             try {
                 const accounts = await this.metaApi.metatraderAccountApi.getAccounts();
+                addEngineLog(`Discovered ${accounts.length} accounts from MetaApi provisioning`);
                 for (const acc of accounts) {
                     if ((acc.state === 'DEPLOYED' || acc.connectionStatus === 'CONNECTED') && !this.activeEngines.has(acc.id)) {
-                        console.log(`[LitmusTrend] Discovered new active account from Dashboard: ${acc.login} (${acc.id})! Attaching trading engine...`);
+                        addEngineLog(`Discovered active account: ${acc.login} (${acc.id})! Attaching...`);
                         attachAccount(acc.id);
                     }
                 }
             } catch (pollErr) {
-                // Silently keep polling
+                addEngineLog(`Discovery error: ${pollErr.message}`);
             }
         };
 
@@ -581,15 +595,16 @@ if (require.main === module) {
             riskPercent: RISK_PERCENT,
             attachedAccounts: engine ? engine.attachedAccounts : [],
             activeEnginesCount: engine ? engine.attachedAccounts.length : 0,
-            uptime: process.uptime()
+            uptime: process.uptime(),
+            logs: engineLogs
         }));
     }).listen(port, () => {
-        console.log(`[LitmusTrend Cloud Engine] Health server listening on port ${port}`);
+        addEngineLog(`Health server listening on port ${port}`);
     });
 
-    const activeAccountId = process.env.METAAPI_ACCOUNT_ID || null;
+    const activeAccountId = process.env.METAAPI_ACCOUNT_ID || '577b0f29-4dc8-45d9-8b47-3472811e1fc7';
     if (!METAAPI_TOKEN) {
-        console.log('[Notice] Set METAAPI_TOKEN in environment to start live cloud trading.');
+        addEngineLog('[Notice] Set METAAPI_TOKEN in environment to start live cloud trading.');
     } else {
         engine = new LitmusCloudEngine(METAAPI_TOKEN, activeAccountId);
         engine.start();

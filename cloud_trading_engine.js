@@ -85,11 +85,60 @@ class LitmusCloudEngine {
                 // Start Stepped Ladder Trailing Loop (Runs every 2000ms)
                 setInterval(() => this.manageOpenPositions(connection), 2000);
 
+                // Start Web Dashboard Sync Telemetry Loop (Runs every 8000ms)
+                setInterval(() => this.syncHeartbeat(connection), 8000);
+
             } catch (err) {
                 console.log(`[LitmusTrend Cloud Engine Waiting] Waiting for MetaApi cloud activation (${err.message}). Retrying in 15 seconds...`);
                 await new Promise(r => setTimeout(r, 15000));
             }
         }
+    }
+
+    async syncHeartbeat(connection) {
+        try {
+            const accInfo = connection.terminalState ? connection.terminalState.accountInformation : null;
+            if (!accInfo) return;
+            const positions = connection.terminalState ? connection.terminalState.positions : [];
+            let activeTrade = null;
+            if (positions && positions.length > 0) {
+                const p = positions[0];
+                activeTrade = {
+                    symbol: p.symbol,
+                    type: p.type === 'POSITION_TYPE_BUY' ? 'BUY' : 'SELL',
+                    lots: p.volume,
+                    entry: p.openPrice ? p.openPrice.toFixed(2) : '-',
+                    target: 'Stepped Ladder',
+                    trailing: p.stopLoss ? `SL: ${p.stopLoss.toFixed(2)}` : 'Initial SL',
+                    pnl: `${p.unrealizedProfit >= 0 ? '+' : ''}$${(p.unrealizedProfit || 0).toFixed(2)}`
+                };
+            }
+            this.sendSyncPayload({
+                login: String(accInfo.login || '81816344'),
+                server: accInfo.server || 'Exness-MT5Trial10',
+                balance: accInfo.balance,
+                equity: accInfo.equity,
+                event: 'HEARTBEAT',
+                activeTrade
+            });
+        } catch (e) {}
+    }
+
+    sendSyncPayload(payload) {
+        try {
+            const https = require('https');
+            const data = JSON.stringify(payload);
+            const req = https.request('https://litmustrend.vercel.app/api/portal/sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(data)
+                }
+            }, () => {});
+            req.on('error', () => {});
+            req.write(data);
+            req.end();
+        } catch (e) {}
     }
 
     // Dynamic 1.0% Lot Sizing
@@ -309,6 +358,20 @@ class LitmusCloudEngine {
 
                             console.log(`[SELL ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
                             zone.isActive = false;
+                            this.sendSyncPayload({
+                                login: '81816344',
+                                server: 'Exness-MT5Trial10',
+                                event: 'OPEN',
+                                activeTrade: {
+                                    symbol: symbol,
+                                    type: 'SELL',
+                                    lots: lots,
+                                    entry: entryPrice.toFixed(2),
+                                    target: 'Stepped Ladder',
+                                    trailing: 'Initial SL',
+                                    pnl: '+$0.00'
+                                }
+                            });
                             break;
                         }
                     }
@@ -349,6 +412,20 @@ class LitmusCloudEngine {
 
                             console.log(`[BUY ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
                             zone.isActive = false;
+                            this.sendSyncPayload({
+                                login: '81816344',
+                                server: 'Exness-MT5Trial10',
+                                event: 'OPEN',
+                                activeTrade: {
+                                    symbol: symbol,
+                                    type: 'BUY',
+                                    lots: lots,
+                                    entry: entryPrice.toFixed(2),
+                                    target: 'Stepped Ladder',
+                                    trailing: 'Initial SL',
+                                    pnl: '+$0.00'
+                                }
+                            });
                             break;
                         }
                     }
@@ -397,12 +474,40 @@ class LitmusCloudEngine {
                         if (targetSL > sl + 0.05) {
                             console.log(`[Ladder Trail] Moving BUY SL on ${pos.symbol} to Lock +${lockedR}R (New SL: ${targetSL.toFixed(2)})`);
                             await connection.modifyPosition(pos.id, targetSL, pos.takeProfit);
+                            this.sendSyncPayload({
+                                login: '81816344',
+                                server: 'Exness-MT5Trial10',
+                                event: 'TRAILING',
+                                activeTrade: {
+                                    symbol: pos.symbol,
+                                    type: 'BUY',
+                                    lots: pos.volume,
+                                    entry: openPrice.toFixed(2),
+                                    target: 'Stepped Ladder',
+                                    trailing: `+${lockedR.toFixed(1)}R Locked`,
+                                    pnl: `${pos.unrealizedProfit >= 0 ? '+' : ''}$${(pos.unrealizedProfit || 0).toFixed(2)}`
+                                }
+                            });
                         }
                     } else if (pos.type === 'POSITION_TYPE_SELL') {
                         targetSL = openPrice - (lockedR * riskDist);
                         if (targetSL < sl - 0.05 || sl === 0) {
                             console.log(`[Ladder Trail] Moving SELL SL on ${pos.symbol} to Lock +${lockedR}R (New SL: ${targetSL.toFixed(2)})`);
                             await connection.modifyPosition(pos.id, targetSL, pos.takeProfit);
+                            this.sendSyncPayload({
+                                login: '81816344',
+                                server: 'Exness-MT5Trial10',
+                                event: 'TRAILING',
+                                activeTrade: {
+                                    symbol: pos.symbol,
+                                    type: 'SELL',
+                                    lots: pos.volume,
+                                    entry: openPrice.toFixed(2),
+                                    target: 'Stepped Ladder',
+                                    trailing: `+${lockedR.toFixed(1)}R Locked`,
+                                    pnl: `${pos.unrealizedProfit >= 0 ? '+' : ''}$${(pos.unrealizedProfit || 0).toFixed(2)}`
+                                }
+                            });
                         }
                     }
                 }

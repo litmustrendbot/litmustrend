@@ -44,6 +44,7 @@ class LitmusCloudEngine {
         this.accountId = accountId;
         this.metaApi = new MetaApi(token);
         this.activeEngines = new Map();
+        this.attachedAccounts = [];
         this.zones = {}; // Per-symbol FVG POI zones
         this.dailyClose = {}; // Per-symbol Previous Day Close (PDC)
         this.swingHigh = {};
@@ -60,10 +61,11 @@ class LitmusCloudEngine {
             if (this.activeEngines.has(accId)) return;
             this.activeEngines.set(accId, true);
 
-            let connected = false;
-            while (!connected) {
+            let retries = 0;
+            while (retries < 15) {
                 try {
                     const account = await this.metaApi.metatraderAccountApi.getAccount(accId);
+                    if (!account) break;
 
                     // If account state is undeployed, deploy it
                     if (account.state !== 'DEPLOYED') {
@@ -77,7 +79,14 @@ class LitmusCloudEngine {
                     await connection.waitSynchronized();
                     console.log(`[LitmusTrend Cloud Engine] Account ${account.login || accId} Synchronized with Broker! Scanning active on: ${SYMBOLS.join(', ')}...`);
 
-                    connected = true;
+                    this.attachedAccounts.push({
+                        id: account.id,
+                        login: account.login,
+                        server: account.server,
+                        state: 'CONNECTED',
+                        symbols: SYMBOLS,
+                        connectedAt: Date.now()
+                    });
 
                     // Initialize symbol zones
                     for (const sym of SYMBOLS) {
@@ -92,21 +101,17 @@ class LitmusCloudEngine {
 
                     // Start Web Dashboard Sync Telemetry Loop (Runs every 8000ms)
                     setInterval(() => this.syncHeartbeat(connection), 8000);
+                    break;
 
                 } catch (err) {
-                    console.log(`[LitmusTrend Cloud Engine Waiting] Account ${accId} waiting (${err.message}). Retrying in 15 seconds...`);
+                    retries++;
+                    console.log(`[LitmusTrend Cloud Engine Waiting] Account ${accId} waiting (${err.message}). Retrying in 15 seconds (attempt ${retries}/15)...`);
                     await new Promise(r => setTimeout(r, 15000));
                 }
             }
         };
 
-        // Attach primary account immediately
-        if (this.accountId) {
-            attachAccount(this.accountId);
-        }
-
-        // Periodically discover any new accounts added through the web dashboard
-        setInterval(async () => {
+        const discoverAccounts = async () => {
             try {
                 const accounts = await this.metaApi.metatraderAccountApi.getAccounts();
                 for (const acc of accounts) {
@@ -118,7 +123,16 @@ class LitmusCloudEngine {
             } catch (pollErr) {
                 // Silently keep polling
             }
-        }, 30000);
+        };
+
+        // Attach primary account immediately if provided
+        if (this.accountId) {
+            attachAccount(this.accountId);
+        }
+
+        // Run account discovery immediately on startup and poll every 15s
+        await discoverAccounts();
+        setInterval(discoverAccounts, 15000);
     }
 
     async syncHeartbeat(connection) {
@@ -551,6 +565,8 @@ class LitmusCloudEngine {
 module.exports = LitmusCloudEngine;
 
 if (require.main === module) {
+    let engine = null;
+
     // Lightweight HTTP health check listener for Render / Cloud deployment
     const http = require('http');
     const port = process.env.PORT || 3000;
@@ -563,17 +579,19 @@ if (require.main === module) {
             symbols: SYMBOLS,
             magicNumber: MAGIC_NUMBER,
             riskPercent: RISK_PERCENT,
+            attachedAccounts: engine ? engine.attachedAccounts : [],
+            activeEnginesCount: engine ? engine.attachedAccounts.length : 0,
             uptime: process.uptime()
         }));
     }).listen(port, () => {
         console.log(`[LitmusTrend Cloud Engine] Health server listening on port ${port}`);
     });
 
-    const activeAccountId = process.env.METAAPI_ACCOUNT_ID || '3b5afbf5-6e0f-43c5-9865-778b26e34d64';
+    const activeAccountId = process.env.METAAPI_ACCOUNT_ID || null;
     if (!METAAPI_TOKEN) {
         console.log('[Notice] Set METAAPI_TOKEN in environment to start live cloud trading.');
     } else {
-        const engine = new LitmusCloudEngine(METAAPI_TOKEN, activeAccountId);
+        engine = new LitmusCloudEngine(METAAPI_TOKEN, activeAccountId);
         engine.start();
     }
 }

@@ -253,12 +253,18 @@ function renderSidebar() {
         const engineText = 'New Strategy • 15M FVG + 5M';
         const instBadge = acc.instrument || 'XAUUSD';
         const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
+        const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
+        const centBadge = isCent ? `<span class="item-risk-tag" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); margin-left: 4px;">CENT</span>` : '';
+        const eqDisplay = (acc.equity !== undefined && acc.equity !== null)
+            ? (isCent ? `${Number(acc.equity).toLocaleString()} USC ($${(Number(acc.equity) / 100).toFixed(2)})` : `$${Number(acc.equity).toFixed(2)}`)
+            : 'Connecting...';
 
         item.innerHTML = `
             <div class="item-top">
                 <div class="item-title-wrap">
                     <span class="item-live-dot" title="EA Connected & Active"></span>
                     <span class="item-name">${escapeHtml(acc.name)}</span>
+                    ${centBadge}
                 </div>
                 <span class="item-risk-tag ${riskBadgeClass}">${riskBadgeText}</span>
             </div>
@@ -269,7 +275,7 @@ function renderSidebar() {
             <div class="item-sub">
                 <span>${escapeHtml(acc.server || 'MT5 Server')}</span>
                 <span>&bull;</span>
-                <span>${escapeHtml(acc.login)}</span>
+                <span style="font-weight: 600; color: #10b981;">${eqDisplay}</span>
             </div>
         `;
 
@@ -302,9 +308,19 @@ function selectAccount(accountId) {
     document.getElementById('viewServerText').innerText = acc.server;
     document.getElementById('viewLoginText').innerText = acc.login;
 
+    const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
     const eqEl = document.getElementById('viewEquityText');
     if (eqEl) {
-        eqEl.innerText = acc.equity ? `$${Number(acc.equity).toFixed(2)}` : '--';
+        if (acc.equity !== undefined && acc.equity !== null) {
+            if (isCent) {
+                const usdEquiv = (Number(acc.equity) / 100).toFixed(2);
+                eqEl.innerHTML = `<span style="color: #10b981;">${Number(acc.equity).toLocaleString()} USC</span> <span style="font-size: 13px; color: #94a3b8; font-weight: normal;">($${usdEquiv} USD Cent Account)</span>`;
+            } else {
+                eqEl.innerText = `$${Number(acc.equity).toFixed(2)}`;
+            }
+        } else {
+            eqEl.innerText = 'Connecting to MetaApi Cloud...';
+        }
     }
 
     const pauseBtn = document.getElementById('btnTogglePause');
@@ -414,7 +430,8 @@ let liveSyncInterval = null;
 
 function startLiveSync() {
     if (liveSyncInterval) clearInterval(liveSyncInterval);
-    liveSyncInterval = setInterval(async () => {
+
+    const triggerSync = async () => {
         const acc = accounts.find(a => a.id === selectedAccountId);
         if (!acc || !acc.login) return;
 
@@ -432,6 +449,14 @@ function startLiveSync() {
                 }
                 if (live.equity !== undefined && live.equity !== acc.equity) {
                     acc.equity = live.equity;
+                    modified = true;
+                }
+                if (live.currency && live.currency !== acc.currency) {
+                    acc.currency = live.currency;
+                    modified = true;
+                }
+                if (live.isCent !== undefined && live.isCent !== acc.isCent) {
+                    acc.isCent = live.isCent;
                     modified = true;
                 }
                 if (JSON.stringify(acc.activeTrade) !== JSON.stringify(live.activeTrade)) {
@@ -454,7 +479,10 @@ function startLiveSync() {
         } catch (e) {
             // Silently ignore network hiccup
         }
-    }, 3000);
+    };
+
+    triggerSync();
+    liveSyncInterval = setInterval(triggerSync, 3000);
 }
 
 // --- 5. ACCOUNT ACTIONS (PAUSE / REMOVE) ---

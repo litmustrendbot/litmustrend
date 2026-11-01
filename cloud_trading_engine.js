@@ -118,6 +118,10 @@ class LitmusCloudEngine {
 
                 } catch (err) {
                     retries++;
+                    if (err.message && (err.message.includes('not found') || err.message.includes('404'))) {
+                        addEngineLog(`Account ${accId} does not exist in MetaApi. Stopping retries.`);
+                        break;
+                    }
                     addEngineLog(`Account ${accId} waiting (${err.message}). Retrying in 15 seconds (attempt ${retries}/15)...`);
                     await new Promise(r => setTimeout(r, 15000));
                 }
@@ -126,12 +130,18 @@ class LitmusCloudEngine {
 
         const discoverAccounts = async () => {
             try {
-                const accounts = await this.metaApi.metatraderAccountApi.getAccounts();
-                addEngineLog(`Discovered ${accounts.length} accounts from MetaApi provisioning`);
-                for (const acc of accounts) {
-                    if ((acc.state === 'DEPLOYED' || acc.connectionStatus === 'CONNECTED') && !this.activeEngines.has(acc.id)) {
-                        addEngineLog(`Discovered active account: ${acc.login} (${acc.id})! Attaching...`);
-                        attachAccount(acc.id);
+                const res = await fetch("https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts", {
+                    headers: { "auth-token": this.token }
+                });
+                if (res.ok) {
+                    const accounts = await res.json();
+                    addEngineLog(`Discovered ${accounts.length} accounts from MetaApi provisioning API`);
+                    for (const acc of accounts) {
+                        const accId = acc._id || acc.id;
+                        if ((acc.state === 'DEPLOYED' || acc.connectionStatus === 'CONNECTED') && !this.activeEngines.has(accId)) {
+                            addEngineLog(`Discovered active account: ${acc.login} (${accId})! Attaching...`);
+                            attachAccount(accId);
+                        }
                     }
                 }
             } catch (pollErr) {

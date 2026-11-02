@@ -59,6 +59,7 @@ class LitmusCloudEngine {
         this.swingLow = {};
         this.lastTraded5MTime = {};
         this.last15MTime = {};
+        this.lastPrices = {};
         this.isScanning = false;
     }
 
@@ -101,9 +102,22 @@ class LitmusCloudEngine {
                         connectedAt: Date.now()
                     });
 
-                    // Initialize symbol zones
+                    // Initialize symbol zones & subscribe to market data
                     for (const sym of SYMBOLS) {
                         if (!this.zones[sym]) this.zones[sym] = [];
+                        try {
+                            await connection.subscribeToMarketData(sym);
+                            addEngineLog(`[Market Data] Subscribed to real-time quotes for ${sym}`);
+                        } catch (subErr) {
+                            addEngineLog(`[Subscription Error] ${sym}: ${subErr.message}`);
+                        }
+                        try {
+                            await this.updateMacroD1Filter(connection, sym);
+                            await this.update15MStructure(connection, sym);
+                            addEngineLog(`[Init Structure] ${sym} PDC=${this.dailyClose[sym] || 'None'} SH=${this.swingHigh[sym] || 'None'} SL=${this.swingLow[sym] || 'None'} ActiveZones=${(this.zones[sym] || []).length}`);
+                        } catch (structErr) {
+                            addEngineLog(`[Init Structure Error] ${sym}: ${structErr.message}`);
+                        }
                     }
 
                     // Start Market Structure & Signal Evaluation Loop (Runs every 1000ms)
@@ -235,7 +249,7 @@ class LitmusCloudEngine {
     // Update D1 Macro Filter (Previous Day Close)
     async updateMacroD1Filter(connection, symbol) {
         try {
-            const candles = await connection.getHistoricalCandles(symbol, '1d', null, 2);
+            const candles = await connection.getHistoricalCandles(symbol, '1d', null, 5);
             if (candles && candles.length >= 2) {
                 this.dailyClose[symbol] = candles[candles.length - 2].close;
             }
@@ -247,7 +261,7 @@ class LitmusCloudEngine {
     // Update 15M Structure & Fair Value Gaps
     async update15MStructure(connection, symbol) {
         try {
-            const r15 = await connection.getHistoricalCandles(symbol, '15m', null, 30);
+            const r15 = await connection.getHistoricalCandles(symbol, '15m', null, 40);
             if (!r15 || r15.length < 25) return;
 
             const n = r15.length;
@@ -258,6 +272,8 @@ class LitmusCloudEngine {
 
             // 1. Fractal Swings (Lookback = 3)
             const lookback = 3;
+            let currentSH = null;
+            let currentSL = null;
             for (let i = n - 2; i >= lookback + 2; i--) {
                 let isHigh = true;
                 let isLow = true;
@@ -265,10 +281,12 @@ class LitmusCloudEngine {
                     if (r15[i].high <= r15[i - k].high || r15[i].high < r15[i + k].high) isHigh = false;
                     if (r15[i].low >= r15[i - k].low || r15[i].low > r15[i + k].low) isLow = false;
                 }
-                if (isHigh && !this.swingHigh[symbol]) this.swingHigh[symbol] = r15[i].high;
-                if (isLow && !this.swingLow[symbol]) this.swingLow[symbol] = r15[i].low;
-                if (this.swingHigh[symbol] && this.swingLow[symbol]) break;
+                if (isHigh && !currentSH) currentSH = r15[i].high;
+                if (isLow && !currentSL) currentSL = r15[i].low;
+                if (currentSH && currentSL) break;
             }
+            if (currentSH) this.swingHigh[symbol] = currentSH;
+            if (currentSL) this.swingLow[symbol] = currentSL;
 
             // 2. Trend & BOS Check
             const pdc = this.dailyClose[symbol] || 0;
@@ -278,45 +296,54 @@ class LitmusCloudEngine {
             const bullishBOS = macroBull && (this.swingHigh[symbol] > 0) && (c1 > this.swingHigh[symbol]) && (c2 <= this.swingHigh[symbol]);
             const bearishBOS = macroBear && (this.swingLow[symbol] > 0) && (c1 < this.swingLow[symbol]) && (c2 >= this.swingLow[symbol]);
 
-            if (bullishBOS || bearishBOS) {
-                if (!this.zones[symbol]) this.zones[symbol] = [];
-                let fvgCount = 0;
+            if (!this.zones[symbol]) this.zones[symbol] = [];
 
-                for (let k = n - 2; k >= n - 15 && fvgCount < 2; k--) {
-                    if (bullishBOS && r15[k] && r15[k - 2]) {
-                        if (r15[k].low > r15[k - 2].high) {
-                            this.zones[symbol].push({
-                                direction: 1, // Bullish
-                                zoneTop: r15[k].low,
-                                zoneBottom: r15[k - 1].low,
-                                isActive: true,
-                                ageBars: 0,
-                                lastOppHigh: 0,
-                                cand1Seen: false
-                            });
-                            fvgCount++;
-                        }
-                    } else if (bearishBOS && r15[k] && r15[k - 2]) {
-                        if (r15[k].high < r15[k - 2].low) {
-                            this.zones[symbol].push({
-                                direction: -1, // Bearish
-                                zoneBottom: r15[k].high,
-                                zoneTop: r15[k - 1].high,
-                                isActive: true,
-                                ageBars: 0,
-                                lastOppLow: 0,
-                                cand1Seen: false
-                            });
-                            fvgCount++;
+            // If we have no active zones, check recent historical BOS & FVGs across past 25 bars
+            const activeZones = this.zones[symbol].filter(z => z.isActive);
+            const needHistoricalScan = (activeZones.length === 0);
+
+            if (bullishBOS || bearishBOS || needHistoricalScan) {
+                let fvgCount = 0;
+                for (let k = n - 2; k >= Math.max(2, n - 25) && fvgCount < 3; k--) {
+                    if (r15[k] && r15[k - 2]) {
+                        if (macroBull && r15[k].low > r15[k - 2].high) {
+                            const zTop = r15[k].low;
+                            const zBottom = r15[k - 1].low;
+                            const exists = this.zones[symbol].some(z => Math.abs(z.zoneTop - zTop) < 0.2);
+                            if (!exists) {
+                                this.zones[symbol].push({
+                                    direction: 1, // Bullish
+                                    zoneTop: zTop,
+                                    zoneBottom: zBottom,
+                                    isActive: true,
+                                    ageBars: (n - 2 - k) * 3,
+                                    lastOppHigh: 0,
+                                    cand1Seen: false
+                                });
+                                fvgCount++;
+                            }
+                        } else if (macroBear && r15[k].high < r15[k - 2].low) {
+                            const zBottom = r15[k].high;
+                            const zTop = r15[k - 1].high;
+                            const exists = this.zones[symbol].some(z => Math.abs(z.zoneBottom - zBottom) < 0.2);
+                            if (!exists) {
+                                this.zones[symbol].push({
+                                    direction: -1, // Bearish
+                                    zoneBottom: zBottom,
+                                    zoneTop: zTop,
+                                    isActive: true,
+                                    ageBars: (n - 2 - k) * 3,
+                                    lastOppLow: 0,
+                                    cand1Seen: false
+                                });
+                                fvgCount++;
+                            }
                         }
                     }
                 }
-
-                if (bullishBOS) this.swingHigh[symbol] = lastClosed.high;
-                if (bearishBOS) this.swingLow[symbol] = lastClosed.low;
             }
         } catch (e) {
-            // Handle streaming data quietly
+            console.error(`[15M Structure Error] ${symbol}:`, e.message);
         }
     }
 
@@ -328,24 +355,31 @@ class LitmusCloudEngine {
             const terminalState = connection.terminalState;
 
             for (const sym of SYMBOLS) {
+                // 1. Maintain 15M Structure & PDC filter periodically (every 60s)
+                const nowMs = Date.now();
+                if (!this.last15MTime[sym] || nowMs - this.last15MTime[sym] >= 60000) {
+                    this.last15MTime[sym] = nowMs;
+                    await this.updateMacroD1Filter(connection, sym);
+                    await this.update15MStructure(connection, sym);
+                }
+
+                // 2. Fetch live quote from subscribed streaming state
                 const price = terminalState ? terminalState.price(sym) : null;
                 if (!price || !price.bid || !price.ask) continue;
+                this.lastPrices[sym] = { bid: price.bid, ask: price.ask, time: new Date().toISOString() };
 
                 const now = new Date();
                 const secondsIn5M = (now.getMinutes() % 5) * 60 + now.getSeconds();
                 const secondsRemaining = 300 - secondsIn5M;
 
-                // 1. Maintain 15M Structure periodically (once per minute)
-                if (now.getSeconds() === 0) {
-                    await this.updateMacroD1Filter(connection, sym);
-                    await this.update15MStructure(connection, sym);
-                }
-
-                // 2. Pre-close trigger: check within final 5 seconds of the 5M candle
+                // 3. Pre-close trigger: check within final 5 seconds of the 5M candle
                 if (secondsRemaining <= PRE_CLOSE_SECONDS) {
                     const currentBarKey = `${sym}-${now.getUTCHours()}:${Math.floor(now.getUTCMinutes() / 5) * 5}`;
                     if (this.lastTraded5MTime[sym] === currentBarKey) continue;
                     this.lastTraded5MTime[sym] = currentBarKey;
+
+                    const activeZonesCount = (this.zones[sym] || []).filter(z => z.isActive).length;
+                    addEngineLog(`[5M Pre-Close Evaluation] ${sym} | Bid=${price.bid} Ask=${price.ask} | Active Zones=${activeZonesCount}`);
 
                     // Evaluate and execute 5M confirmation trade inside active FVG
                     await this.evaluateSetup(connection, sym, price);
@@ -606,8 +640,13 @@ if (require.main === module) {
             attachedAccounts: engine ? engine.attachedAccounts : [],
             activeEnginesCount: engine ? engine.attachedAccounts.length : 0,
             uptime: process.uptime(),
+            zones: engine ? engine.zones : {},
+            dailyClose: engine ? engine.dailyClose : {},
+            swingHigh: engine ? engine.swingHigh : {},
+            swingLow: engine ? engine.swingLow : {},
+            liveQuotes: engine ? engine.lastPrices : {},
             logs: engineLogs
-        }));
+        }, null, 2));
     }).listen(port, () => {
         addEngineLog(`Health server listening on port ${port}`);
     });

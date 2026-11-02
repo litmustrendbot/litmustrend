@@ -156,32 +156,114 @@
                     </div>
                 </div>
 
-                <!-- TRADE ANALYSIS & EXECUTION LOG -->
-                <div class="trades-section">
-                    <div class="section-title-bar">
-                        <h3>Executed Trades History</h3>
-                        <span class="trades-count-label"><span id="tableTradesCount">0</span> trades recorded</span>
+                <!-- DASHBOARD VIEW TABS: LIVE WATCHDOG vs EXECUTED TRADES -->
+                <div class="dashboard-tabs-bar" style="display: flex; gap: 8px; margin: 24px 0 16px 0; border-bottom: 2px solid var(--border-subtle); padding-bottom: 6px;">
+                    <button type="button" id="tabBtnWatchdog" class="dash-tab-btn active" onclick="switchDashboardTab('watchdog')">
+                        <span class="live-beacon"></span> Live Strategy Watchdog
+                    </button>
+                    <button type="button" id="tabBtnTrades" class="dash-tab-btn" onclick="switchDashboardTab('trades')">
+                        Executed Trades History (<span id="tableTradesCount">0</span>)
+                    </button>
+                </div>
+
+                <!-- TAB 1: AUTONOMOUS STRATEGY WATCHDOG PANEL -->
+                <div id="tabPanelWatchdog" class="dash-tab-panel">
+                    <!-- WATCHDOG ACTIVE BANNER -->
+                    <div class="watchdog-banner" style="background: var(--bg-surface); border: 1px solid var(--green-border); border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span class="live-beacon"></span>
+                            <div>
+                                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                    AUTONOMOUS STRATEGY WATCHDOG &bull; 100% AUTOMATED
+                                    <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; background: var(--green-bg); color: var(--green); font-weight: 700; border: 1px solid var(--green-border);">LIVE TICK SCANNER</span>
+                                </h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-secondary);">
+                                    Actively reading live Gold ticks from broker. When the 3 strategy criteria are satisfied, the bot automatically executes the 1.0% trade into your MT5 account.
+                                </p>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Live Quote (XAUUSDc)</div>
+                            <div id="wdLiveQuote" style="font-family: var(--font-mono); font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">Bid: -- | Ask: --</div>
+                        </div>
                     </div>
 
-                    <table class="clean-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Timestamp</th>
-                                <th>Instrument</th>
-                                <th>Type</th>
-                                <th>Volume</th>
-                                <th>Entry Price</th>
-                                <th>Exit Price</th>
-                                <th>Target</th>
-                                <th>Outcome</th>
-                                <th>Return / Profit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tradesTableBody">
-                            <!-- Injected dynamically -->
-                        </tbody>
-                    </table>
+                    <!-- 3-STEP REAL-TIME STRATEGY CHECKLIST -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 22px;">
+                        <!-- STEP 1 CARD -->
+                        <div class="strategy-check-card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Step 1: Macro Trend</span>
+                                <span id="wdStep1Badge" style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: var(--green-bg); color: var(--green);">[✓] ALIGNED</span>
+                            </div>
+                            <div id="wdStep1Title" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">4H Bullish Trend</div>
+                            <div id="wdStep1Desc" style="font-size: 0.8rem; color: var(--text-secondary);">Price trading above 4H Close (3957.78). Institutional long bias active.</div>
+                        </div>
+
+                        <!-- STEP 2 CARD -->
+                        <div class="strategy-check-card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Step 2: 15M FVG POI Zone</span>
+                                <span id="wdStep2Badge" style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: var(--green-bg); color: var(--green);">[✓] IN ZONE</span>
+                            </div>
+                            <div id="wdStep2Title" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Zone: 3963.68 – 3960.66</div>
+                            <div id="wdStep2Desc" style="font-size: 0.8rem; color: var(--text-secondary);">Price entered FVG discount liquidity. 4 total active zones armed in memory.</div>
+                        </div>
+
+                        <!-- STEP 3 CARD -->
+                        <div class="strategy-check-card" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Step 3: 5M Reversal Trigger</span>
+                                <span id="wdStep3Badge" style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">[⏳] MONITORING</span>
+                            </div>
+                            <div id="wdStep3Title" style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Next Check: <span id="wdCandleTimer">--m --s</span></div>
+                            <div id="wdStep3Desc" style="font-size: 0.8rem; color: var(--text-secondary);">Watching for 5M reversal close inside tapped zone to place trade automatically.</div>
+                        </div>
+                    </div>
+
+                    <!-- AUTONOMOUS WATCHDOG AUDIT LOG STREAM -->
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">Autonomous Watchdog Live Audit Feed</h3>
+                                <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: var(--text-muted);">Real-time decision logs streamed directly from the cloud trading engine.</p>
+                            </div>
+                            <span id="wdLogSyncBadge" style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">● Streaming Live</span>
+                        </div>
+                        <div id="watchdogLogsContainer" style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px; max-height: 280px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary);">
+                            <div style="color: var(--text-muted);">Connecting to autonomous watchdog telemetry...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: EXECUTED TRADES PANEL -->
+                <div id="tabPanelTrades" class="dash-tab-panel hidden">
+                    <div class="trades-section">
+                        <div class="section-title-bar">
+                            <h3>Executed Trades History</h3>
+                            <span class="trades-count-label"><span id="tableTradesCount">0</span> trades recorded</span>
+                        </div>
+
+                        <table class="clean-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Timestamp</th>
+                                    <th>Instrument</th>
+                                    <th>Type</th>
+                                    <th>Volume</th>
+                                    <th>Entry Price</th>
+                                    <th>Exit Price</th>
+                                    <th>Target</th>
+                                    <th>Outcome</th>
+                                    <th>Return / Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradesTableBody">
+                                <!-- Injected dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

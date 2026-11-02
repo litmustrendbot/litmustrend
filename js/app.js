@@ -485,6 +485,7 @@ function startLiveSync() {
 
     triggerSync();
     liveSyncInterval = setInterval(triggerSync, 3000);
+    startWatchdogTelemetry();
 }
 
 // --- 5. ACCOUNT ACTIONS (PAUSE / REMOVE) ---
@@ -1124,6 +1125,133 @@ async function handleCreateAccount(e) {
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// --- AUTONOMOUS STRATEGY WATCHDOG TELEMETRY ---
+let watchdogInterval = null;
+
+function switchDashboardTab(tabName) {
+    const btnWd = document.getElementById('tabBtnWatchdog');
+    const btnTr = document.getElementById('tabBtnTrades');
+    const panelWd = document.getElementById('tabPanelWatchdog');
+    const panelTr = document.getElementById('tabPanelTrades');
+
+    if (tabName === 'watchdog') {
+        btnWd?.classList.add('active');
+        btnTr?.classList.remove('active');
+        panelWd?.classList.remove('hidden');
+        panelTr?.classList.add('hidden');
+    } else {
+        btnTr?.classList.add('active');
+        btnWd?.classList.remove('active');
+        panelTr?.classList.remove('hidden');
+        panelWd?.classList.add('hidden');
+    }
+}
+
+async function pollWatchdogTelemetry() {
+    try {
+        const res = await fetch('/api/portal/watchdog');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data || !data.success) return;
+
+        // 1. Live Quote
+        const quoteEl = document.getElementById('wdLiveQuote');
+        if (quoteEl && data.liveQuote && data.liveQuote.bid) {
+            quoteEl.innerText = `Bid: ${data.liveQuote.bid.toFixed(2)} | Ask: ${data.liveQuote.ask.toFixed(2)}`;
+        }
+
+        // 2. Step 1: Macro Trend
+        const step1Badge = document.getElementById('wdStep1Badge');
+        const step1Title = document.getElementById('wdStep1Title');
+        const step1Desc = document.getElementById('wdStep1Desc');
+        if (data.macroFilter) {
+            const isBull = data.macroFilter.isBullish;
+            if (step1Badge) {
+                step1Badge.innerText = isBull ? '[✓] BULLISH ALIGNED' : '[✓] BEARISH ALIGNED';
+                step1Badge.style.color = isBull ? 'var(--green)' : 'var(--red)';
+                step1Badge.style.background = isBull ? 'var(--green-bg)' : 'var(--red-bg)';
+            }
+            if (step1Title) {
+                step1Title.innerText = isBull ? '4H Bullish Macro Trend' : '4H Bearish Macro Trend';
+            }
+            if (step1Desc) {
+                step1Desc.innerText = `Price is trading ${isBull ? 'above' : 'below'} 4H Close (${data.macroFilter.h4Close.toFixed(2)}). Institutional bias active.`;
+            }
+        }
+
+        // 3. Step 2: 15M FVG Zone
+        const step2Badge = document.getElementById('wdStep2Badge');
+        const step2Title = document.getElementById('wdStep2Title');
+        const step2Desc = document.getElementById('wdStep2Desc');
+        if (data.currentZone) {
+            if (step2Badge) {
+                step2Badge.innerText = '[✓] IN ZONE (DISCOUNT)';
+                step2Badge.style.color = 'var(--green)';
+                step2Badge.style.background = 'var(--green-bg)';
+            }
+            if (step2Title) {
+                step2Title.innerText = `Zone: ${data.currentZone.top.toFixed(2)} – ${data.currentZone.bottom.toFixed(2)}`;
+            }
+            if (step2Desc) {
+                step2Desc.innerText = `Gold entered 15M ${data.currentZone.direction} FVG. Armed for 5M reversal close.`;
+            }
+        } else {
+            if (step2Badge) {
+                step2Badge.innerText = `[⏳] ${data.totalActiveZones || 0} ZONES ARMED`;
+                step2Badge.style.color = '#f59e0b';
+                step2Badge.style.background = 'rgba(245, 158, 11, 0.15)';
+            }
+            if (step2Title) {
+                step2Title.innerText = `${data.totalActiveZones || 0} Bullish FVGs Armed in Memory`;
+            }
+            if (step2Desc) {
+                step2Desc.innerText = 'Monitoring Gold price action as it approaches institutional FVG zones.';
+            }
+        }
+
+        // 4. Step 3: 5M Confirmation Candle Timer
+        const step3Badge = document.getElementById('wdStep3Badge');
+        const timerEl = document.getElementById('wdCandleTimer');
+        const step3Desc = document.getElementById('wdStep3Desc');
+        if (data.candle5M) {
+            if (timerEl) timerEl.innerText = data.candle5M.formattedTime;
+            const isCritical = data.candle5M.secondsRemaining <= 15;
+            if (step3Badge) {
+                step3Badge.innerText = isCritical ? '[⚡] AUTO-TRIGGER WINDOW' : '[⏳] EVALUATING';
+                step3Badge.style.color = isCritical ? 'var(--accent)' : '#f59e0b';
+                step3Badge.style.background = isCritical ? 'var(--accent-glow)' : 'rgba(245, 158, 11, 0.15)';
+            }
+            if (step3Desc) {
+                step3Desc.innerText = isCritical 
+                    ? 'In the 15-second close window: evaluating reversal close to place 1% trade automatically.'
+                    : 'Building 5M confirmation candle inside tapped zone to place trade automatically.';
+            }
+        }
+
+        // 5. Audit Log Feed
+        const logBox = document.getElementById('watchdogLogsContainer');
+        if (logBox && data.logs && data.logs.length > 0) {
+            logBox.innerHTML = data.logs.map(line => {
+                let color = 'var(--text-secondary)';
+                if (line.includes('SUCCESS') || line.includes('Order ID') || line.includes('PLACING') || line.includes('BOS')) {
+                    color = 'var(--accent)';
+                } else if (line.includes('Pre-Close') || line.includes('Active Zones')) {
+                    color = '#f59e0b';
+                } else if (line.includes('Error') || line.includes('TIMEOUT')) {
+                    color = 'var(--red)';
+                }
+                return `<div style="color: ${color}; margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid var(--border-subtle);">${escapeHtml(line)}</div>`;
+            }).join('');
+        }
+    } catch (e) {}
+}
+
+function startWatchdogTelemetry() {
+    if (watchdogInterval) clearInterval(watchdogInterval);
+    pollWatchdogTelemetry();
+    watchdogInterval = setInterval(pollWatchdogTelemetry, 3000);
 }
 
 // --- INIT ---

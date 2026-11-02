@@ -2089,6 +2089,60 @@ body.dark-theme .btn-glow:hover {
     border-radius: 6px;
 }
 
+/* ====================================================================
+   AUTONOMOUS STRATEGY WATCHDOG TAB & DASHBOARD STYLES
+   ==================================================================== */
+.dash-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dash-tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-secondary);
+}
+
+.dash-tab-btn.active {
+    color: var(--accent);
+    background: var(--accent-glow);
+    font-weight: 700;
+}
+
+.live-beacon {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+    animation: beaconPulse 1.8s infinite;
+    display: inline-block;
+}
+
+@keyframes beaconPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+}
+
+.strategy-check-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.strategy-check-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
 /* RESPONSIVE BREAKPOINTS FOR ADD ACCOUNT VIEW */
 @media (max-width: 900px) {
     .strategy-cards-grid {

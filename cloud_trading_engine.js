@@ -637,7 +637,21 @@ if (require.main === module) {
     // Lightweight HTTP health check listener for Render / Cloud deployment
     const http = require('http');
     const port = process.env.PORT || 3000;
-    http.createServer((req, res) => {
+    http.createServer(async (req, res) => {
+        if (req.url === '/candles') {
+            try {
+                if (engine && engine.metaApi) {
+                    const acc = await engine.metaApi.metatraderAccountApi.getAccount(activeAccountId);
+                    const c5 = await acc.getHistoricalCandles('XAUUSDc', '5m', undefined, 120);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify(c5));
+                }
+            } catch (err) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ error: err.message }));
+            }
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             status: 'online',

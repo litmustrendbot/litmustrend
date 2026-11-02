@@ -86,8 +86,9 @@
                 <div class="analysis-header">
                     <div>
                         <h2 id="viewAccName">Account Name</h2>
-                        <div class="analysis-meta">
-                            <span id="viewStrategyText">New Strategy 1%</span>
+                        <div class="analysis-meta" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <span id="viewStrategyText" style="font-weight: 700; color: var(--accent);">The Big Boys 4H</span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAccountStrategy()" style="padding: 2px 10px; font-size: 0.72rem; border-radius: 20px; font-weight: 600; background: var(--bg-surface-secondary);" title="Switch between The Big Boys and New Strategy">⇄ Switch Strategy</button>
                             <span class="meta-sep">&bull;</span>
                             <span id="viewServerText">Exness-MT5Real7</span>
                             <span class="meta-sep">&bull;</span>
@@ -200,7 +201,7 @@
                 <div class="wizard-stepper">
                     <div class="wizard-step-node active" id="stepNode1" onclick="goToWizardStep(1)">
                         <span class="step-circle">1</span>
-                        <span class="step-label">New Strategy 1%</span>
+                        <span class="step-label">Select Strategy</span>
                     </div>
                     <div class="stepper-line" id="stepLine1"></div>
                     <div class="wizard-step-node" id="stepNode2" onclick="goToWizardStep(2)">
@@ -210,22 +211,85 @@
                 </div>
 
                 <!-- ==============================================================
-                     PANEL 1: NEW STRATEGY 1%
+                     PANEL 1: STRATEGY SELECTION
                      ============================================================== -->
                 <div id="wizardPanel1" class="wizard-panel active-panel">
-                    <div class="new-strategy-hero-card">
-                        <div class="new-strategy-header-row">
-                            <div class="new-strategy-title-group">
-                                <h3>New Strategy 1%</h3>
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0;">Select Trading Strategy</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Choose between the high-frequency 4H intraday runner or the conservative D1 macro filter. Both utilize 1.0% dynamic lot sizing and the stepped trailing stop ladder.</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                        
+                        <!-- CARD 1: THE BIG BOYS -->
+                        <div id="cardBigBoys" class="strategy-pick-card selected" onclick="selectStrategyCard('The Big Boys 4H')">
+                            <div class="strategy-card-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">
+                                ★ RECOMMENDED • HIGH YIELD
                             </div>
+                            <div class="strategy-card-header">
+                                <div class="strategy-card-radio"></div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">The Big Boys (4H / 15M / 5M)</h4>
+                                    <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">4H Macro Filter • 15M FVG • 5M Entry</p>
+                                </div>
+                            </div>
+                            <div class="strategy-card-stats" style="margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
+                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">18-Mo Net</div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: #10b981;">+5,062R</div>
+                                </div>
+                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Profit Factor</div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">2.80</div>
+                                </div>
+                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Frequency</div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--accent);">~249 / mo</div>
+                                </div>
+                            </div>
+                            <p style="margin-top: 12px; margin-bottom: 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">
+                                Updates trend every 4 hours to catch intraday runners. Delivered <strong>+$5,918 USD</strong> withdrawn on $10 Cent account.
+                            </p>
                         </div>
 
-                        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
-                            <button type="button" class="btn btn-primary btn-lg" onclick="goToWizardStep(2)">
-                                <span class="btn-text">Proceed to MT5 Setup</span>
-                                <span class="btn-arrow">→</span>
-                            </button>
+                        <!-- CARD 2: NEW STRATEGY -->
+                        <div id="cardNewStrategy" class="strategy-pick-card" onclick="selectStrategyCard('New Strategy 1%')">
+                            <div class="strategy-card-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">
+                                CALMER • LOWER DRAWDOWN
+                            </div>
+                            <div class="strategy-card-header">
+                                <div class="strategy-card-radio"></div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">New Strategy (D1 / 15M / 5M)</h4>
+                                    <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">D1 PDC Filter • 15M FVG • 5M Entry</p>
+                                </div>
+                            </div>
+                            <div class="strategy-card-stats" style="margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
+                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">18-Mo Net</div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: #10b981;">+3,940R</div>
+                                </div>
+                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Profit Factor</div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">2.72</div>
+                                </div>
+                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Frequency</div>
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--accent);">~201 / mo</div>
+                                </div>
+                            </div>
+                            <p style="margin-top: 12px; margin-bottom: 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">
+                                Uses Daily Close (PDC) macro trend. Stays out of sideways chop with -91R max drawdown. Delivered <strong>+$2,190 USD</strong> withdrawn.
+                            </p>
                         </div>
+
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="goToWizardStep(2)">
+                            <span class="btn-text">Proceed to MT5 Setup</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
                     </div>
                 </div>
 
@@ -238,14 +302,14 @@
                         <button type="button" class="btn-step-back" onclick="goToWizardStep(1)">← Back</button>
                         <span class="active-choice-chip" id="panel2StrategyBadge">
                             <span class="dot-indicator"></span>
-                            <span id="panel2StrategyName">New Strategy 1%</span>
+                            <span id="panel2StrategyName">The Big Boys (4H / 15M / 5M)</span>
                         </span>
                     </div>
 
                     <div class="seamless-form-wrap">
                         <form id="addAccountForm" onsubmit="handleCreateAccount(event)">
                             
-                            <input type="hidden" id="accStrategy" value="New Strategy 1%" required>
+                            <input type="hidden" id="accStrategy" value="The Big Boys 4H" required>
 
                             <!-- ACCOUNT NAME -->
                             <div class="form-group">

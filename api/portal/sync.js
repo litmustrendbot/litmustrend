@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
         try {
             const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-            const { login, server, balance, equity, currency, activeTrade, closedTrade, event } = body || {};
+            const { login, server, balance, equity, currency, activeTrade, closedTrade, strategy, event } = body || {};
 
             if (!login) {
                 return res.status(400).json({ success: false, error: 'Login ID required' });
@@ -26,6 +26,7 @@ module.exports = async (req, res) => {
                 liveAccounts[key] = {
                     login: key,
                     server: server || '',
+                    strategy: strategy || 'The Big Boys 4H',
                     balance: balance || 0,
                     equity: equity || 0,
                     currency: currency || 'USD',
@@ -37,6 +38,7 @@ module.exports = async (req, res) => {
             }
 
             const acc = liveAccounts[key];
+            if (strategy) acc.strategy = strategy;
             if (balance !== undefined) acc.balance = balance;
             if (equity !== undefined) acc.equity = equity;
             if (currency) {

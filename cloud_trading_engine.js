@@ -54,7 +54,8 @@ class LitmusCloudEngine {
         this.activeEngines = new Map();
         this.attachedAccounts = [];
         this.zones = {}; // Per-symbol FVG POI zones
-        this.dailyClose = {}; // Per-symbol Previous Day Close (PDC)
+        this.dailyClose = {}; // Per-symbol Previous Day Close (PDC for New Strategy)
+        this.h4Close = {}; // Per-symbol Previous 4H Close (for The Big Boys)
         this.swingHigh = {};
         this.swingLow = {};
         this.lastTraded5MTime = {};
@@ -116,9 +117,9 @@ class LitmusCloudEngine {
 
                         if (isSubscribed) {
                             try {
-                                await this.updateMacroD1Filter(account, sym);
+                                await this.updateMacroFilters(account, sym);
                                 await this.update15MStructure(account, sym);
-                                addEngineLog(`[Init Structure] ${sym} PDC=${this.dailyClose[sym] || 'None'} SH=${this.swingHigh[sym] || 'None'} SL=${this.swingLow[sym] || 'None'} ActiveZones=${(this.zones[sym] || []).length}`);
+                                addEngineLog(`[Init Structure] ${sym} D1 PDC=${this.dailyClose[sym] || 'None'} 4H Close=${this.h4Close[sym] || 'None'} SH=${this.swingHigh[sym] || 'None'} SL=${this.swingLow[sym] || 'None'} ActiveZones=${(this.zones[sym] || []).length}`);
                             } catch (structErr) {
                                 addEngineLog(`[Init Structure Error] ${sym}: ${structErr.message}`);
                             }
@@ -251,17 +252,27 @@ class LitmusCloudEngine {
         return parseFloat(lot.toFixed(2));
     }
 
-    // Update D1 Macro Filter (Previous Day Close)
-    async updateMacroD1Filter(account, symbol) {
+    // Update Macro Filters (D1 Previous Day Close & 4H Previous Candle Close)
+    async updateMacroFilters(account, symbol) {
         try {
-            const candles = await account.getHistoricalCandles(symbol, '1d', undefined, 5);
-            if (candles && candles.length >= 2) {
-                this.dailyClose[symbol] = candles[candles.length - 2].close;
-                addEngineLog(`[Macro D1] ${symbol} Previous Day Close: ${this.dailyClose[symbol]}`);
+            const candlesD1 = await account.getHistoricalCandles(symbol, '1d', undefined, 5);
+            if (candlesD1 && candlesD1.length >= 2) {
+                this.dailyClose[symbol] = candlesD1[candlesD1.length - 2].close;
             }
         } catch (e) {
             addEngineLog(`[Macro D1 Error] ${symbol}: ${e.message}`);
         }
+
+        try {
+            const candles4H = await account.getHistoricalCandles(symbol, '4h', undefined, 5);
+            if (candles4H && candles4H.length >= 2) {
+                this.h4Close[symbol] = candles4H[candles4H.length - 2].close;
+            }
+        } catch (e) {
+            addEngineLog(`[Macro 4H Error] ${symbol}: ${e.message}`);
+        }
+
+        addEngineLog(`[Macro Filters] ${symbol} D1 PDC=${this.dailyClose[symbol] || 'None'} | 4H Close=${this.h4Close[symbol] || 'None'}`);
     }
 
     // Update 15M Structure & Fair Value Gaps
@@ -297,10 +308,18 @@ class LitmusCloudEngine {
             if (currentSH) this.swingHigh[symbol] = currentSH;
             if (currentSL) this.swingLow[symbol] = currentSL;
 
-            // 2. Trend & BOS Check
+            // 2. Trend & BOS Check (Both 4H for The Big Boys and D1 for New Strategy)
             const pdc = this.dailyClose[symbol] || 0;
-            const macroBull = (pdc === 0) || (c1 > pdc);
-            const macroBear = (pdc === 0) || (c1 < pdc);
+            const p4hc = this.h4Close[symbol] || 0;
+
+            const macroBull_4H = (p4hc === 0) || (c1 > p4hc);
+            const macroBear_4H = (p4hc === 0) || (c1 < p4hc);
+
+            const macroBull_D1 = (pdc === 0) || (c1 > pdc);
+            const macroBear_D1 = (pdc === 0) || (c1 < pdc);
+
+            const macroBull = macroBull_4H || macroBull_D1;
+            const macroBear = macroBear_4H || macroBear_D1;
 
             const bullishBOS = macroBull && (this.swingHigh[symbol] > 0) && (c1 > this.swingHigh[symbol]) && (c2 <= this.swingHigh[symbol]);
             const bearishBOS = macroBear && (this.swingLow[symbol] > 0) && (c1 < this.swingLow[symbol]) && (c2 >= this.swingLow[symbol]);
@@ -313,7 +332,7 @@ class LitmusCloudEngine {
 
             if (bullishBOS || bearishBOS || needHistoricalScan) {
                 let fvgCount = 0;
-                for (let k = n - 2; k >= Math.max(2, n - 25) && fvgCount < 3; k--) {
+                for (let k = n - 2; k >= Math.max(2, n - 25) && fvgCount < 4; k--) {
                     if (r15[k] && r15[k - 1] && r15[k - 2]) {
                         if (macroBull && r15[k].low > r15[k - 2].high) {
                             const zTop = r15[k].low;
@@ -373,7 +392,7 @@ class LitmusCloudEngine {
                 const nowMs = Date.now();
                 if (!this.last15MTime[sym] || nowMs - this.last15MTime[sym] >= 60000) {
                     this.last15MTime[sym] = nowMs;
-                    await this.updateMacroD1Filter(account, sym);
+                    await this.updateMacroFilters(account, sym);
                     await this.update15MStructure(account, sym);
                 }
 
@@ -657,7 +676,7 @@ if (require.main === module) {
         res.end(JSON.stringify({
             status: 'online',
             service: 'LitmusTrend Cloud Engine',
-            strategy: 'Option C (1% Dynamic Risk + Stepped Ladder)',
+            strategy: 'Dual-Engine: The Big Boys (4H/15M/5M) & New Strategy (D1/15M/5M)',
             symbols: SYMBOLS,
             magicNumber: MAGIC_NUMBER,
             riskPercent: RISK_PERCENT,
@@ -666,6 +685,7 @@ if (require.main === module) {
             uptime: process.uptime(),
             zones: engine ? engine.zones : {},
             dailyClose: engine ? engine.dailyClose : {},
+            h4Close: engine ? engine.h4Close : {},
             swingHigh: engine ? engine.swingHigh : {},
             swingLow: engine ? engine.swingLow : {},
             liveQuotes: engine ? engine.lastPrices : {},

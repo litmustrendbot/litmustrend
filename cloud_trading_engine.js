@@ -59,6 +59,8 @@ class LitmusCloudEngine {
         this.h4Close = {}; // Per-symbol Previous 4H Close (for The Big Boys)
         this.swingHigh = {};
         this.swingLow = {};
+        this.stream5MCandle = {};
+        this.stream5MHistory = {};
         this.lastTraded5MTime = {};
         this.last15MTime = {};
         this.lastPrices = {};
@@ -400,6 +402,30 @@ class LitmusCloudEngine {
                 if (!price || !price.bid || !price.ask) continue;
                 this.lastPrices[sym] = { bid: price.bid, ask: price.ask, time: new Date().toISOString() };
 
+                // Build real-time 5M candle in memory to guarantee zero-latency trigger even if REST times out
+                const mid = (price.bid + price.ask) / 2;
+                const now = new Date();
+                const current5MKey = Math.floor(now.getTime() / 300000) * 300000;
+                if (!this.stream5MCandle[sym] || this.stream5MCandle[sym].time !== current5MKey) {
+                    if (this.stream5MCandle[sym]) {
+                        if (!this.stream5MHistory[sym]) this.stream5MHistory[sym] = [];
+                        this.stream5MHistory[sym].push({ ...this.stream5MCandle[sym] });
+                        if (this.stream5MHistory[sym].length > 20) this.stream5MHistory[sym].shift();
+                    }
+                    this.stream5MCandle[sym] = {
+                        time: current5MKey,
+                        open: mid,
+                        high: mid,
+                        low: mid,
+                        close: mid
+                    };
+                } else {
+                    const bar = this.stream5MCandle[sym];
+                    if (mid > bar.high) bar.high = mid;
+                    if (mid < bar.low) bar.low = mid;
+                    bar.close = mid;
+                }
+
                 // 2. Maintain 15M Structure & PDC filter periodically (every 60s)
                 const nowMs = Date.now();
                 if (!this.last15MTime[sym] || nowMs - this.last15MTime[sym] >= 60000) {
@@ -442,28 +468,44 @@ class LitmusCloudEngine {
             const openCount = positions ? positions.filter(p => p.symbol === symbol && p.magic === MAGIC_NUMBER).length : 0;
             if (openCount >= MAX_CONCURRENT_POSITIONS) return;
 
-            // Fetch last 4 5M candles from account
-            const r5 = await account.getHistoricalCandles(symbol, '5m', undefined, 4);
-            if (!r5 || r5.length < 3) return;
+            // Fetch last 5M candles from account with instant fallback to real-time stream memory
+            let c5 = null;
+            try {
+                const r5 = await account.getHistoricalCandles(symbol, '5m', undefined, 4);
+                if (r5 && r5.length >= 2) {
+                    c5 = r5[r5.length - 1];
+                }
+            } catch (candleErr) {
+                // If MetaApi REST historical data endpoint times out (504), seamless fallback to real-time stream
+            }
 
-            const c5 = r5[r5.length - 1]; // Forming candle (within final 5s of close)
+            if (!c5 && this.stream5MCandle[symbol]) {
+                c5 = this.stream5MCandle[symbol];
+            }
+            if (!c5) {
+                const mid = (currentPrice.bid + currentPrice.ask) / 2;
+                c5 = { open: mid, high: mid, low: mid, close: mid };
+            }
+
             const o1 = c5.open, h1 = c5.high, l1 = c5.low, cl1 = c5.close;
             const isBull5M = cl1 > o1;
             const isBear5M = cl1 < o1;
 
-            // Account-level strategy filter check
+            // Strategy filter: for New Strategy (D1), require price to align with Previous Day Close
             const attached = this.attachedAccounts.find(a => a.id === account.id || String(a.login) === String(account.login));
             const isD1 = attached && attached.strategy && (attached.strategy.includes('D1') || attached.strategy.includes('New Strategy'));
-            const macroFilter = isD1 ? (this.dailyClose[symbol] || 0) : (this.h4Close[symbol] || 0);
+            const pdc = this.dailyClose[symbol] || 0;
 
             for (const zone of zones) {
                 if (!zone.isActive) continue;
 
-                // Enforce account's macro filter alignment (D1 PDC vs 4H Close)
-                if (macroFilter > 0) {
-                    if (zone.direction === 1 && currentPrice.ask < macroFilter) continue;
-                    if (zone.direction === -1 && currentPrice.bid > macroFilter) continue;
+                // For New Strategy (D1), enforce Daily PDC filter
+                if (isD1 && pdc > 0) {
+                    if (zone.direction === 1 && currentPrice.ask < pdc) continue;
+                    if (zone.direction === -1 && currentPrice.bid > pdc) continue;
                 }
+                // For The Big Boys (4H), 4H alignment is strictly enforced during 15M structure generation (c1 > 4H Close),
+                // so retracements into valid discount/premium FVGs execute freely without being blocked.
 
                 zone.ageBars = (zone.ageBars || 0) + 1;
                 if (zone.ageBars > 150) {
@@ -499,13 +541,13 @@ class LitmusCloudEngine {
                             const riskDist = slPrice - entryPrice;
                             const lots = this.calculateLotSize(connection, symbol, entryPrice, slPrice, RISK_PERCENT);
 
-                            console.log(`[ORDER EXECUTION] Placing SELL on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
+                            addEngineLog(`[ORDER EXECUTION] Placing SELL on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
                             const result = await connection.createMarketSellOrder(symbol, lots, slPrice, 0, {
                                 comment: `Ladder5M Risk:${riskDist.toFixed(2)}`,
                                 magic: MAGIC_NUMBER
                             });
 
-                            console.log(`[SELL ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
+                            addEngineLog(`[SELL ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
                             zone.isActive = false;
                             const liveAcc = connection.terminalState ? connection.terminalState.accountInformation : null;
                             this.sendSyncPayload({
@@ -554,13 +596,13 @@ class LitmusCloudEngine {
                             const riskDist = entryPrice - slPrice;
                             const lots = this.calculateLotSize(connection, symbol, entryPrice, slPrice, RISK_PERCENT);
 
-                            console.log(`[ORDER EXECUTION] Placing BUY on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
+                            addEngineLog(`[ORDER EXECUTION] Placing BUY on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
                             const result = await connection.createMarketBuyOrder(symbol, lots, slPrice, 0, {
                                 comment: `Ladder5M Risk:${riskDist.toFixed(2)}`,
                                 magic: MAGIC_NUMBER
                             });
 
-                            console.log(`[BUY ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
+                            addEngineLog(`[BUY ENTERED SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${symbol}`);
                             zone.isActive = false;
                             const liveAcc = connection.terminalState ? connection.terminalState.accountInformation : null;
                             this.sendSyncPayload({
@@ -583,7 +625,7 @@ class LitmusCloudEngine {
                 }
             }
         } catch (e) {
-            console.error(`[Trade Execution Error] on ${symbol}:`, e.message);
+            addEngineLog(`[Trade Execution Error] on ${symbol}: ${e.message}`);
         }
     }
 

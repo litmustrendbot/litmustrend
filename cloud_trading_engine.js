@@ -831,6 +831,32 @@ if (require.main === module) {
             }
         }
 
+        if (req.url.startsWith('/lot-size')) {
+            try {
+                const sym = 'XAUUSDc';
+                const entry = 3946.275;
+                const sl = 3945.623;
+                const attached = engine && engine.attachedAccounts && engine.attachedAccounts[0];
+                const conn = (engine && engine.connections && attached) ? engine.connections.get(attached.id) : null;
+                const ts = conn ? conn.terminalState : null;
+                const accInfo = ts ? ts.accountInformation : null;
+                const specFn = ts && typeof ts.specification === 'function';
+                const spec = specFn ? ts.specification(sym) : null;
+                const lot = conn ? engine.calculateLotSize(conn, sym, entry, sl, 1.0) : 0;
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({
+                    sym, entry, sl, calculatedLot: lot,
+                    accInfo,
+                    lastKnownEquity: engine ? engine.lastKnownEquity : null,
+                    specFnExists: specFn,
+                    spec
+                }, null, 2));
+            } catch (err) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ error: err.message, stack: err.stack }));
+            }
+        }
+
         if (req.url === '/restart') {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ status: 'restarting' }));

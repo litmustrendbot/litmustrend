@@ -98,7 +98,10 @@
                         </div>
                     </div>
 
-                    <div class="analysis-header-actions">
+                    <div class="analysis-header-actions" style="display: flex; align-items: center; gap: 8px;">
+                        <button class="btn btn-warning btn-sm" id="btnTestTrade" onclick="triggerTestTrade()" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.82rem;" title="Place a live 1.0% test trade on Gold to verify real broker execution">
+                            <span>⚡ Test 1% Trade</span>
+                        </button>
                         <button class="btn-action" id="btnTogglePause" onclick="toggleCurrentAccountPause()">Pause EA</button>
                         <button class="btn-action danger" onclick="deleteCurrentAccount()">Remove Account</button>
                     </div>

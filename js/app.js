@@ -501,6 +501,48 @@ function toggleCurrentAccountPause() {
     }
 }
 
+async function triggerTestTrade() {
+    const btn = document.getElementById('btnTestTrade');
+    const acc = accounts.find(a => a.id === selectedAccountId);
+    if (!acc) {
+        alert('Please select an account first.');
+        return;
+    }
+
+    if (!confirm(`Place a live 1.0% test trade on Gold (XAUUSDc) on Exness account ${acc.login} to verify live execution?`)) {
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Placing 1% Trade...</span>';
+    }
+
+    try {
+        const res = await fetch('https://litmustrend.onrender.com/test-trade', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: acc.login })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(`✅ 1.0% Test Trade Placed Successfully!\n\nOrder ID: ${data.orderId}\nSymbol: ${data.symbol}\nLots: ${data.lots}\nEntry: ${data.entry}\nSL: ${data.sl}\n\nCheck your MT5 terminal now! The stepped trailing stop ladder is actively managing it.`);
+            if (typeof syncAccountTelemetry === 'function') {
+                syncAccountTelemetry(acc);
+            }
+        } else {
+            alert(`❌ Trade Failed: ${data.error || 'Unknown error'}`);
+        }
+    } catch (err) {
+        alert(`❌ Could not contact trading engine: ${err.message}`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Test 1% Trade</span>';
+        }
+    }
+}
+
 function deleteCurrentAccount() {
     const acc = accounts.find(a => a.id === selectedAccountId);
     if (!acc) return;

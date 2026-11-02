@@ -674,10 +674,82 @@ module.exports = LitmusCloudEngine;
 if (require.main === module) {
     let engine = null;
 
-    // Lightweight HTTP health check listener for Render / Cloud deployment
+    // Lightweight HTTP health check & control listener for Render / Cloud deployment
     const http = require('http');
     const port = process.env.PORT || 3000;
     http.createServer(async (req, res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+        if (req.method === 'OPTIONS') {
+            res.writeHead(200);
+            return res.end();
+        }
+
+        if (req.url === '/test-trade' && req.method === 'POST') {
+            try {
+                if (!engine || !engine.attachedAccounts || engine.attachedAccounts.length === 0) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ success: false, error: 'No attached broker accounts found in engine' }));
+                }
+
+                const attached = engine.attachedAccounts[0];
+                const acc = await engine.metaApi.metatraderAccountApi.getAccount(attached.id);
+                const connection = acc.getStreamingConnection();
+                if (!connection.isSynchronized()) {
+                    await connection.waitSynchronized();
+                }
+
+                const sym = 'XAUUSDc';
+                const terminalState = connection.terminalState;
+                const price = terminalState ? terminalState.price(sym) : null;
+                const entryPrice = (price && price.ask) ? price.ask : (engine.lastPrices[sym] ? engine.lastPrices[sym].ask : 3902.0);
+                const slDist = 1.50; // $1.50 risk distance for 1% test trade
+                const slPrice = Number((entryPrice - slDist).toFixed(3));
+
+                const lots = engine.calculateLotSize(connection, sym, entryPrice, slPrice, 1.0);
+                addEngineLog(`[TEST TRADE TRIGGERED] Placing 1% BUY on ${sym} | Lots: ${lots} | Entry: ${entryPrice} | SL: ${slPrice} | Risk Dist: ${slDist}`);
+
+                const result = await connection.createMarketBuyOrder(sym, lots, slPrice, 0, {
+                    comment: `Ladder5M Risk:${slDist.toFixed(2)}`,
+                    magic: MAGIC_NUMBER
+                });
+
+                addEngineLog(`[TEST TRADE SUCCESS] Order ID: ${result ? result.orderId : 'Accepted'} on ${sym}`);
+
+                engine.sendSyncPayload({
+                    login: String(attached.login),
+                    server: attached.server,
+                    event: 'OPEN',
+                    activeTrade: {
+                        symbol: sym,
+                        type: 'BUY',
+                        lots: lots,
+                        entry: entryPrice.toFixed(2),
+                        target: 'Stepped Ladder',
+                        trailing: 'Initial SL',
+                        pnl: '+$0.00'
+                    }
+                });
+
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({
+                    success: true,
+                    orderId: result ? result.orderId : 'Accepted',
+                    symbol: sym,
+                    lots: lots,
+                    entry: entryPrice.toFixed(2),
+                    sl: slPrice.toFixed(2),
+                    message: `1.0% Test Trade placed successfully on Exness!`
+                }));
+            } catch (tradeErr) {
+                addEngineLog(`[TEST TRADE ERROR] ${tradeErr.message}`);
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ success: false, error: tradeErr.message }));
+            }
+        }
+
         if (req.url === '/candles') {
             try {
                 if (engine && engine.metaApi) {

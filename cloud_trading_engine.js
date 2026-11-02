@@ -105,23 +105,28 @@ class LitmusCloudEngine {
                     // Initialize symbol zones & subscribe to market data
                     for (const sym of SYMBOLS) {
                         if (!this.zones[sym]) this.zones[sym] = [];
+                        let isSubscribed = false;
                         try {
                             await connection.subscribeToMarketData(sym);
+                            isSubscribed = true;
                             addEngineLog(`[Market Data] Subscribed to real-time quotes for ${sym}`);
                         } catch (subErr) {
                             addEngineLog(`[Subscription Error] ${sym}: ${subErr.message}`);
                         }
-                        try {
-                            await this.updateMacroD1Filter(connection, sym);
-                            await this.update15MStructure(connection, sym);
-                            addEngineLog(`[Init Structure] ${sym} PDC=${this.dailyClose[sym] || 'None'} SH=${this.swingHigh[sym] || 'None'} SL=${this.swingLow[sym] || 'None'} ActiveZones=${(this.zones[sym] || []).length}`);
-                        } catch (structErr) {
-                            addEngineLog(`[Init Structure Error] ${sym}: ${structErr.message}`);
+
+                        if (isSubscribed) {
+                            try {
+                                await this.updateMacroD1Filter(account, sym);
+                                await this.update15MStructure(account, sym);
+                                addEngineLog(`[Init Structure] ${sym} PDC=${this.dailyClose[sym] || 'None'} SH=${this.swingHigh[sym] || 'None'} SL=${this.swingLow[sym] || 'None'} ActiveZones=${(this.zones[sym] || []).length}`);
+                            } catch (structErr) {
+                                addEngineLog(`[Init Structure Error] ${sym}: ${structErr.message}`);
+                            }
                         }
                     }
 
                     // Start Market Structure & Signal Evaluation Loop (Runs every 1000ms)
-                    setInterval(() => this.scanMarket(connection), 1000);
+                    setInterval(() => this.scanMarket(account, connection), 1000);
 
                     // Start Stepped Ladder Trailing Loop (Runs every 2000ms)
                     setInterval(() => this.manageOpenPositions(connection), 2000);
@@ -247,22 +252,26 @@ class LitmusCloudEngine {
     }
 
     // Update D1 Macro Filter (Previous Day Close)
-    async updateMacroD1Filter(connection, symbol) {
+    async updateMacroD1Filter(account, symbol) {
         try {
-            const candles = await connection.getHistoricalCandles(symbol, '1d', null, 5);
+            const candles = await account.getHistoricalCandles(symbol, '1d', undefined, 5);
             if (candles && candles.length >= 2) {
                 this.dailyClose[symbol] = candles[candles.length - 2].close;
+                addEngineLog(`[Macro D1] ${symbol} Previous Day Close: ${this.dailyClose[symbol]}`);
             }
         } catch (e) {
-            // Quiet fallback
+            addEngineLog(`[Macro D1 Error] ${symbol}: ${e.message}`);
         }
     }
 
     // Update 15M Structure & Fair Value Gaps
-    async update15MStructure(connection, symbol) {
+    async update15MStructure(account, symbol) {
         try {
-            const r15 = await connection.getHistoricalCandles(symbol, '15m', null, 40);
-            if (!r15 || r15.length < 25) return;
+            const r15 = await account.getHistoricalCandles(symbol, '15m', undefined, 40);
+            if (!r15 || r15.length < 25) {
+                addEngineLog(`[15M Structure] ${symbol}: received ${r15 ? r15.length : 0} candles`);
+                return;
+            }
 
             const n = r15.length;
             const lastClosed = r15[n - 2];
@@ -343,11 +352,11 @@ class LitmusCloudEngine {
                 }
             }
         } catch (e) {
-            console.error(`[15M Structure Error] ${symbol}:`, e.message);
+            addEngineLog(`[15M Structure Error] ${symbol}: ${e.message}`);
         }
     }
 
-    async scanMarket(connection) {
+    async scanMarket(account, connection) {
         if (this.isScanning) return;
         this.isScanning = true;
 
@@ -355,18 +364,18 @@ class LitmusCloudEngine {
             const terminalState = connection.terminalState;
 
             for (const sym of SYMBOLS) {
-                // 1. Maintain 15M Structure & PDC filter periodically (every 60s)
-                const nowMs = Date.now();
-                if (!this.last15MTime[sym] || nowMs - this.last15MTime[sym] >= 60000) {
-                    this.last15MTime[sym] = nowMs;
-                    await this.updateMacroD1Filter(connection, sym);
-                    await this.update15MStructure(connection, sym);
-                }
-
-                // 2. Fetch live quote from subscribed streaming state
+                // 1. Fetch live quote from subscribed streaming state
                 const price = terminalState ? terminalState.price(sym) : null;
                 if (!price || !price.bid || !price.ask) continue;
                 this.lastPrices[sym] = { bid: price.bid, ask: price.ask, time: new Date().toISOString() };
+
+                // 2. Maintain 15M Structure & PDC filter periodically (every 60s)
+                const nowMs = Date.now();
+                if (!this.last15MTime[sym] || nowMs - this.last15MTime[sym] >= 60000) {
+                    this.last15MTime[sym] = nowMs;
+                    await this.updateMacroD1Filter(account, sym);
+                    await this.update15MStructure(account, sym);
+                }
 
                 const now = new Date();
                 const secondsIn5M = (now.getMinutes() % 5) * 60 + now.getSeconds();
@@ -382,7 +391,7 @@ class LitmusCloudEngine {
                     addEngineLog(`[5M Pre-Close Evaluation] ${sym} | Bid=${price.bid} Ask=${price.ask} | Active Zones=${activeZonesCount}`);
 
                     // Evaluate and execute 5M confirmation trade inside active FVG
-                    await this.evaluateSetup(connection, sym, price);
+                    await this.evaluateSetup(account, connection, sym, price);
                 }
             }
         } catch (e) {
@@ -392,7 +401,7 @@ class LitmusCloudEngine {
         }
     }
 
-    async evaluateSetup(connection, symbol, currentPrice) {
+    async evaluateSetup(account, connection, symbol, currentPrice) {
         try {
             const zones = this.zones[symbol] || [];
             if (zones.length === 0) return;
@@ -402,8 +411,8 @@ class LitmusCloudEngine {
             const openCount = positions ? positions.filter(p => p.symbol === symbol && p.magic === MAGIC_NUMBER).length : 0;
             if (openCount >= MAX_CONCURRENT_POSITIONS) return;
 
-            // Fetch last 3 5M candles
-            const r5 = await connection.getHistoricalCandles(symbol, '5m', null, 4);
+            // Fetch last 4 5M candles from account
+            const r5 = await account.getHistoricalCandles(symbol, '5m', undefined, 4);
             if (!r5 || r5.length < 3) return;
 
             const c5 = r5[r5.length - 1]; // Forming candle (within final 5s of close)

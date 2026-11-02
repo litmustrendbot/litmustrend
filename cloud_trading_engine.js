@@ -61,6 +61,7 @@ class LitmusCloudEngine {
         this.swingLow = {};
         this.stream5MCandle = {};
         this.stream5MHistory = {};
+        this.lastKnownEquity = {};
         this.lastTraded5MTime = {};
         this.last15MTime = {};
         this.lastPrices = {};
@@ -197,6 +198,9 @@ class LitmusCloudEngine {
         try {
             const accInfo = connection.terminalState ? connection.terminalState.accountInformation : null;
             if (!accInfo) return;
+            if (accInfo.equity && accInfo.equity > 0) {
+                this.lastKnownEquity[String(accInfo.login)] = accInfo.equity;
+            }
             const positions = connection.terminalState ? connection.terminalState.positions : [];
             let activeTrade = null;
             if (positions && positions.length > 0) {
@@ -246,7 +250,10 @@ class LitmusCloudEngine {
 
         const terminalState = connection.terminalState;
         const accountInfo = terminalState ? terminalState.accountInformation : null;
-        const equity = accountInfo && accountInfo.equity > 0 ? accountInfo.equity : 100.0;
+        let equity = accountInfo && accountInfo.equity > 0 ? accountInfo.equity : null;
+        if (!equity) {
+            equity = (this.lastKnownEquity && Object.values(this.lastKnownEquity)[0]) || 1200.0;
+        }
 
         const spec = terminalState ? terminalState.specification(symbol) : null;
         const minLot = spec && spec.minVolume > 0 ? spec.minVolume : 0.01;
@@ -273,7 +280,7 @@ class LitmusCloudEngine {
         const riskAmount = equity * ((riskPercent || 1.0) / 100.0);
         let lot = riskAmount / lossPerLot;
         lot = Math.max(minLot, Math.min(maxLot, lot));
-        lot = Math.floor(lot / lotStep) * lotStep;
+        lot = Math.round(lot / lotStep) * lotStep;
 
         return parseFloat(lot.toFixed(2));
     }
@@ -822,6 +829,13 @@ if (require.main === module) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 return res.end(JSON.stringify({ error: err.message }));
             }
+        }
+
+        if (req.url === '/restart') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'restarting' }));
+            setTimeout(() => process.exit(0), 1000);
+            return;
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });

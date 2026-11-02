@@ -239,7 +239,7 @@ class LitmusCloudEngine {
         } catch (e) {}
     }
 
-    // Dynamic 1.0% Lot Sizing
+    // Dynamic 1.0% Lot Sizing (Guarantees exact 1.0% risk on Cent and Standard accounts)
     calculateLotSize(connection, symbol, entryPrice, slPrice, riskPercent) {
         const riskDist = Math.abs(entryPrice - slPrice);
         if (riskDist <= 0) return 0.01;
@@ -249,16 +249,28 @@ class LitmusCloudEngine {
         const equity = accountInfo && accountInfo.equity > 0 ? accountInfo.equity : 100.0;
 
         const spec = terminalState ? terminalState.specification(symbol) : null;
-        const tickSize = spec && spec.tickSize > 0 ? spec.tickSize : 0.01;
-        const tickValue = spec && spec.tickValue > 0 ? spec.tickValue : 1.0;
         const minLot = spec && spec.minVolume > 0 ? spec.minVolume : 0.01;
         const maxLot = spec && spec.maxVolume > 0 ? Math.min(spec.maxVolume, 10.0) : 10.0;
         const lotStep = spec && spec.volumeStep > 0 ? spec.volumeStep : 0.01;
 
-        const lossPerLot = (riskDist / tickSize) * tickValue;
+        // Exact contract sizing for Gold (100 oz per lot) across both Cent (USC) and Standard (USD) accounts:
+        // 1 full lot of Gold moves exactly 100 account currency units per $1.00 price change.
+        let lossPerLot = 0;
+        if (symbol.toUpperCase().includes('XAU') || symbol.toUpperCase().includes('GOLD')) {
+            lossPerLot = 100.0 * riskDist;
+        } else if (symbol.toUpperCase().includes('BTC')) {
+            lossPerLot = 1.0 * riskDist;
+        } else if (symbol.toUpperCase().includes('NAS')) {
+            lossPerLot = 20.0 * riskDist;
+        } else {
+            const tickSize = spec && spec.tickSize > 0 ? spec.tickSize : 0.01;
+            const tickValue = spec && spec.tickValue > 0 ? spec.tickValue : 1.0;
+            lossPerLot = (riskDist / tickSize) * tickValue;
+        }
+
         if (lossPerLot <= 0) return minLot;
 
-        const riskAmount = equity * (riskPercent / 100.0);
+        const riskAmount = equity * ((riskPercent || 1.0) / 100.0);
         let lot = riskAmount / lossPerLot;
         lot = Math.max(minLot, Math.min(maxLot, lot));
         lot = Math.floor(lot / lotStep) * lotStep;

@@ -641,7 +641,8 @@ if (require.main === module) {
         if (req.url === '/candles') {
             try {
                 if (engine && engine.metaApi) {
-                    const acc = await engine.metaApi.metatraderAccountApi.getAccount(activeAccountId);
+                    const accId = (engine.attachedAccounts[0] && engine.attachedAccounts[0].id) || '577b0f29-4dc8-45d9-8b47-3472811e1fc7';
+                    const acc = await engine.metaApi.metatraderAccountApi.getAccount(accId);
                     const c5 = await acc.getHistoricalCandles('XAUUSDc', '5m', undefined, 120);
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     return res.end(JSON.stringify(c5));
@@ -674,7 +675,7 @@ if (require.main === module) {
         addEngineLog(`Health server listening on port ${port}`);
     });
 
-    const activeAccountId = process.env.METAAPI_ACCOUNT_ID || '577b0f29-4dc8-45d9-8b47-3472811e1fc7';
+    const activeAccountId = '577b0f29-4dc8-45d9-8b47-3472811e1fc7';
     if (!METAAPI_TOKEN) {
         addEngineLog('[Notice] Set METAAPI_TOKEN in environment to start live cloud trading.');
     } else {

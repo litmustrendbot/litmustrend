@@ -95,7 +95,8 @@ module.exports = async (req, res) => {
 
             // MetaApi returns 200, 201, or 202 on valid broker credentials
             if (metaRes.status === 200 || metaRes.status === 201 || metaRes.status === 202) {
-                const newAccountId = metaRes.data ? (metaRes.data.id || metaRes.data._id) : null;
+                const isRealGuid = metaRes.data && metaRes.data.id && typeof metaRes.data.id === 'string' && metaRes.data.id.length > 10 && !metaRes.data.error;
+                const newAccountId = isRealGuid ? (metaRes.data.id || metaRes.data._id) : null;
                 if (newAccountId) {
                     try {
                         await callMetaApi(`/users/current/accounts/${newAccountId}/deploy`, 'POST', {}, metaApiToken);

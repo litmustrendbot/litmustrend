@@ -13,7 +13,7 @@ const SYMBOLS = (process.env.TRADING_SYMBOLS || process.env.TRADING_SYMBOL || 'X
     .map(s => s.trim())
     .filter(Boolean);
 const RISK_PERCENT = parseFloat(process.env.RISK_PERCENT || '1.0');
-const PRE_CLOSE_SECONDS = 5;
+const PRE_CLOSE_SECONDS = 15;
 const MAGIC_NUMBER = 155025;
 const MAX_CONCURRENT_POSITIONS = 10;
 
@@ -168,8 +168,8 @@ class LitmusCloudEngine {
                     addEngineLog(`Discovered ${accounts.length} accounts from MetaApi provisioning API`);
                     for (const acc of accounts) {
                         const accId = acc._id || acc.id;
-                        if ((acc.state === 'DEPLOYED' || acc.connectionStatus === 'CONNECTED') && !this.activeEngines.has(accId)) {
-                            addEngineLog(`Discovered active account: ${acc.login} (${accId})! Attaching...`);
+                        if (!this.activeEngines.has(accId)) {
+                            addEngineLog(`Discovered account: ${acc.login} (${accId}, state=${acc.state})! Attaching...`);
                             attachAccount(accId);
                         }
                     }
@@ -716,7 +716,7 @@ if (require.main === module) {
         addEngineLog(`Health server listening on port ${port}`);
     });
 
-    const activeAccountId = '577b0f29-4dc8-45d9-8b47-3472811e1fc7';
+    const activeAccountId = process.env.METAAPI_ACCOUNT_ID || null;
     if (!METAAPI_TOKEN) {
         addEngineLog('[Notice] Set METAAPI_TOKEN in environment to start live cloud trading.');
     } else {

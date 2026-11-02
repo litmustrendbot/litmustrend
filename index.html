@@ -215,72 +215,28 @@
                      ============================================================== -->
                 <div id="wizardPanel1" class="wizard-panel active-panel">
                     <div style="margin-bottom: 20px;">
-                        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0;">Select Trading Strategy</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Choose between the high-frequency 4H intraday runner or the conservative D1 macro filter. Both utilize 1.0% dynamic lot sizing and the stepped trailing stop ladder.</p>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0;">Select Strategy</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Choose the strategy for this account.</p>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;">
                         
                         <!-- CARD 1: THE BIG BOYS -->
-                        <div id="cardBigBoys" class="strategy-pick-card selected" onclick="selectStrategyCard('The Big Boys 4H')">
-                            <div class="strategy-card-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">
-                                ★ RECOMMENDED • HIGH YIELD
+                        <div id="cardBigBoys" class="strategy-pick-card selected" onclick="selectStrategyCard('The Big Boys 4H')" style="display: flex; align-items: center; gap: 14px; padding: 22px 20px;">
+                            <div class="strategy-card-radio"></div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">The Big Boys</h4>
+                                <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--text-muted);">4H / 15M / 5M</p>
                             </div>
-                            <div class="strategy-card-header">
-                                <div class="strategy-card-radio"></div>
-                                <div>
-                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">The Big Boys (4H / 15M / 5M)</h4>
-                                    <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">4H Macro Filter • 15M FVG • 5M Entry</p>
-                                </div>
-                            </div>
-                            <div class="strategy-card-stats" style="margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
-                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">18-Mo Net</div>
-                                    <div style="font-size: 0.95rem; font-weight: 800; color: #10b981;">+5,062R</div>
-                                </div>
-                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Profit Factor</div>
-                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">2.80</div>
-                                </div>
-                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Frequency</div>
-                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--accent);">~249 / mo</div>
-                                </div>
-                            </div>
-                            <p style="margin-top: 12px; margin-bottom: 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">
-                                Updates trend every 4 hours to catch intraday runners. Delivered <strong>+$5,918 USD</strong> withdrawn on $10 Cent account.
-                            </p>
                         </div>
 
                         <!-- CARD 2: NEW STRATEGY -->
-                        <div id="cardNewStrategy" class="strategy-pick-card" onclick="selectStrategyCard('New Strategy 1%')">
-                            <div class="strategy-card-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">
-                                CALMER • LOWER DRAWDOWN
+                        <div id="cardNewStrategy" class="strategy-pick-card" onclick="selectStrategyCard('New Strategy 1%')" style="display: flex; align-items: center; gap: 14px; padding: 22px 20px;">
+                            <div class="strategy-card-radio"></div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">New Strategy</h4>
+                                <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--text-muted);">D1 / 15M / 5M</p>
                             </div>
-                            <div class="strategy-card-header">
-                                <div class="strategy-card-radio"></div>
-                                <div>
-                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">New Strategy (D1 / 15M / 5M)</h4>
-                                    <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">D1 PDC Filter • 15M FVG • 5M Entry</p>
-                                </div>
-                            </div>
-                            <div class="strategy-card-stats" style="margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
-                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">18-Mo Net</div>
-                                    <div style="font-size: 0.95rem; font-weight: 800; color: #10b981;">+3,940R</div>
-                                </div>
-                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Profit Factor</div>
-                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);">2.72</div>
-                                </div>
-                                <div style="background: var(--bg-surface-secondary); padding: 8px; border-radius: 6px;">
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Frequency</div>
-                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--accent);">~201 / mo</div>
-                                </div>
-                            </div>
-                            <p style="margin-top: 12px; margin-bottom: 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">
-                                Uses Daily Close (PDC) macro trend. Stays out of sideways chop with -91R max drawdown. Delivered <strong>+$2,190 USD</strong> withdrawn.
-                            </p>
                         </div>
 
                     </div>

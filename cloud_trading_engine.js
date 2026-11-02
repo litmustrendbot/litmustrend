@@ -94,10 +94,20 @@ class LitmusCloudEngine {
                     await connection.waitSynchronized();
                     addEngineLog(`Account ${account.login || accId} Synchronized with Broker! Scanning active on: ${SYMBOLS.join(', ')}...`);
 
+                    let accStrategy = 'The Big Boys 4H';
+                    try {
+                        const syncRes = await fetch(`https://litmustrend.vercel.app/api/portal/sync?login=${account.login}`);
+                        if (syncRes.ok) {
+                            const syncData = await syncRes.json();
+                            if (syncData && syncData.strategy) accStrategy = syncData.strategy;
+                        }
+                    } catch (e) {}
+
                     this.attachedAccounts.push({
                         id: account.id,
                         login: account.login,
                         server: account.server,
+                        strategy: accStrategy,
                         state: 'CONNECTED',
                         symbols: SYMBOLS,
                         connectedAt: Date.now()
@@ -439,8 +449,19 @@ class LitmusCloudEngine {
             const isBull5M = cl1 > o1;
             const isBear5M = cl1 < o1;
 
+            // Account-level strategy filter check
+            const attached = this.attachedAccounts.find(a => a.id === account.id || String(a.login) === String(account.login));
+            const isD1 = attached && attached.strategy && (attached.strategy.includes('D1') || attached.strategy.includes('New Strategy'));
+            const macroFilter = isD1 ? (this.dailyClose[symbol] || 0) : (this.h4Close[symbol] || 0);
+
             for (const zone of zones) {
                 if (!zone.isActive) continue;
+
+                // Enforce account's macro filter alignment (D1 PDC vs 4H Close)
+                if (macroFilter > 0) {
+                    if (zone.direction === 1 && currentPrice.ask < macroFilter) continue;
+                    if (zone.direction === -1 && currentPrice.bid > macroFilter) continue;
+                }
 
                 zone.ageBars = (zone.ageBars || 0) + 1;
                 if (zone.ageBars > 150) {

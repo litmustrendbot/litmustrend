@@ -283,7 +283,7 @@ class LitmusCloudEngine {
             const lookback = 3;
             let currentSH = null;
             let currentSL = null;
-            for (let i = n - 2; i >= lookback + 2; i--) {
+            for (let i = n - 2 - lookback; i >= lookback; i--) {
                 let isHigh = true;
                 let isLow = true;
                 for (let k = 1; k <= lookback; k++) {
@@ -314,7 +314,7 @@ class LitmusCloudEngine {
             if (bullishBOS || bearishBOS || needHistoricalScan) {
                 let fvgCount = 0;
                 for (let k = n - 2; k >= Math.max(2, n - 25) && fvgCount < 3; k--) {
-                    if (r15[k] && r15[k - 2]) {
+                    if (r15[k] && r15[k - 1] && r15[k - 2]) {
                         if (macroBull && r15[k].low > r15[k - 2].high) {
                             const zTop = r15[k].low;
                             const zBottom = r15[k - 1].low;

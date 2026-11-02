@@ -52,6 +52,7 @@ class LitmusCloudEngine {
         this.accountId = accountId;
         this.metaApi = new MetaApi(token);
         this.activeEngines = new Map();
+        this.connections = new Map();
         this.attachedAccounts = [];
         this.zones = {}; // Per-symbol FVG POI zones
         this.dailyClose = {}; // Per-symbol Previous Day Close (PDC for New Strategy)
@@ -92,6 +93,7 @@ class LitmusCloudEngine {
                     const connection = account.getStreamingConnection();
                     await connection.connect();
                     await connection.waitSynchronized();
+                    this.connections.set(account.id, connection);
                     addEngineLog(`Account ${account.login || accId} Synchronized with Broker! Scanning active on: ${SYMBOLS.join(', ')}...`);
 
                     let accStrategy = 'The Big Boys 4H';
@@ -696,9 +698,12 @@ if (require.main === module) {
 
                 const attached = engine.attachedAccounts[0];
                 const acc = await engine.metaApi.metatraderAccountApi.getAccount(attached.id);
-                const connection = acc.getStreamingConnection();
-                if (!connection.isSynchronized()) {
-                    await connection.waitSynchronized();
+                let connection = (engine.connections && engine.connections.get(attached.id)) || acc.getStreamingConnection();
+                if (!connection.synchronized) {
+                    try {
+                        await connection.connect();
+                        await connection.waitSynchronized();
+                    } catch (e) {}
                 }
 
                 const sym = 'XAUUSDc';

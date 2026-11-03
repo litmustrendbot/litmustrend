@@ -250,18 +250,32 @@ class LitmusCloudEngine {
 
         const terminalState = connection.terminalState;
         const accountInfo = terminalState ? terminalState.accountInformation : null;
-        let equity = accountInfo && accountInfo.equity > 0 ? accountInfo.equity : null;
-        if (!equity) {
-            equity = (this.lastKnownEquity && Object.values(this.lastKnownEquity)[0]) || 1200.0;
-        }
-
         const spec = terminalState ? terminalState.specification(symbol) : null;
         const minLot = spec && spec.minVolume > 0 ? spec.minVolume : 0.01;
         const maxLot = spec && spec.maxVolume > 0 ? Math.min(spec.maxVolume, 10.0) : 10.0;
         const lotStep = spec && spec.volumeStep > 0 ? spec.volumeStep : 0.01;
 
-        // Exact contract sizing for Gold (100 oz per lot) across both Cent (USC) and Standard (USD) accounts:
-        // 1 full lot of Gold moves exactly 100 account currency units per $1.00 price change.
+        // Retrieve verified live equity (never fallback to arbitrary large number)
+        let equity = accountInfo && accountInfo.equity > 0 ? accountInfo.equity : null;
+        if (!equity && accountInfo && accountInfo.balance > 0) {
+            equity = accountInfo.balance;
+        }
+        if (!equity && accountInfo && accountInfo.login) {
+            equity = this.lastKnownEquity[String(accountInfo.login)];
+        }
+        if (!equity) {
+            equity = (this.lastKnownEquity && Object.values(this.lastKnownEquity)[0]) || 0;
+        }
+
+        // Detect if account or symbol is Cent (USC) denominated
+        const currency = (accountInfo && accountInfo.currency) || '';
+        const server = (accountInfo && accountInfo.server) || '';
+        const isCent = (currency === 'USC' || /cent/i.test(server) || symbol.toLowerCase().endsWith('c'));
+
+        // Calculate exact loss per 1.00 lot:
+        // On Exness Cent (XAUUSDc): 1 Cent lot = 1 oz. 1 lot moves exactly 100 USC per $1.00 move (0.01 lot = 1 USC / 1 cent per $1.00).
+        // On Exness Standard (XAUUSD): 1 Standard lot = 100 oz. 1 lot moves $100 USD per $1.00 move (0.01 lot = $1.00 per $1.00).
+        // Therefore, 1 full lot moves exactly 100 account currency units per $1.00 in BOTH Cent (USC) and Standard (USD) accounts!
         let lossPerLot = 0;
         if (symbol.toUpperCase().includes('XAU') || symbol.toUpperCase().includes('GOLD')) {
             lossPerLot = 100.0 * riskDist;
@@ -269,20 +283,33 @@ class LitmusCloudEngine {
             lossPerLot = 1.0 * riskDist;
         } else if (symbol.toUpperCase().includes('NAS')) {
             lossPerLot = 20.0 * riskDist;
+        } else if (spec && spec.tickSize > 0 && spec.tickValue > 0) {
+            lossPerLot = (riskDist / spec.tickSize) * spec.tickValue;
         } else {
-            const tickSize = spec && spec.tickSize > 0 ? spec.tickSize : 0.01;
-            const tickValue = spec && spec.tickValue > 0 ? spec.tickValue : 1.0;
-            lossPerLot = (riskDist / tickSize) * tickValue;
+            lossPerLot = 100.0 * riskDist;
         }
 
         if (lossPerLot <= 0) return minLot;
 
+        if (!equity || equity <= 0) {
+            addEngineLog(`[LOT SIZING WARNING] Equity not yet loaded for account, defaulting to minLot (${minLot})`);
+            return minLot;
+        }
+
         const riskAmount = equity * ((riskPercent || 1.0) / 100.0);
         let lot = riskAmount / lossPerLot;
-        lot = Math.max(minLot, Math.min(maxLot, lot));
-        lot = Math.round(lot / lotStep) * lotStep;
 
-        return parseFloat(lot.toFixed(2));
+        if (lot < minLot) {
+            const actualRiskOnMinLot = minLot * lossPerLot;
+            const actualRiskPct = (actualRiskOnMinLot / equity) * 100.0;
+            addEngineLog(`[MIN LOT CONSTRAINT] Exact 1% risk requires ${lot.toFixed(4)} lots, but broker minimum is ${minLot}. Trading ${minLot} lots (Risk: ${actualRiskPct.toFixed(1)}% of ${equity.toFixed(2)} ${currency || (isCent ? 'USC' : 'USD')}).`);
+            lot = minLot;
+        } else {
+            lot = Math.min(maxLot, lot);
+            lot = Math.floor(lot / lotStep) * lotStep; // Use Math.floor to guarantee risk NEVER exceeds 1.0%
+        }
+
+        return parseFloat(Math.max(minLot, lot).toFixed(2));
     }
 
     // Update Macro Filters (D1 Previous Day Close & 4H Previous Candle Close)
@@ -453,13 +480,13 @@ class LitmusCloudEngine {
                     await this.update15MStructure(account, sym);
                 }
 
-                const now = new Date();
-                const secondsIn5M = (now.getMinutes() % 5) * 60 + now.getSeconds();
+                const nowTime = new Date();
+                const secondsIn5M = (nowTime.getMinutes() % 5) * 60 + nowTime.getSeconds();
                 const secondsRemaining = 300 - secondsIn5M;
 
                 // 3. Pre-close trigger: check within final 5 seconds of the 5M candle
                 if (secondsRemaining <= PRE_CLOSE_SECONDS) {
-                    const currentBarKey = `${sym}-${now.getUTCHours()}:${Math.floor(now.getUTCMinutes() / 5) * 5}`;
+                    const currentBarKey = `${sym}-${nowTime.getUTCHours()}:${Math.floor(nowTime.getUTCMinutes() / 5) * 5}`;
                     if (this.lastTraded5MTime[sym] === currentBarKey) continue;
                     this.lastTraded5MTime[sym] = currentBarKey;
 
@@ -556,9 +583,14 @@ class LitmusCloudEngine {
                             let slPrice = zone.zoneTop;
                             const minSlDist = (symbol.includes('BTC') || symbol.includes('NAS')) ? 5.0 : 0.50;
                             if (slPrice < entryPrice + minSlDist) slPrice = entryPrice + minSlDist;
+                            slPrice = parseFloat(slPrice.toFixed(2));
 
                             const riskDist = slPrice - entryPrice;
                             const lots = this.calculateLotSize(connection, symbol, entryPrice, slPrice, RISK_PERCENT);
+                            if (!lots || lots <= 0) {
+                                addEngineLog(`[ORDER SKIPPED] Lot size calculated as 0 for ${symbol}`);
+                                break;
+                            }
 
                             addEngineLog(`[ORDER EXECUTION] Placing SELL on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
                             const result = await connection.createMarketSellOrder(symbol, lots, slPrice, 0, {
@@ -611,9 +643,14 @@ class LitmusCloudEngine {
                             let slPrice = zone.zoneBottom;
                             const minSlDist = (symbol.includes('BTC') || symbol.includes('NAS')) ? 5.0 : 0.50;
                             if (slPrice > entryPrice - minSlDist) slPrice = entryPrice - minSlDist;
+                            slPrice = parseFloat(slPrice.toFixed(2));
 
                             const riskDist = entryPrice - slPrice;
                             const lots = this.calculateLotSize(connection, symbol, entryPrice, slPrice, RISK_PERCENT);
+                            if (!lots || lots <= 0) {
+                                addEngineLog(`[ORDER SKIPPED] Lot size calculated as 0 for ${symbol}`);
+                                break;
+                            }
 
                             addEngineLog(`[ORDER EXECUTION] Placing BUY on ${symbol} | Lots: ${lots} | SL: ${slPrice} | Risk Dist: ${riskDist.toFixed(2)}`);
                             const result = await connection.createMarketBuyOrder(symbol, lots, slPrice, 0, {
@@ -682,7 +719,7 @@ class LitmusCloudEngine {
                 if (lockedR >= 0.0) {
                     let targetSL = 0;
                     if (pos.type === 'POSITION_TYPE_BUY') {
-                        targetSL = openPrice + (lockedR * riskDist);
+                        targetSL = parseFloat((openPrice + (lockedR * riskDist)).toFixed(2));
                         if (targetSL > sl + 0.05) {
                             console.log(`[Ladder Trail] Moving BUY SL on ${pos.symbol} to Lock +${lockedR}R (New SL: ${targetSL.toFixed(2)})`);
                             await connection.modifyPosition(pos.id, targetSL, pos.takeProfit);
@@ -703,7 +740,7 @@ class LitmusCloudEngine {
                             });
                         }
                     } else if (pos.type === 'POSITION_TYPE_SELL') {
-                        targetSL = openPrice - (lockedR * riskDist);
+                        targetSL = parseFloat((openPrice - (lockedR * riskDist)).toFixed(2));
                         if (targetSL < sl - 0.05 || sl === 0) {
                             console.log(`[Ladder Trail] Moving SELL SL on ${pos.symbol} to Lock +${lockedR}R (New SL: ${targetSL.toFixed(2)})`);
                             await connection.modifyPosition(pos.id, targetSL, pos.takeProfit);

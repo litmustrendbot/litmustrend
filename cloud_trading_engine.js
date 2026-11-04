@@ -306,7 +306,7 @@ class LitmusCloudEngine {
             lot = minLot;
         } else {
             lot = Math.min(maxLot, lot);
-            lot = Math.floor(lot / lotStep) * lotStep; // Use Math.floor to guarantee risk NEVER exceeds 1.0%
+            lot = Math.round(lot / lotStep) * lotStep; // Use Math.round to get as close to exact 1.0% as broker volumeStep allows
         }
 
         return parseFloat(Math.max(minLot, lot).toFixed(2));

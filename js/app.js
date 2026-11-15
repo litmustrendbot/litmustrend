@@ -247,10 +247,11 @@ function renderSidebar() {
         item.className = `account-list-item ${acc.id === selectedAccountId ? 'selected' : ''}`;
         item.onclick = () => selectAccount(acc.id);
 
-        const isBigBoys = !acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H');
-        const riskBadgeClass = isBigBoys ? 'tag-bigboys' : 'tag-newstrategy';
+        const isPrincess = acc.strategy && (acc.strategy.includes('Princess') || acc.strategy.includes('princess'));
+        const isBigBoys = !isPrincess && (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H'));
+        const riskBadgeClass = isPrincess ? 'tag-princess' : (isBigBoys ? 'tag-bigboys' : 'tag-newstrategy');
         const riskBadgeText = '1% RISK';
-        const engineText = isBigBoys ? 'The Big Boys • 4H/15M/5M' : 'New Strategy • D1/15M/5M';
+        const engineText = isPrincess ? 'Princess Strategy • Daily/5M FVG' : (isBigBoys ? 'The Big Boys • 4H/15M/5M' : 'New Strategy • D1/15M/5M');
         const instBadge = acc.instrument || 'XAUUSD';
         const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
         const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
@@ -304,8 +305,9 @@ function selectAccount(accountId) {
     // Populate header
     document.getElementById('viewAccName').innerText = acc.name;
     const instLabel = acc.brokerSymbol ? `${acc.instrument || 'XAUUSD'} [${acc.brokerSymbol}]` : (acc.instrument || 'XAUUSD');
-    const isBigBoys = !acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H');
-    const stratName = isBigBoys ? 'The Big Boys (4H / 15M / 5M)' : 'New Strategy (D1 / 15M / 5M)';
+    const isPrincess = acc.strategy && (acc.strategy.includes('Princess') || acc.strategy.includes('princess'));
+    const isBigBoys = !isPrincess && (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H'));
+    const stratName = isPrincess ? 'Princess Strategy (Daily Bias & 5M FVG)' : (isBigBoys ? 'The Big Boys (4H / 15M / 5M)' : 'New Strategy (D1 / 15M / 5M)');
     document.getElementById('viewStrategyText').innerText = `${stratName} • ${instLabel}`;
     document.getElementById('viewServerText').innerText = acc.server;
     document.getElementById('viewLoginText').innerText = acc.login;
@@ -896,15 +898,23 @@ function selectStrategyCard(strategyValue) {
 
     const cardBB = document.getElementById('cardBigBoys');
     const cardNS = document.getElementById('cardNewStrategy');
+    const cardPS = document.getElementById('cardPrincess');
     const badgeName = document.getElementById('panel2StrategyName');
 
-    if (strategyValue.includes('Big Boys') || strategyValue.includes('4H')) {
+    if (strategyValue.includes('Princess')) {
+        if (cardPS) cardPS.classList.add('selected');
+        if (cardBB) cardBB.classList.remove('selected');
+        if (cardNS) cardNS.classList.remove('selected');
+        if (badgeName) badgeName.innerText = 'Princess Strategy (Daily Bias & 5M FVG)';
+    } else if (strategyValue.includes('Big Boys') || strategyValue.includes('4H')) {
         if (cardBB) cardBB.classList.add('selected');
         if (cardNS) cardNS.classList.remove('selected');
+        if (cardPS) cardPS.classList.remove('selected');
         if (badgeName) badgeName.innerText = 'The Big Boys (4H / 15M / 5M)';
     } else {
         if (cardNS) cardNS.classList.add('selected');
         if (cardBB) cardBB.classList.remove('selected');
+        if (cardPS) cardPS.classList.remove('selected');
         if (badgeName) badgeName.innerText = 'New Strategy (D1 / 15M / 5M)';
     }
 }
@@ -913,8 +923,13 @@ function toggleAccountStrategy() {
     const acc = accounts.find(a => a.id === selectedAccountId);
     if (!acc) return;
 
-    const isCurrentlyBigBoys = !acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H');
-    acc.strategy = isCurrentlyBigBoys ? 'New Strategy 1%' : 'The Big Boys 4H';
+    if (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H')) {
+        acc.strategy = 'New Strategy 1%';
+    } else if (acc.strategy.includes('New Strategy') || acc.strategy.includes('D1')) {
+        acc.strategy = 'Princess Strategy';
+    } else {
+        acc.strategy = 'The Big Boys 4H';
+    }
     saveAccounts();
     renderSidebar();
     selectAccount(acc.id);

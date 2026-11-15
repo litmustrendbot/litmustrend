@@ -537,9 +537,9 @@ class LitmusCloudEngine {
             const isBull5M = cl1 > o1;
             const isBear5M = cl1 < o1;
 
-            // Strategy filter: for New Strategy (D1), require price to align with Previous Day Close
+            // Strategy filter: for New Strategy (D1) & Princess Strategy, require price to align with Previous Day Close
             const attached = this.attachedAccounts.find(a => a.id === account.id || String(a.login) === String(account.login));
-            const isD1 = attached && attached.strategy && (attached.strategy.includes('D1') || attached.strategy.includes('New Strategy'));
+            const isD1 = attached && attached.strategy && (attached.strategy.includes('D1') || attached.strategy.includes('New Strategy') || attached.strategy.includes('Princess'));
             const pdc = this.dailyClose[symbol] || 0;
 
             for (const zone of zones) {
@@ -905,7 +905,7 @@ if (require.main === module) {
         res.end(JSON.stringify({
             status: 'online',
             service: 'LitmusTrend Cloud Engine',
-            strategy: 'Dual-Engine: The Big Boys (4H/15M/5M) & New Strategy (D1/15M/5M)',
+            strategy: 'Tri-Engine: The Big Boys (4H/15M/5M), New Strategy (D1/15M/5M) & Princess Strategy (Daily/5M FVG)',
             symbols: SYMBOLS,
             magicNumber: MAGIC_NUMBER,
             riskPercent: RISK_PERCENT,

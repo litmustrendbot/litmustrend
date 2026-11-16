@@ -251,7 +251,7 @@ function renderSidebar() {
         const isBigBoys = !isPrincess && (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H'));
         const riskBadgeClass = isPrincess ? 'tag-princess' : (isBigBoys ? 'tag-bigboys' : 'tag-newstrategy');
         const riskBadgeText = '1% RISK';
-        const engineText = isPrincess ? 'Princess Strategy • Daily/5M FVG' : (isBigBoys ? 'The Big Boys • 4H/15M/5M' : 'New Strategy • D1/15M/5M');
+        const engineText = isPrincess ? 'Princess Strategy • 4H/15M/5M' : (isBigBoys ? 'The Big Boys • 4H/15M/5M' : 'New Strategy • D1/15M/5M');
         const instBadge = acc.instrument || 'XAUUSD';
         const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
         const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
@@ -307,7 +307,7 @@ function selectAccount(accountId) {
     const instLabel = acc.brokerSymbol ? `${acc.instrument || 'XAUUSD'} [${acc.brokerSymbol}]` : (acc.instrument || 'XAUUSD');
     const isPrincess = acc.strategy && (acc.strategy.includes('Princess') || acc.strategy.includes('princess'));
     const isBigBoys = !isPrincess && (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H'));
-    const stratName = isPrincess ? 'Princess Strategy (Daily Bias & 5M FVG)' : (isBigBoys ? 'The Big Boys (4H / 15M / 5M)' : 'New Strategy (D1 / 15M / 5M)');
+    const stratName = isPrincess ? 'Princess Strategy (4H / 15M / 5M)' : (isBigBoys ? 'The Big Boys (4H / 15M / 5M)' : 'New Strategy (D1 / 15M / 5M)');
     document.getElementById('viewStrategyText').innerText = `${stratName} • ${instLabel}`;
     document.getElementById('viewServerText').innerText = acc.server;
     document.getElementById('viewLoginText').innerText = acc.login;
@@ -905,7 +905,7 @@ function selectStrategyCard(strategyValue) {
         if (cardPS) cardPS.classList.add('selected');
         if (cardBB) cardBB.classList.remove('selected');
         if (cardNS) cardNS.classList.remove('selected');
-        if (badgeName) badgeName.innerText = 'Princess Strategy (Daily Bias & 5M FVG)';
+        if (badgeName) badgeName.innerText = 'Princess Strategy (4H / 15M / 5M)';
     } else if (strategyValue.includes('Big Boys') || strategyValue.includes('4H')) {
         if (cardBB) cardBB.classList.add('selected');
         if (cardNS) cardNS.classList.remove('selected');

@@ -12,7 +12,7 @@ const SYMBOLS = (process.env.TRADING_SYMBOLS || process.env.TRADING_SYMBOL || 'X
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
-const RISK_PERCENT = parseFloat(process.env.RISK_PERCENT || '1.0');
+const RISK_PERCENT = parseFloat(process.env.RISK_PERCENT || '2.0');
 const PRE_CLOSE_SECONDS = 15;
 const MAGIC_NUMBER = 155025;
 const MAX_CONCURRENT_POSITIONS = 10;
@@ -243,7 +243,7 @@ class LitmusCloudEngine {
         } catch (e) {}
     }
 
-    // Dynamic 1.0% Lot Sizing (Guarantees exact 1.0% risk on Cent and Standard accounts)
+    // Dynamic 2.0% Lot Sizing (Guarantees exact 2.0% risk on Cent and Standard accounts)
     calculateLotSize(connection, symbol, entryPrice, slPrice, riskPercent) {
         const riskDist = Math.abs(entryPrice - slPrice);
         if (riskDist <= 0) return 0.01;
@@ -296,17 +296,17 @@ class LitmusCloudEngine {
             return minLot;
         }
 
-        const riskAmount = equity * ((riskPercent || 1.0) / 100.0);
+        const riskAmount = equity * ((riskPercent || 2.0) / 100.0);
         let lot = riskAmount / lossPerLot;
 
         if (lot < minLot) {
             const actualRiskOnMinLot = minLot * lossPerLot;
             const actualRiskPct = (actualRiskOnMinLot / equity) * 100.0;
-            addEngineLog(`[MIN LOT CONSTRAINT] Exact 1% risk requires ${lot.toFixed(4)} lots, but broker minimum is ${minLot}. Trading ${minLot} lots (Risk: ${actualRiskPct.toFixed(1)}% of ${equity.toFixed(2)} ${currency || (isCent ? 'USC' : 'USD')}).`);
+            addEngineLog(`[MIN LOT CONSTRAINT] Exact 2% risk requires ${lot.toFixed(4)} lots, but broker minimum is ${minLot}. Trading ${minLot} lots (Risk: ${actualRiskPct.toFixed(1)}% of ${equity.toFixed(2)} ${currency || (isCent ? 'USC' : 'USD')}).`);
             lot = minLot;
         } else {
             lot = Math.min(maxLot, lot);
-            lot = Math.round(lot / lotStep) * lotStep; // Use Math.round to get as close to exact 1.0% as broker volumeStep allows
+            lot = Math.round(lot / lotStep) * lotStep; // Use Math.round to get as close to exact 2.0% as broker volumeStep allows
         }
 
         return parseFloat(Math.max(minLot, lot).toFixed(2));
@@ -808,11 +808,11 @@ if (require.main === module) {
                 const terminalState = connection.terminalState;
                 const price = terminalState ? terminalState.price(sym) : null;
                 const entryPrice = (price && price.ask) ? price.ask : (engine.lastPrices[sym] ? engine.lastPrices[sym].ask : 3902.0);
-                const slDist = 1.50; // $1.50 risk distance for 1% test trade
+                const slDist = 1.50; // $1.50 risk distance for 2% test trade
                 const slPrice = Number((entryPrice - slDist).toFixed(3));
 
-                const lots = engine.calculateLotSize(connection, sym, entryPrice, slPrice, 1.0);
-                addEngineLog(`[TEST TRADE TRIGGERED] Placing 1% BUY on ${sym} | Lots: ${lots} | Entry: ${entryPrice} | SL: ${slPrice} | Risk Dist: ${slDist}`);
+                const lots = engine.calculateLotSize(connection, sym, entryPrice, slPrice, RISK_PERCENT);
+                addEngineLog(`[TEST TRADE TRIGGERED] Placing 2% BUY on ${sym} | Lots: ${lots} | Entry: ${entryPrice} | SL: ${slPrice} | Risk Dist: ${slDist}`);
 
                 const result = await connection.createMarketBuyOrder(sym, lots, slPrice, 0, {
                     comment: `Ladder5M Risk:${slDist.toFixed(2)}`,

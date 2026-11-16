@@ -250,7 +250,7 @@ function renderSidebar() {
         const isPrincess = acc.strategy && (acc.strategy.includes('Princess') || acc.strategy.includes('princess'));
         const isBigBoys = !isPrincess && (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H'));
         const riskBadgeClass = isPrincess ? 'tag-princess' : (isBigBoys ? 'tag-bigboys' : 'tag-newstrategy');
-        const riskBadgeText = '1% RISK';
+        const riskBadgeText = '2% RISK';
         const engineText = isPrincess ? 'Princess Strategy • 4H/15M/5M' : (isBigBoys ? 'The Big Boys • 4H/15M/5M' : 'New Strategy • D1/15M/5M');
         const instBadge = acc.instrument || 'XAUUSD';
         const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
@@ -518,7 +518,7 @@ async function triggerTestTrade() {
 
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span>⏳ Placing 1% Trade...</span>';
+        btn.innerHTML = '<span>⏳ Placing 2% Trade...</span>';
     }
 
     try {
@@ -541,7 +541,7 @@ async function triggerTestTrade() {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<span>⚡ Test 1% Trade</span>';
+            btn.innerHTML = '<span>⚡ Test 2% Trade</span>';
         }
     }
 }
@@ -1240,7 +1240,7 @@ async function pollWatchdogTelemetry() {
             }
             if (step3Desc) {
                 step3Desc.innerText = isCritical 
-                    ? 'In the 15-second close window: evaluating reversal close to place 1% trade automatically.'
+                    ? 'In the 15-second close window: evaluating reversal close to place 2% trade automatically.'
                     : 'Building 5M confirmation candle inside tapped zone to place trade automatically.';
             }
         }

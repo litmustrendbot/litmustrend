@@ -251,7 +251,10 @@ function renderSidebar() {
     accounts.forEach(acc => {
         const item = document.createElement('div');
         item.className = `account-list-item ${acc.id === selectedAccountId ? 'selected' : ''}`;
-        item.onclick = () => selectAccount(acc.id);
+        item.onclick = () => {
+            switchLitmusView('bot');
+            selectAccount(acc.id);
+        };
 
         const isPrincess = acc.strategy && (acc.strategy.includes('Princess') || acc.strategy.includes('princess'));
         const isBigBoys = !isPrincess && (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H'));
@@ -302,11 +305,16 @@ function selectAccount(accountId) {
     // Update sidebar highlight
     renderSidebar();
 
-    // Hide add account page and show active analysis
+    // Hide add account page and show active analysis ONLY if we are in 'bot' view
     const addPage = document.getElementById('addAccountPage');
-    if (addPage) addPage.classList.add('hidden');
     const activeEl = document.getElementById('activeAnalysis');
-    if (activeEl) activeEl.classList.remove('hidden');
+    if (currentLitmusView === 'bot') {
+        if (addPage) addPage.classList.add('hidden');
+        if (activeEl) activeEl.classList.remove('hidden');
+    } else {
+        if (activeEl) activeEl.classList.add('hidden');
+        if (addPage) addPage.classList.add('hidden');
+    }
 
     // Populate header
     document.getElementById('viewAccName').innerText = acc.name;
@@ -1003,14 +1011,25 @@ function togglePasswordVisibility() {
 
 // --- 7. ADD ACCOUNT PAGE WORKFLOW (FULL PAGE IN WORKSPACE, NOT A POP-UP) ---
 function openAddAccountPage() {
+    currentLitmusView = 'bot';
     selectedAccountId = null;
     renderSidebar();
 
+    const btnBot = document.getElementById('navBtnBot');
+    const btnSocial = document.getElementById('navBtnSocial');
+    const btnJournal = document.getElementById('navBtnJournal');
+    [btnBot, btnSocial, btnJournal].forEach(b => b && b.classList.remove('active'));
+    if (btnBot) btnBot.classList.add('active');
+
     const activeEl = document.getElementById('activeAnalysis');
     const pageEl = document.getElementById('addAccountPage');
+    const socialView = document.getElementById('socialStudioView');
+    const journalView = document.getElementById('tradeJournalView');
     const backBtn = document.getElementById('btnCancelAddPage');
 
     if (activeEl) activeEl.classList.add('hidden');
+    if (socialView) socialView.classList.add('hidden');
+    if (journalView) journalView.classList.add('hidden');
     if (pageEl) pageEl.classList.remove('hidden');
 
     // Show back button only if there are existing accounts to return to
@@ -1366,6 +1385,8 @@ const DEFAULT_LITMUS_TRADES = [
   }
 ];
 
+let activeJournalFilter = 'ALL';
+
 function switchLitmusView(view) {
     currentLitmusView = view;
     
@@ -1375,16 +1396,26 @@ function switchLitmusView(view) {
     [btnBot, btnSocial, btnJournal].forEach(b => b && b.classList.remove('active'));
 
     const activeAnalysis = document.getElementById('activeAnalysis');
+    const addAccountPage = document.getElementById('addAccountPage');
     const socialView = document.getElementById('socialStudioView');
     const journalView = document.getElementById('tradeJournalView');
 
+    // 1. Force-hide ALL views to ensure ZERO bleed-through or stacking
     if (activeAnalysis) activeAnalysis.classList.add('hidden');
+    if (addAccountPage) addAccountPage.classList.add('hidden');
     if (socialView) socialView.classList.add('hidden');
     if (journalView) journalView.classList.add('hidden');
 
+    // 2. Selectively activate only the requested view
     if (view === 'bot') {
         if (btnBot) btnBot.classList.add('active');
-        if (activeAnalysis) activeAnalysis.classList.remove('hidden');
+        if (accounts.length > 0 && selectedAccountId) {
+            if (activeAnalysis) activeAnalysis.classList.remove('hidden');
+        } else if (accounts.length > 0) {
+            selectAccount(accounts[0].id);
+        } else {
+            if (addAccountPage) addAccountPage.classList.remove('hidden');
+        }
     } else if (view === 'social') {
         if (btnSocial) btnSocial.classList.add('active');
         if (socialView) socialView.classList.remove('hidden');
@@ -1433,6 +1464,15 @@ function onLitmusTradeChanged(tradeId) {
     const badgeR = document.getElementById('ltSlide2BadgeR');
     if (badgeR) badgeR.innerText = `${t.final_r} Target Hit 🎯`;
 
+    const gradeHeader = document.getElementById('ltHeaderTradeGrade');
+    if (gradeHeader) gradeHeader.innerText = `GRADE ${t.trade_grade}`;
+
+    const returnHeader = document.getElementById('ltHeaderReturn');
+    if (returnHeader) returnHeader.innerText = `${t.final_r} (+$${Number(t.pnl).toFixed(2)})`;
+
+    const effHeader = document.getElementById('ltHeaderEfficiency');
+    if (effHeader) effHeader.innerText = t.efficiency_score;
+
     const btnS1 = document.getElementById('ltBtnDownloadS1');
     if (btnS1) {
         btnS1.href = t.snapshot_before;
@@ -1448,7 +1488,7 @@ function onLitmusTradeChanged(tradeId) {
     const caption = `🎯 ${symClean} Before & After SMC Execution!
 • Setup: ${t.setup_category || '15M Origin Demand POI'}
 • Realized Return: ${t.final_r} (+$${Number(t.pnl || 0).toFixed(2)} USD)
-• Risk Sizing: Dynamic 10% auto-calculated | Break-Even at +2R
+• Risk Sizing: Dynamic 2.0% auto-calculated | Break-Even at +3R
 
 Swipe right to see the outcome! ➡️
 
@@ -1510,60 +1550,205 @@ function ltCopyCurrentCaption() {
     });
 }
 
+// --- INSTITUTIONAL TRADE JOURNAL ---
+function filterJournal(sym) {
+    activeJournalFilter = sym;
+
+    const btnAll = document.getElementById('jFilterAll');
+    const btnGold = document.getElementById('jFilterGold');
+    const btnGbp = document.getElementById('jFilterGbp');
+    [btnAll, btnGold, btnGbp].forEach(b => b && b.classList.remove('active'));
+
+    if (sym === 'ALL' && btnAll) btnAll.classList.add('active');
+    else if (sym === 'XAUUSD' && btnGold) btnGold.classList.add('active');
+    else if (sym === 'GBPUSD' && btnGbp) btnGbp.classList.add('active');
+
+    renderLitmusJournal();
+}
+
 function renderLitmusJournal() {
     const container = document.getElementById('ltJournalContainer');
     if (!container) return;
 
-    container.innerHTML = DEFAULT_LITMUS_TRADES.map(t => {
+    const filtered = DEFAULT_LITMUS_TRADES.filter(t => {
+        if (activeJournalFilter === 'ALL') return true;
+        return t.symbol.toUpperCase().includes(activeJournalFilter.toUpperCase());
+    });
+
+    // Update KPI bar
+    const kpiCount = document.getElementById('jKpiTradesCount');
+    if (kpiCount) kpiCount.innerText = `${filtered.length} Trade${filtered.length === 1 ? '' : 's'}`;
+
+    let totalR = 0;
+    let totalPnl = 0;
+    filtered.forEach(t => {
+        const numR = parseFloat(String(t.final_r).replace('+', '').replace('R', '')) || 0;
+        totalR += numR;
+        totalPnl += Number(t.pnl) || 0;
+    });
+
+    const kpiNetR = document.getElementById('jKpiNetReturn');
+    if (kpiNetR) kpiNetR.innerText = `+${totalR.toFixed(1)} R`;
+
+    const kpiNetPnl = document.getElementById('jKpiNetPnl');
+    if (kpiNetPnl) kpiNetPnl.innerText = `+$${totalPnl.toFixed(2)} Account Net`;
+
+    const kpiAvgR = document.getElementById('jKpiAvgR');
+    if (kpiAvgR) {
+        const avg = filtered.length > 0 ? (totalR / filtered.length).toFixed(1) : '0.0';
+        kpiAvgR.innerText = `+${avg} R`;
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="background: var(--bg-surface); border: 1px dashed var(--border); border-radius: 14px; padding: 40px; text-align: center; color: var(--text-muted);">
+                <p style="margin: 0; font-size: 0.95rem; font-weight: 600;">No trades logged for this filter category.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(t => {
         const sym = String(t.symbol).replace('m', '');
         return `
             <div class="journal-trade-card">
-                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono);">${sym}</span>
-                            <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(22, 163, 74, 0.12); color: var(--green); border: 1px solid rgba(22, 163, 74, 0.3);">${t.status} ${t.final_r}</span>
-                            <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--bg-surface-secondary); color: var(--text-secondary);">Grade: ${t.trade_grade}</span>
-                        </div>
-                        <span style="font-size: 0.75rem; color: var(--text-muted);">${t.setup_title} • Efficiency: <strong style="color: var(--accent);">${t.efficiency_score}</strong></span>
+                <!-- TOP ROW: TICKER, STATUS, GRADE & PNL -->
+                <div class="journal-card-top-row">
+                    <div class="journal-asset-meta">
+                        <span class="journal-ticker">${sym}</span>
+                        <span class="journal-status-pill">${t.status} ${t.final_r}</span>
+                        <span class="journal-grade-pill">Grade: ${t.trade_grade}</span>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">${t.session}</span>
                     </div>
-                    <span style="font-size: 1.15rem; font-weight: 800; color: var(--green); font-family: var(--font-mono);">+$${Number(t.pnl).toFixed(2)} USD</span>
+                    <span class="journal-pnl-pill">+$${Number(t.pnl).toFixed(2)} USD</span>
                 </div>
 
-                <!-- BEFORE & AFTER SNAPSHOTS -->
+                <!-- SUBTITLE -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span style="font-size: 0.86rem; font-weight: 700; color: var(--text-primary);">${t.setup_title}</span>
+                    <span style="font-size: 0.76rem; color: var(--text-muted);">Efficiency Score: <strong style="color: var(--accent);">${t.efficiency_score}</strong></span>
+                </div>
+
+                <!-- BEFORE & AFTER SNAPSHOTS COMPARISON WITH LIGHTBOX -->
                 <div class="trade-snapshots-compare">
-                    <div class="snapshot-box">
+                    <div class="snapshot-box" onclick="openSnapshotLightbox('${t.snapshot_before}', '${sym} • Before Entry Setup', '15M POI Imbalance & Liquidity Sweep Analysis')">
                         <img src="${t.snapshot_before}" alt="${sym} Before">
+                        <div class="snapshot-overlay-zoom">🔍 Fullscreen</div>
                         <div class="snapshot-label">
-                            <span style="color: #0284c7;">📸 BEFORE SETUP (15m POI Analysis)</span>
-                            <span>Limit Fill: ${t.entry}</span>
+                            <span style="color: #0284c7;">📸 BEFORE SETUP (15M POI Analysis)</span>
+                            <span>Limit Fill: <strong>${t.entry}</strong></span>
                         </div>
                     </div>
-                    <div class="snapshot-box">
+                    <div class="snapshot-box" onclick="openSnapshotLightbox('${t.snapshot_after}', '${sym} • After Outcome', '${t.final_r} Target Hit via Stepped Trailing Stop')">
                         <img src="${t.snapshot_after}" alt="${sym} After">
+                        <div class="snapshot-overlay-zoom">🔍 Fullscreen</div>
                         <div class="snapshot-label">
                             <span style="color: var(--green);">🎯 AFTER OUTCOME (${t.final_r} Target Hit)</span>
-                            <span>Exit: ${t.exit}</span>
+                            <span>Exit: <strong>${t.exit}</strong></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- STORY & CONTEXT -->
-                <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; background: var(--bg-surface-secondary); padding: 14px; border-radius: 10px;">
-                    <strong style="color: var(--text-primary); display: block; margin-bottom: 4px;">⚡ Trade Execution Narrative:</strong>
+                <!-- 8-CELL EXECUTION METRICS GRID -->
+                <div class="journal-metrics-grid">
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Direction</span>
+                        <span class="j-cell-val" style="color: var(--green);">${t.type} (LONG)</span>
+                    </div>
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Volume</span>
+                        <span class="j-cell-val">${t.lots} Lots</span>
+                    </div>
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Entry Level</span>
+                        <span class="j-cell-val">${t.entry}</span>
+                    </div>
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Stop Loss</span>
+                        <span class="j-cell-val" style="color: #ef4444;">${t.sl}</span>
+                    </div>
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Take Profit</span>
+                        <span class="j-cell-val">${t.tp}</span>
+                    </div>
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Exit Price</span>
+                        <span class="j-cell-val">${t.exit}</span>
+                    </div>
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Setup Category</span>
+                        <span class="j-cell-val" style="font-size: 0.78rem;">${t.setup_category}</span>
+                    </div>
+                    <div class="journal-metric-cell">
+                        <span class="j-cell-label">Efficiency</span>
+                        <span class="j-cell-val" style="color: var(--accent);">${t.efficiency_score}</span>
+                    </div>
+                </div>
+
+                <!-- STORY & CONTEXT NARRATIVE -->
+                <div class="journal-narrative-box">
+                    <strong style="color: var(--text-primary); display: block; margin-bottom: 6px; font-size: 0.86rem;">⚡ Systematic Trade Narrative:</strong>
                     ${t.in_trade_story}
                 </div>
 
+                <!-- PSYCHOLOGY & EMOTIONAL DISCIPLINE -->
+                <div class="journal-psychology-box">
+                    <div>
+                        <strong style="color: var(--text-primary);">Mindset at Entry:</strong>
+                        <span style="color: var(--text-secondary); margin-left: 6px;">${t.psychology?.mindset_entry || 'Systematic & Calm'}</span>
+                    </div>
+                    <div>
+                        <strong style="color: var(--text-primary);">Tilt Index:</strong>
+                        <span style="color: var(--green); font-weight: 700; margin-left: 6px;">${t.psychology?.tilt_level || '0% (Zero FOMO)'}</span>
+                    </div>
+                    <div>
+                        <strong style="color: var(--text-primary);">Execution Discipline:</strong>
+                        <span style="color: var(--accent); font-weight: 700; margin-left: 6px;">10/10 Perfect Compliance</span>
+                    </div>
+                </div>
+
                 <!-- RULES CHECKLIST -->
-                <div class="checklist-pill-grid">
-                    ${t.checklist.map(c => `
-                        <div class="rule-check-pill ${c.passed ? 'passed' : ''}">
-                            <span>${c.passed ? '✓' : '✗'}</span>
-                            <span>${c.rule}</span>
-                        </div>
-                    `).join('')}
+                <div>
+                    <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: block;">SYSTEMATIC RULES VERIFICATION:</span>
+                    <div class="checklist-pill-grid">
+                        ${t.checklist.map(c => `
+                            <div class="rule-check-pill ${c.passed ? 'passed' : ''}">
+                                <span>${c.passed ? '✓' : '✗'}</span>
+                                <span>${c.rule}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
 }
+
+// --- SNAPSHOT LIGHTBOX FUNCTIONS ---
+function openSnapshotLightbox(src, title, subtitle) {
+    const lb = document.getElementById('snapshotLightbox');
+    const img = document.getElementById('lightboxImg');
+    const tEl = document.getElementById('lightboxTitle');
+    const sEl = document.getElementById('lightboxSubtitle');
+
+    if (!lb || !img) return;
+
+    img.src = src;
+    if (tEl) tEl.innerText = title || 'Snapshot Analysis';
+    if (sEl) sEl.innerText = subtitle || 'High-Resolution Review';
+
+    lb.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSnapshotLightbox() {
+    const lb = document.getElementById('snapshotLightbox');
+    if (lb) lb.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeSnapshotLightbox();
+    }
+});

@@ -552,78 +552,98 @@
             </div>
 
             <!-- ==============================================================
-                 3. SOCIAL VIBE STUDIO (TIKTOK PHOTO MODE & ZERO-API SHARE HUB)
+                 3. SOCIAL VIBE STUDIO (TIKTOK PHOTO MODE & ZERO-API CREATOR SUITE)
                  ============================================================== -->
             <div id="socialStudioView" class="studio-viewport hidden">
                 <div class="studio-header-card">
-                    <div>
-                        <h2 style="margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                            <span>📸</span>
+                    <div class="studio-header-left">
+                        <div class="studio-badge-row">
+                            <span class="studio-kpi-badge">CREATOR SUITE</span>
+                            <span class="studio-sub-badge">Zero-API Viral Engine</span>
+                        </div>
+                        <h2 class="studio-main-title">
+                            <span class="studio-icon-glow">📸</span>
                             <span>Social Vibe Studio</span>
                         </h2>
-                        <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted);">
-                            1-Click Zero-API multi-platform creator suite for @litmus_trend and @litmustrend
+                        <p class="studio-main-desc">
+                            1-Click multi-platform creator suite for <strong>@litmus_trend</strong> • TikTok Photo Mode & instant high-impact Before/After trade carousels
                         </p>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Select Trade:</label>
-                        <select id="ltSelectTrade" class="form-input font-mono" style="padding: 6px 12px; font-size: 0.82rem; width: auto;" onchange="onLitmusTradeChanged(this.value)">
-                            <option value="TRD-81816344-01">XAUUSD • +12.0R WIN (Gold)</option>
+                    <div class="studio-trade-selector-card">
+                        <div class="selector-meta-header">
+                            <span class="selector-label">ACTIVE SETUP</span>
+                            <span class="selector-status" id="ltHeaderTradeGrade">GRADE A+</span>
+                        </div>
+                        <select id="ltSelectTrade" class="form-input studio-trade-select" onchange="onLitmusTradeChanged(this.value)">
+                            <option value="TRD-81816344-01">XAUUSD (Gold) • +12.0R WIN</option>
                             <option value="TRD-81816344-02">GBPUSD • +15.0R WIN</option>
                         </select>
+                        <div class="trade-mini-stats-bar">
+                            <span>Return: <strong id="ltHeaderReturn" class="text-green">+12.0R ($120.00)</strong></span>
+                            <span>&bull;</span>
+                            <span>Efficiency: <strong id="ltHeaderEfficiency" class="text-accent">99.2%</strong></span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="studio-grid">
-                    <!-- LEFT: TIKTOK PHOTO MODE (2-SLIDE CAROUSEL) -->
+                    <!-- LEFT: TIKTOK PHOTO MODE (SMARTPHONE FRAME CAROUSEL) -->
                     <div class="tiktok-mockup-frame">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #f43f5e, #6366f1); padding: 2px;">
-                                    <div style="width: 100%; height: 100%; border-radius: 50%; background: #000; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; color: #fff;">LT</div>
+                        <div class="phone-status-bar">
+                            <div class="phone-profile-meta">
+                                <div class="creator-avatar-wrap">
+                                    <div class="creator-avatar-inner">LT</div>
                                 </div>
                                 <div>
-                                    <span style="font-size: 0.85rem; font-weight: 700; display: block; color: #fff;">@litmus_trend</span>
-                                    <span style="font-size: 0.7rem; color: #06b6d4; font-family: var(--font-mono);">📸 TikTok Photo Mode (2-Slide Carousel)</span>
+                                    <div class="creator-username-row">
+                                        <span class="creator-name">@litmus_trend</span>
+                                        <span class="verified-badge" title="Verified Prop Strategy">✓</span>
+                                    </div>
+                                    <span class="creator-mode-tag">📸 TikTok Photo Mode (2-Slide Carousel)</span>
                                 </div>
                             </div>
-                            <span style="font-size: 0.72rem; font-family: var(--font-mono); font-weight: 700; background: rgba(6, 182, 212, 0.15); color: #06b6d4; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(6, 182, 212, 0.3);">Swipe Mode ➡️</span>
+                            <span class="swipe-indicator-pill">Swipe Mode ➡️</span>
                         </div>
 
                         <!-- Slide Switcher Tabs -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: rgba(255, 255, 255, 0.05); padding: 4px; border-radius: 10px;">
-                            <button type="button" id="ltSlide1Tab" class="share-pill-btn primary" onclick="switchLtTikTokSlide(1)" style="font-size: 0.75rem; padding: 7px 10px;">
+                        <div class="slide-nav-tabs">
+                            <button type="button" id="ltSlide1Tab" class="share-pill-btn primary" onclick="switchLtTikTokSlide(1)">
                                 <span>1️⃣</span>
-                                <span>Slide 1 (Before Setup)</span>
+                                <span>Slide 1: Before Entry</span>
                             </button>
-                            <button type="button" id="ltSlide2Tab" class="share-pill-btn" onclick="switchLtTikTokSlide(2)" style="font-size: 0.75rem; padding: 7px 10px;">
+                            <button type="button" id="ltSlide2Tab" class="share-pill-btn" onclick="switchLtTikTokSlide(2)">
                                 <span>2️⃣</span>
-                                <span>Slide 2 (After Outcome 🎯)</span>
+                                <span>Slide 2: After Outcome 🎯</span>
                             </button>
                         </div>
 
                         <!-- Carousel Viewport -->
                         <div class="carousel-viewport-box">
                             <div id="ltSlide1Box">
-                                <img id="ltSlide1Img" src="snapshots/XAUUSD_Trade_Before.png" alt="Slide 1 Before" class="carousel-slide-img">
-                                <div class="slide-overlay-badge">SLIDE 1 • BEFORE ENTRY</div>
+                                <img id="ltSlide1Img" src="snapshots/XAUUSD_Trade_Before.png" alt="Slide 1 Before" class="carousel-slide-img" onclick="openSnapshotLightbox(this.src, 'Slide 1: Before Setup', '15M Imbalance & POI Zone Analysis')">
+                                <div class="slide-overlay-badge">SLIDE 1 • BEFORE ENTRY (15M POI)</div>
+                                <div class="slide-zoom-hint" onclick="openSnapshotLightbox(document.getElementById('ltSlide1Img').src, 'Slide 1: Before Setup', '15M Imbalance & POI Zone Analysis')">🔍 Click to Enlarge</div>
                                 <div class="slide-swipe-pill">Swipe for outcome ➡️</div>
                             </div>
                             <div id="ltSlide2Box" class="hidden">
-                                <img id="ltSlide2Img" src="snapshots/XAUUSD_Trade_After.png" alt="Slide 2 After" class="carousel-slide-img">
-                                <div class="slide-overlay-badge" style="background: rgba(22, 163, 74, 0.9);">SLIDE 2 • AFTER OUTCOME</div>
-                                <div class="slide-swipe-pill" style="background: #22c55e; color: #052e16;" id="ltSlide2BadgeR">+12.0R Target Hit 🎯</div>
+                                <img id="ltSlide2Img" src="snapshots/XAUUSD_Trade_After.png" alt="Slide 2 After" class="carousel-slide-img" onclick="openSnapshotLightbox(this.src, 'Slide 2: After Outcome', 'Full Expansion Target Hit')">
+                                <div class="slide-overlay-badge success">SLIDE 2 • AFTER OUTCOME</div>
+                                <div class="slide-zoom-hint" onclick="openSnapshotLightbox(document.getElementById('ltSlide2Img').src, 'Slide 2: After Outcome', 'Full Expansion Target Hit')">🔍 Click to Enlarge</div>
+                                <div class="slide-swipe-pill success" id="ltSlide2BadgeR">+12.0R Target Hit 🎯</div>
                             </div>
                         </div>
 
                         <!-- Caption & Swipe Hook Box -->
-                        <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
-                            <span style="font-size: 0.7rem; font-weight: 700; color: #06b6d4; text-transform: uppercase;">⚡ Viral Swipe Hook:</span>
-                            <p style="margin: 0; font-size: 0.82rem; font-weight: 600; line-height: 1.4; color: #fff;" id="ltTikTokHook">
+                        <div class="caption-display-card">
+                            <div class="caption-hook-header">
+                                <span class="caption-hook-tag">⚡ VIRAL SWIPE HOOK</span>
+                                <span class="copy-hint-text">Auto-synced</span>
+                            </div>
+                            <p class="caption-hook-body" id="ltTikTokHook">
                                 "Look at this clean 15m Gold setup... swipe right to see how it played out! ➡️"
                             </p>
-                            <p style="margin: 0; font-size: 0.75rem; color: #94a3b8; font-family: var(--font-mono); line-height: 1.4; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 6px;" id="ltTikTokCaption">
+                            <p class="caption-full-text" id="ltTikTokCaption">
                                 Textbook execution adhering strictly to the strategy rulebook. Follow @litmus_trend for daily before & after setups! #fyp #forex #trading #xauusd #tradingview #smartmoneyconcepts
                             </p>
                         </div>
@@ -633,37 +653,37 @@
                     <div class="studio-card">
                         <!-- ZERO-API SHARE HUB -->
                         <div class="share-hub-box">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="font-size: 0.75rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                                    <span>⚡</span> 1-Click Instant Share (Zero API / 100% Free)
+                            <div class="share-hub-header">
+                                <span class="share-hub-title">
+                                    <span>⚡</span> 1-Click Instant Share (Zero-API)
                                 </span>
-                                <span style="font-size: 0.65rem; font-family: var(--font-mono); font-weight: 700; background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 2px 8px; border-radius: 12px;">No API Needed</span>
+                                <span class="share-hub-pill">100% Free / No Setup</span>
                             </div>
-                            <p style="margin: 0; font-size: 0.76rem; color: #cbd5e1; line-height: 1.4;">
-                                Charts, Before/After slides, and viral captions are auto-prepared. Tap any platform to share immediately:
+                            <p class="share-hub-desc">
+                                Charts, Before/After slides, and formatted captions are prepared. Tap any platform to publish immediately:
                             </p>
                             <div class="share-btn-grid">
-                                <button type="button" class="share-pill-btn" onclick="ltShareToTikTok()">
+                                <button type="button" class="share-pill-btn brand-tiktok" onclick="ltShareToTikTok()">
                                     <span>🎵</span>
                                     <span>TikTok Photo</span>
                                 </button>
-                                <button type="button" class="share-pill-btn" onclick="ltShareToX()">
+                                <button type="button" class="share-pill-btn brand-x" onclick="ltShareToX()">
                                     <span>𝕏</span>
                                     <span>Post to 𝕏</span>
                                 </button>
-                                <button type="button" class="share-pill-btn" onclick="ltShareToInstagram()">
+                                <button type="button" class="share-pill-btn brand-instagram" onclick="ltShareToInstagram()">
                                     <span>📸</span>
                                     <span>Instagram</span>
                                 </button>
-                                <button type="button" class="share-pill-btn" onclick="ltShareToWhatsApp()">
+                                <button type="button" class="share-pill-btn brand-whatsapp" onclick="ltShareToWhatsApp()">
                                     <span>💬</span>
                                     <span>WhatsApp</span>
                                 </button>
-                                <button type="button" class="share-pill-btn" onclick="ltShareToTelegram()">
+                                <button type="button" class="share-pill-btn brand-telegram" onclick="ltShareToTelegram()">
                                     <span>✈️</span>
                                     <span>Telegram</span>
                                 </button>
-                                <button type="button" class="share-pill-btn primary" onclick="ltShareToDeviceApps()">
+                                <button type="button" class="share-pill-btn brand-device primary" onclick="ltShareToDeviceApps()">
                                     <span>📱</span>
                                     <span>Share to Apps</span>
                                 </button>
@@ -671,26 +691,33 @@
                         </div>
 
                         <!-- SLIDE DOWNLOAD ACTIONS -->
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                <a id="ltBtnDownloadS1" href="snapshots/XAUUSD_Trade_Before.png" download="Slide1_Before_Setup_XAUUSD.png" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; padding: 10px;">
-                                    <span>⬇</span>
-                                    <span>Slide 1 (Before)</span>
+                        <div class="slide-downloads-wrap">
+                            <div class="section-micro-title">DOWNLOAD HIGH-RES SLIDES (PNG)</div>
+                            <div class="slide-download-grid">
+                                <a id="ltBtnDownloadS1" href="snapshots/XAUUSD_Trade_Before.png" download="Slide1_Before_Setup_XAUUSD.png" class="btn btn-secondary btn-sm download-btn-card">
+                                    <span class="dl-icon">⬇</span>
+                                    <div class="dl-meta">
+                                        <strong class="dl-name">Slide 1 (Before)</strong>
+                                        <span class="dl-specs">15M Setup POI • PNG</span>
+                                    </div>
                                 </a>
-                                <a id="ltBtnDownloadS2" href="snapshots/XAUUSD_Trade_After.png" download="Slide2_After_Outcome_XAUUSD.png" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; padding: 10px;">
-                                    <span>⬇</span>
-                                    <span>Slide 2 (After)</span>
+                                <a id="ltBtnDownloadS2" href="snapshots/XAUUSD_Trade_After.png" download="Slide2_After_Outcome_XAUUSD.png" class="btn btn-secondary btn-sm download-btn-card">
+                                    <span class="dl-icon">⬇</span>
+                                    <div class="dl-meta">
+                                        <strong class="dl-name">Slide 2 (After)</strong>
+                                        <span class="dl-specs">Target Expansion • PNG</span>
+                                    </div>
                                 </a>
                             </div>
                         </div>
 
                         <!-- CAPTION EDITOR -->
-                        <div style="display: flex; flex-direction: column; gap: 6px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Post Caption (Editable):</label>
-                                <button type="button" class="btn-text-link" onclick="ltCopyCurrentCaption()" style="font-size: 0.75rem; font-weight: 700;">Copy Text</button>
+                        <div class="caption-editor-wrap">
+                            <div class="caption-editor-header">
+                                <label class="caption-editor-label">EDIT POST CAPTION & HASHTAGS:</label>
+                                <button type="button" class="btn-text-link" onclick="ltCopyCurrentCaption()">📋 Copy Text</button>
                             </div>
-                            <textarea id="ltSocialCaption" rows="6" class="form-input font-mono" style="font-size: 0.78rem; line-height: 1.5; resize: vertical;"></textarea>
+                            <textarea id="ltSocialCaption" rows="6" class="form-input font-mono caption-textarea" placeholder="Post caption auto-generated here..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -702,21 +729,74 @@
             <div id="tradeJournalView" class="studio-viewport hidden">
                 <div class="studio-header-card">
                     <div>
-                        <h2 style="margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                            <span>📖</span>
+                        <div class="studio-badge-row">
+                            <span class="studio-kpi-badge journal-badge">INSTITUTIONAL AUDIT</span>
+                            <span class="studio-sub-badge">Prop Desk Standards</span>
+                        </div>
+                        <h2 class="studio-main-title">
+                            <span class="studio-icon-glow">📖</span>
                             <span>Institutional Trade Journal</span>
                         </h2>
-                        <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted);">
-                            After Market Strategy (AMS) rule-adherence, MAE/MFE, psychology & TradingView execution breakdowns
+                        <p class="studio-main-desc">
+                            After Market Strategy (AMS) execution audits, systematic rule adherence, liquidity sweep verification & TradingView charts
                         </p>
+                    </div>
+
+                    <div class="journal-filter-group">
+                        <button type="button" class="journal-filter-btn active" id="jFilterAll" onclick="filterJournal('ALL')">All Trades</button>
+                        <button type="button" class="journal-filter-btn" id="jFilterGold" onclick="filterJournal('XAUUSD')">Gold (XAUUSD)</button>
+                        <button type="button" class="journal-filter-btn" id="jFilterGbp" onclick="filterJournal('GBPUSD')">British Pound</button>
                     </div>
                 </div>
 
-                <div id="ltJournalContainer" style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- 4 EXECUTIVE KPI METRICS BAR -->
+                <div class="journal-kpi-bar">
+                    <div class="journal-kpi-card">
+                        <span class="kpi-label">VERIFIED SETUPS</span>
+                        <span class="kpi-num" id="jKpiTradesCount">2 Trades</span>
+                        <span class="kpi-foot text-green">100% Rule Compliance</span>
+                    </div>
+                    <div class="journal-kpi-card">
+                        <span class="kpi-label">TOTAL NET RETURN</span>
+                        <span class="kpi-num text-green" id="jKpiNetReturn">+27.0 R</span>
+                        <span class="kpi-foot" id="jKpiNetPnl">+$270.00 Account Net</span>
+                    </div>
+                    <div class="journal-kpi-card">
+                        <span class="kpi-label">AVERAGE MULTIPLIER</span>
+                        <span class="kpi-num text-accent" id="jKpiAvgR">+13.5 R</span>
+                        <span class="kpi-foot">Stepped Trailing Ladder</span>
+                    </div>
+                    <div class="journal-kpi-card">
+                        <span class="kpi-label">WIN RATE & GRADE</span>
+                        <span class="kpi-num text-green">100% (A+)</span>
+                        <span class="kpi-foot">Zero Breakeven Drag</span>
+                    </div>
+                </div>
+
+                <!-- JOURNAL CARDS INJECTED HERE -->
+                <div id="ltJournalContainer" class="journal-cards-container">
                     <!-- Injected dynamically via app.js -->
                 </div>
             </div>
+
+        </main>
     </section>
+
+    <!-- FULLSCREEN SNAPSHOT LIGHTBOX MODAL -->
+    <div id="snapshotLightbox" class="lightbox-modal hidden" onclick="closeSnapshotLightbox()">
+        <div class="lightbox-dialog" onclick="event.stopPropagation()">
+            <div class="lightbox-header">
+                <div>
+                    <h3 id="lightboxTitle" style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #fff;">Snapshot Analysis</h3>
+                    <span id="lightboxSubtitle" style="font-size: 0.8rem; color: #94a3b8;">High-Resolution Chart Review</span>
+                </div>
+                <button type="button" class="lightbox-close-btn" onclick="closeSnapshotLightbox()" title="Close (Esc)">✕</button>
+            </div>
+            <div class="lightbox-body">
+                <img id="lightboxImg" src="" alt="Full Snapshot" class="lightbox-img">
+            </div>
+        </div>
+    </div>
 
     <!-- TRIPLE-TAP THEME TOAST -->
     <div id="themeToast" class="theme-toast">

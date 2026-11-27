@@ -239,22 +239,44 @@ body.dark-theme .bg-watermark-logo {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.2s ease,
+                border-color 0.2s ease;
+    will-change: width, min-width, max-width;
 }
 
 .sidebar-header {
     height: 64px;
-    padding: 0 20px;
+    padding: 0 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--border);
+    gap: 8px;
+    overflow: hidden;
 }
 
 .sidebar-brand {
     display: flex;
     align-items: center;
     gap: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sidebar-header-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.icon-sidebar-toggle {
+    transition: transform 0.2s ease;
 }
 
 .brand-sidebar-logo {
@@ -288,6 +310,9 @@ body.dark-theme .bg-watermark-logo {
     padding: 6px;
     border-radius: 6px;
     transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-icon:hover {
@@ -298,6 +323,15 @@ body.dark-theme .bg-watermark-logo {
 
 .sidebar-action {
     padding: 16px 20px 10px;
+    transition: padding 0.2s ease;
+}
+
+.btn-add-acc .btn-icon-plus {
+    display: none;
+}
+
+.item-collapsed-avatar {
+    display: none;
 }
 
 .sidebar-section-title {
@@ -315,6 +349,159 @@ body.dark-theme .bg-watermark-logo {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    transition: padding 0.2s ease;
+}
+
+/* === COLLAPSED SIDEBAR RAIL (68px) === */
+.sidebar.collapsed {
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+}
+
+.sidebar.collapsed .sidebar-header {
+    padding: 0 8px;
+    justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-brand {
+    display: none;
+}
+
+.sidebar.collapsed .header-btn-aux {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-header-actions {
+    width: 100%;
+    justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-nav-group {
+    padding: 0 8px 12px;
+}
+
+.sidebar.collapsed .sidebar-nav-btn {
+    padding: 10px 0;
+    justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-nav-btn .nav-btn-text,
+.sidebar.collapsed .sidebar-nav-btn span:not(.sidebar-nav-icon) {
+    display: none !important;
+}
+
+.sidebar.collapsed .sidebar-nav-icon {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.sidebar.collapsed .sidebar-action {
+    padding: 10px 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.sidebar.collapsed .btn-add-acc {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar.collapsed .btn-add-acc .btn-text {
+    display: none !important;
+}
+
+.sidebar.collapsed .btn-add-acc .btn-icon-plus {
+    display: block !important;
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.sidebar.collapsed .sidebar-section-title {
+    display: none;
+}
+
+.sidebar.collapsed .accounts-list {
+    padding: 6px 8px;
+    align-items: center;
+}
+
+.sidebar.collapsed .account-list-item {
+    padding: 0;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.sidebar.collapsed .account-list-item .item-top,
+.sidebar.collapsed .account-list-item .item-strategy-label,
+.sidebar.collapsed .account-list-item .item-sub {
+    display: none !important;
+}
+
+.sidebar.collapsed .item-collapsed-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border);
+    position: relative;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    user-select: none;
+}
+
+.sidebar.collapsed .item-collapsed-avatar .item-live-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid var(--bg-sidebar);
+}
+
+.sidebar.collapsed .account-list-item.selected .item-collapsed-avatar {
+    background: rgba(37, 99, 235, 0.18);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.25);
+}
+
+/* Viewport Toggle Button */
+.btn-viewport-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.18s ease;
+}
+
+.btn-viewport-toggle:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+    background: var(--bg-sidebar-hover);
 }
 
 /* ENHANCED ACCOUNT ITEM IN SIDEBAR */

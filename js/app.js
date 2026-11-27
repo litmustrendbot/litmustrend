@@ -132,6 +132,58 @@ function initTripleTapThemeToggle() {
     window.addEventListener('touchend', handleGlobalTap, { passive: true });
 }
 
+// --- 2C. SIDEBAR MINIMIZE / COLLAPSE FUNCTIONALITY ---
+function toggleSidebarCollapse() {
+    const sidebar = document.getElementById('appSidebar') || document.querySelector('.sidebar');
+    if (!sidebar) return;
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    try {
+        localStorage.setItem('litmus_sidebar_collapsed', isCollapsed ? '1' : '0');
+    } catch (e) {}
+    updateSidebarToggleUI(isCollapsed);
+}
+
+function updateSidebarToggleUI(isCollapsed) {
+    const btn = document.getElementById('btnToggleSidebar');
+    if (btn) {
+        btn.setAttribute('title', isCollapsed ? 'Expand Sidebar (Ctrl+B)' : 'Minimize Sidebar (Ctrl+B)');
+        btn.setAttribute('aria-label', isCollapsed ? 'Expand Sidebar' : 'Minimize Sidebar');
+        const arrow = btn.querySelector('.toggle-arrow');
+        if (arrow) {
+            arrow.setAttribute('d', isCollapsed ? 'm10 9 3 3-3 3' : 'm14 15-3-3 3-3');
+        }
+    }
+    const vpBtns = document.querySelectorAll('.btn-viewport-toggle');
+    vpBtns.forEach(vpBtn => {
+        vpBtn.setAttribute('title', isCollapsed ? 'Expand Sidebar (Ctrl+B)' : 'Minimize Sidebar (Ctrl+B)');
+        const arrow = vpBtn.querySelector('path');
+        if (arrow) {
+            arrow.setAttribute('d', isCollapsed ? 'm10 9 3 3-3 3' : 'm14 9 3 3-3 3');
+        }
+    });
+}
+
+function initSidebarState() {
+    try {
+        const saved = localStorage.getItem('litmus_sidebar_collapsed');
+        if (saved === '1') {
+            const sidebar = document.getElementById('appSidebar') || document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.add('collapsed');
+                updateSidebarToggleUI(true);
+            }
+        }
+    } catch (e) {}
+
+    // Keyboard shortcut: Ctrl + B or Cmd + B
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+            e.preventDefault();
+            toggleSidebarCollapse();
+        }
+    });
+}
+
 function handleGlobalTap(e) {
     // Avoid double counting if touchend and click fire closely
     const now = Date.now();
@@ -269,7 +321,14 @@ function renderSidebar() {
             ? (isCent ? `${Number(acc.equity).toLocaleString()} USC ($${(Number(acc.equity) / 100).toFixed(2)})` : `$${Number(acc.equity).toFixed(2)}`)
             : 'Connecting...';
 
+        const initials = (acc.name || 'MT').trim().slice(0, 2).toUpperCase();
+        item.setAttribute('title', `${acc.name} (${acc.server || 'MT5'}) • ${engineText} • ${eqDisplay}`);
+
         item.innerHTML = `
+            <div class="item-collapsed-avatar" title="${escapeHtml(acc.name)}">
+                <span class="collapsed-avatar-initials">${escapeHtml(initials)}</span>
+                <span class="item-live-dot" title="EA Connected & Active"></span>
+            </div>
             <div class="item-top">
                 <div class="item-title-wrap">
                     <span class="item-live-dot" title="EA Connected & Active"></span>
@@ -1299,6 +1358,7 @@ function startWatchdogTelemetry() {
 // --- INIT ---
 window.addEventListener('DOMContentLoaded', () => {
     initTripleTapThemeToggle();
+    initSidebarState();
     updateSyncedBrokerSymbol();
 
     const dropdown = document.getElementById('brokerSearchResults');

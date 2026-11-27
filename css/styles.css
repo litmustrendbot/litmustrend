@@ -986,7 +986,7 @@ body.dark-theme .bg-watermark-logo {
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 6px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 0.9rem;
     font-family: var(--font-main);
 }
@@ -998,11 +998,12 @@ body.dark-theme .bg-watermark-logo {
 
 .select-input {
     cursor: pointer;
+    color: var(--text-primary);
 }
 
 .select-input option {
-    background: #0c1018;
-    color: #fff;
+    background: var(--bg-surface);
+    color: var(--text-primary);
 }
 
 .form-row {
@@ -2572,8 +2573,14 @@ body.dark-theme .btn-glow:hover {
     font-weight: 700;
     border-radius: 8px;
     background: var(--bg-input);
-    border-color: var(--border);
+    border: 1px solid var(--border);
+    color: var(--text-primary) !important;
     cursor: pointer;
+}
+
+.studio-trade-select option {
+    background: var(--bg-surface);
+    color: var(--text-primary) !important;
 }
 
 .trade-mini-stats-bar {
@@ -2703,9 +2710,22 @@ body.dark-theme .btn-glow:hover {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border);
     padding: 4px;
     border-radius: 12px;
+}
+
+.slide-nav-tabs .share-pill-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-primary) !important;
+}
+
+.slide-nav-tabs .share-pill-btn.primary {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #ffffff !important;
 }
 
 /* Carousel Viewport */
@@ -2904,33 +2924,35 @@ body.dark-theme .btn-glow:hover {
     font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
-    color: #ffffff;
+    border: 1px solid var(--border);
+    background: var(--bg-surface-secondary);
+    color: var(--text-primary) !important;
     transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
 .share-pill-btn:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: var(--bg-sidebar-hover);
+    color: var(--text-primary) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-sm);
 }
 
 .share-pill-btn.primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #ffffff;
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #ffffff !important;
 }
 
 .share-pill-btn.primary:hover {
-    background: var(--accent-hover);
+    background: var(--accent-hover) !important;
+    color: #ffffff !important;
 }
 
-.share-pill-btn.brand-tiktok:hover { background: rgba(0, 242, 234, 0.2); border-color: #00f2ea; }
-.share-pill-btn.brand-x:hover { background: rgba(255, 255, 255, 0.2); }
-.share-pill-btn.brand-instagram:hover { background: rgba(225, 48, 108, 0.2); border-color: #e1306c; }
-.share-pill-btn.brand-whatsapp:hover { background: rgba(37, 211, 102, 0.2); border-color: #25d366; }
-.share-pill-btn.brand-telegram:hover { background: rgba(0, 136, 204, 0.2); border-color: #0088cc; }
+.share-pill-btn.brand-tiktok:hover { background: rgba(0, 242, 234, 0.15); border-color: #00f2ea; color: var(--text-primary) !important; }
+.share-pill-btn.brand-x:hover { background: var(--bg-sidebar-hover); color: var(--text-primary) !important; }
+.share-pill-btn.brand-instagram:hover { background: rgba(225, 48, 108, 0.15); border-color: #e1306c; color: var(--text-primary) !important; }
+.share-pill-btn.brand-whatsapp:hover { background: rgba(37, 211, 102, 0.15); border-color: #25d366; color: var(--text-primary) !important; }
+.share-pill-btn.brand-telegram:hover { background: rgba(0, 136, 204, 0.15); border-color: #0088cc; color: var(--text-primary) !important; }
 
 /* Download Section */
 .slide-downloads-wrap {
@@ -3021,6 +3043,9 @@ body.dark-theme .btn-glow:hover {
     resize: vertical;
     border-radius: 10px;
     padding: 12px;
+    background: var(--bg-input) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
 }
 
 /* ====================================================================
@@ -3616,8 +3641,8 @@ body.dark-theme .btn-glow:hover {
     border-radius: 8px;
     border: 1px solid var(--border);
     background: var(--bg-surface-secondary);
-    color: var(--text-secondary);
-    font-size: 0.82rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -3821,7 +3846,7 @@ body.dark-theme .btn-glow:hover {
     font-weight: 600;
     background: var(--bg-surface-secondary);
     border: 1px solid var(--border);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     cursor: pointer;
     transition: all 0.15s ease;
     display: flex;

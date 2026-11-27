@@ -554,6 +554,11 @@ body.dark-theme .bg-watermark-logo {
     flex-shrink: 0;
 }
 
+.item-live-dot.paused {
+    background: #f59e0b !important;
+    box-shadow: 0 0 6px #f59e0b !important;
+}
+
 .item-name {
     font-size: 0.94rem;
     font-weight: 700;
@@ -3391,4 +3396,595 @@ body.dark-theme .btn-glow:hover {
     max-height: 75vh;
     object-fit: contain;
     border-radius: 8px;
+}
+
+/* ====================================================================
+   ACCOUNT MANAGER & MULTI-ASSET RISK ENGINE STYLES
+   ==================================================================== */
+.manager-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.manager-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.manager-section-title {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+.manager-section-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.manager-accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.manager-account-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+
+.manager-account-card:hover {
+    border-color: var(--text-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.manager-account-card.selected {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(37, 99, 235, 0.05) 100%);
+    box-shadow: 0 0 0 1.5px var(--accent), var(--shadow-sm);
+}
+
+.manager-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.manager-card-identity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.manager-card-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.manager-status-pill {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.manager-status-pill.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.manager-status-pill.paused {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.manager-card-equity-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.manager-card-equity {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #10b981;
+    letter-spacing: -0.02em;
+}
+
+.manager-card-server {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+}
+
+.manager-card-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+}
+
+.manager-mini-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--bg-surface-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.manager-mini-pill.risk-pill {
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--accent);
+    border-color: rgba(37, 99, 235, 0.25);
+}
+
+.manager-empty-state {
+    padding: 40px 24px;
+    text-align: center;
+    background: var(--bg-surface);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Config Grid */
+.manager-config-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 960px) {
+    .manager-config-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.manager-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+.manager-card-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.manager-card-title {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.manager-card-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Preset Buttons */
+.manager-preset-group {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.manager-preset-btn {
+    padding: 10px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-surface-secondary);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.manager-preset-btn .preset-pct {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.manager-preset-btn .preset-desc {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.manager-preset-btn:hover {
+    background: var(--bg-sidebar-hover);
+    border-color: var(--text-secondary);
+}
+
+.manager-preset-btn.active {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.manager-preset-btn.active .preset-pct {
+    color: var(--accent);
+}
+
+/* Custom Risk Slider / Input Row */
+.manager-custom-risk-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-surface-secondary);
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.manager-risk-slider {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.manager-risk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.manager-risk-input {
+    width: 52px;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-align: right;
+    outline: none;
+}
+
+/* Risk Calculation Callout */
+.manager-calc-box {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(37, 99, 235, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.manager-calc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+}
+
+.manager-calc-label {
+    color: var(--text-secondary);
+}
+
+.manager-calc-val {
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.manager-calc-val.cash-risk {
+    color: #ef4444;
+}
+
+/* Instruments Slots */
+.manager-slots-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border);
+}
+
+.manager-slots-count {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.manager-slots-pills {
+    display: flex;
+    gap: 6px;
+}
+
+.manager-slot-chip {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+}
+
+.manager-slot-chip.filled {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Active Instruments Tags */
+.manager-active-tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 42px;
+    padding: 8px;
+    background: var(--bg-surface-secondary);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    align-items: center;
+}
+
+.manager-active-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+.manager-active-tag-remove {
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    color: #fff;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.manager-active-tag-remove:hover {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Quick Select Instruments Cloud */
+.manager-quick-instruments-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.manager-quick-inst-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.manager-quick-inst-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.manager-quick-inst-btn.selected {
+    background: rgba(37, 99, 235, 0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.manager-quick-inst-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Custom Instrument Input */
+.manager-custom-inst-row {
+    display: flex;
+    gap: 8px;
+}
+
+.manager-custom-inst-input {
+    flex: 1;
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    outline: none;
+}
+
+.manager-custom-inst-input:focus {
+    border-color: var(--accent);
+}
+
+/* Sentinel Callout */
+.manager-sentinel-banner {
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.manager-sentinel-banner strong {
+    color: var(--text-primary);
+}
+
+/* Status Controls */
+.manager-status-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.manager-status-indicator-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.manager-pulse-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.manager-pulse-dot.active {
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+}
+
+.manager-pulse-dot.paused {
+    background: #f59e0b;
+    box-shadow: 0 0 10px #f59e0b;
+}
+
+.manager-status-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.manager-status-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.manager-status-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Danger Zone Card */
+.manager-card.danger-card {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(239, 68, 68, 0.03) 100%);
+}
+
+.btn-danger-outline {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-danger-outline:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+}
+
+/* Save Bar */
+.manager-save-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-top: 10px;
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.manager-save-status {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }

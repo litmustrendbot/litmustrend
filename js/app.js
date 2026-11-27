@@ -99,6 +99,18 @@ function loadAccounts() {
                     acc.strategy = 'The Big Boys 4H';
                     changed = true;
                 }
+                if (acc.riskPercent === undefined || acc.riskPercent === null) {
+                    acc.riskPercent = 2.0;
+                    changed = true;
+                }
+                if (!Array.isArray(acc.instruments) || acc.instruments.length === 0) {
+                    acc.instruments = [acc.instrument || 'XAUUSD'];
+                    changed = true;
+                }
+                if (acc.isPaused === undefined) {
+                    acc.isPaused = false;
+                    changed = true;
+                }
                 // Clear any mock placeholder trades so only real trades show
                 if (acc.activeTrade && (acc.activeTrade.entry === '68,450.00' || acc.activeTrade.entry === '2,740.20' || acc.activeTrade.entry === '19,742.50' || acc.activeTrade.entry === '2,740.10')) {
                     acc.activeTrade = null;
@@ -311,27 +323,32 @@ function renderSidebar() {
         const isPrincess = acc.strategy && (acc.strategy.includes('Princess') || acc.strategy.includes('princess'));
         const isBigBoys = !isPrincess && (!acc.strategy || acc.strategy.includes('Big Boys') || acc.strategy.includes('4H'));
         const riskBadgeClass = isPrincess ? 'tag-princess' : (isBigBoys ? 'tag-bigboys' : 'tag-newstrategy');
-        const riskBadgeText = '2% RISK';
+        const riskPct = acc.riskPercent !== undefined ? acc.riskPercent : 2.0;
+        const riskBadgeText = `${riskPct}% RISK`;
         const engineText = isPrincess ? 'Princess Strategy • 4H/15M/5M' : (isBigBoys ? 'The Big Boys • 4H/15M/5M' : 'New Strategy • D1/15M/5M');
-        const instBadge = acc.instrument || 'XAUUSD';
-        const brokerSymText = (acc.brokerSymbol && acc.brokerSymbol !== instBadge) ? ` (${acc.brokerSymbol})` : '';
+        const activePairs = (Array.isArray(acc.instruments) && acc.instruments.length > 0) ? acc.instruments : [acc.instrument || 'XAUUSD'];
+        const instBadge = activePairs.join(', ');
+        const brokerSymText = (acc.brokerSymbol && !activePairs.includes(acc.brokerSymbol)) ? ` (${acc.brokerSymbol})` : '';
         const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
         const centBadge = isCent ? `<span class="item-risk-tag" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); margin-left: 4px;">CENT</span>` : '';
         const eqDisplay = (acc.equity !== undefined && acc.equity !== null)
             ? (isCent ? `${Number(acc.equity).toLocaleString()} USC ($${(Number(acc.equity) / 100).toFixed(2)})` : `$${Number(acc.equity).toFixed(2)}`)
             : 'Connecting...';
+        const isPaused = Boolean(acc.isPaused);
+        const dotStatusTitle = isPaused ? 'EA Paused' : 'EA Connected & Active';
+        const dotClass = isPaused ? 'item-live-dot paused' : 'item-live-dot';
 
         const initials = (acc.name || 'MT').trim().slice(0, 2).toUpperCase();
-        item.setAttribute('title', `${acc.name} (${acc.server || 'MT5'}) • ${engineText} • ${eqDisplay}`);
+        item.setAttribute('title', `${acc.name} (${acc.server || 'MT5'}) • ${engineText} • ${riskBadgeText} • Pairs: ${instBadge} • ${isPaused ? '[PAUSED]' : '[ACTIVE]'} • ${eqDisplay}`);
 
         item.innerHTML = `
-            <div class="item-collapsed-avatar" title="${escapeHtml(acc.name)}">
+            <div class="item-collapsed-avatar" title="${escapeHtml(acc.name)} (${isPaused ? 'Paused' : 'Active'})">
                 <span class="collapsed-avatar-initials">${escapeHtml(initials)}</span>
-                <span class="item-live-dot" title="EA Connected & Active"></span>
+                <span class="${dotClass}" title="${dotStatusTitle}"></span>
             </div>
             <div class="item-top">
                 <div class="item-title-wrap">
-                    <span class="item-live-dot" title="EA Connected & Active"></span>
+                    <span class="${dotClass}" title="${dotStatusTitle}"></span>
                     <span class="item-name">${escapeHtml(acc.name)}</span>
                     ${centBadge}
                 </div>
@@ -403,6 +420,13 @@ function selectAccount(accountId) {
     const pauseBtn = document.getElementById('btnTogglePause');
     if (pauseBtn) {
         pauseBtn.innerText = acc.isPaused ? 'Resume EA' : 'Pause EA';
+    }
+
+    const riskPct = acc.riskPercent !== undefined ? acc.riskPercent : 2.0;
+    const testTradeBtn = document.getElementById('btnTestTrade');
+    if (testTradeBtn) {
+        testTradeBtn.innerHTML = `<span>⚡ Test ${riskPct}% Trade</span>`;
+        testTradeBtn.setAttribute('title', `Place a live ${riskPct}% test trade on Gold to verify real broker execution`);
     }
 
     // Trade stats calculation
@@ -574,6 +598,13 @@ function toggleCurrentAccountPause() {
     const pauseBtn = document.getElementById('btnTogglePause');
     if (pauseBtn) {
         pauseBtn.innerText = acc.isPaused ? 'Resume EA' : 'Pause EA';
+    }
+
+    const riskPct = acc.riskPercent !== undefined ? acc.riskPercent : 2.0;
+    const testTradeBtn = document.getElementById('btnTestTrade');
+    if (testTradeBtn) {
+        testTradeBtn.innerHTML = `<span>⚡ Test ${riskPct}% Trade</span>`;
+        testTradeBtn.setAttribute('title', `Place a live ${riskPct}% test trade on Gold to verify real broker execution`);
     }
 }
 
@@ -1075,18 +1106,21 @@ function openAddAccountPage() {
     renderSidebar();
 
     const btnBot = document.getElementById('navBtnBot');
+    const btnManager = document.getElementById('navBtnManager');
     const btnSocial = document.getElementById('navBtnSocial');
     const btnJournal = document.getElementById('navBtnJournal');
-    [btnBot, btnSocial, btnJournal].forEach(b => b && b.classList.remove('active'));
+    [btnBot, btnManager, btnSocial, btnJournal].forEach(b => b && b.classList.remove('active'));
     if (btnBot) btnBot.classList.add('active');
 
     const activeEl = document.getElementById('activeAnalysis');
     const pageEl = document.getElementById('addAccountPage');
+    const managerView = document.getElementById('accountManagerView');
     const socialView = document.getElementById('socialStudioView');
     const journalView = document.getElementById('tradeJournalView');
     const backBtn = document.getElementById('btnCancelAddPage');
 
     if (activeEl) activeEl.classList.add('hidden');
+    if (managerView) managerView.classList.add('hidden');
     if (socialView) socialView.classList.add('hidden');
     if (journalView) journalView.classList.add('hidden');
     if (pageEl) pageEl.classList.remove('hidden');
@@ -1451,18 +1485,21 @@ function switchLitmusView(view) {
     currentLitmusView = view;
     
     const btnBot = document.getElementById('navBtnBot');
+    const btnManager = document.getElementById('navBtnManager');
     const btnSocial = document.getElementById('navBtnSocial');
     const btnJournal = document.getElementById('navBtnJournal');
-    [btnBot, btnSocial, btnJournal].forEach(b => b && b.classList.remove('active'));
+    [btnBot, btnManager, btnSocial, btnJournal].forEach(b => b && b.classList.remove('active'));
 
     const activeAnalysis = document.getElementById('activeAnalysis');
     const addAccountPage = document.getElementById('addAccountPage');
+    const managerView = document.getElementById('accountManagerView');
     const socialView = document.getElementById('socialStudioView');
     const journalView = document.getElementById('tradeJournalView');
 
     // 1. Force-hide ALL views to ensure ZERO bleed-through or stacking
     if (activeAnalysis) activeAnalysis.classList.add('hidden');
     if (addAccountPage) addAccountPage.classList.add('hidden');
+    if (managerView) managerView.classList.add('hidden');
     if (socialView) socialView.classList.add('hidden');
     if (journalView) journalView.classList.add('hidden');
 
@@ -1476,6 +1513,10 @@ function switchLitmusView(view) {
         } else {
             if (addAccountPage) addAccountPage.classList.remove('hidden');
         }
+    } else if (view === 'manager') {
+        if (btnManager) btnManager.classList.add('active');
+        if (managerView) managerView.classList.remove('hidden');
+        renderAccountManager();
     } else if (view === 'social') {
         if (btnSocial) btnSocial.classList.add('active');
         if (socialView) socialView.classList.remove('hidden');
@@ -1812,3 +1853,557 @@ document.addEventListener('keydown', (e) => {
         closeSnapshotLightbox();
     }
 });
+
+// ====================================================================
+// LITMUSTREND - ACCOUNT MANAGER & MULTI-ASSET RISK ENGINE
+// ====================================================================
+let managerSelectedAccountId = null;
+
+function showLitmusToast(msg) {
+    const toast = document.getElementById('themeToast');
+    if (toast) {
+        toast.innerHTML = `<span>${msg}</span>`;
+        toast.classList.add('visible');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+            toast.classList.remove('visible');
+        }, 2600);
+    }
+}
+
+function renderAccountManager() {
+    const grid = document.getElementById('managerAccountsGrid');
+    const configContainer = document.getElementById('managerConfigContainer');
+    if (!grid || !configContainer) return;
+
+    if (accounts.length === 0) {
+        grid.innerHTML = `
+            <div class="manager-empty-state" style="grid-column: 1 / -1;">
+                <span style="font-size: 2.2rem;">💼</span>
+                <strong style="color: var(--text-primary); font-size: 1.1rem;">No Trading Accounts Connected</strong>
+                <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 420px; margin: 0 auto;">
+                    Connect an MT5 broker account to manage risk sizing, multi-instrument monitoring (up to 3 pairs), and execution controls.
+                </p>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openAddAccountPage()" style="margin-top: 6px;">
+                    + Connect MT5 Account
+                </button>
+            </div>
+        `;
+        configContainer.innerHTML = '';
+        return;
+    }
+
+    if (!managerSelectedAccountId || !accounts.some(a => a.id === managerSelectedAccountId)) {
+        managerSelectedAccountId = selectedAccountId || accounts[0].id;
+    }
+
+    // Render Accounts Cards Grid
+    grid.innerHTML = accounts.map(acc => {
+        const isSelected = acc.id === managerSelectedAccountId;
+        const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
+        const eqDisplay = (acc.equity !== undefined && acc.equity !== null)
+            ? (isCent ? `${Number(acc.equity).toLocaleString()} USC ($${(Number(acc.equity) / 100).toFixed(2)})` : `$${Number(acc.equity).toFixed(2)}`)
+            : 'Connecting...';
+        const riskVal = acc.riskPercent !== undefined ? acc.riskPercent : 2.0;
+        const activePairs = (Array.isArray(acc.instruments) && acc.instruments.length > 0) ? acc.instruments : [acc.instrument || 'XAUUSD'];
+        const isPaused = Boolean(acc.isPaused);
+
+        return `
+            <div class="manager-account-card ${isSelected ? 'selected' : ''}" onclick="selectManagerAccount('${acc.id}')">
+                <div class="manager-card-top">
+                    <div class="manager-card-identity">
+                        <span class="manager-pulse-dot ${isPaused ? 'paused' : 'active'}" style="width: 8px; height: 8px;"></span>
+                        <span class="manager-card-name">${escapeHtml(acc.name)}</span>
+                    </div>
+                    <span class="manager-status-pill ${isPaused ? 'paused' : 'active'}">
+                        ${isPaused ? '⏸️ Paused' : '🟢 Active'}
+                    </span>
+                </div>
+                <div class="manager-card-equity-row">
+                    <span class="manager-card-equity">${eqDisplay}</span>
+                    <span class="manager-card-server">${escapeHtml(acc.server || 'MT5')}</span>
+                </div>
+                <div class="manager-card-badges">
+                    <span class="manager-mini-pill risk-pill">${riskVal}% Risk</span>
+                    <span class="manager-mini-pill">${activePairs.length}/3 Pairs: ${escapeHtml(activePairs.join(', '))}</span>
+                    ${isCent ? '<span class="manager-mini-pill" style="color: #10b981;">CENT</span>' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    renderSelectedAccountConfig();
+}
+
+function selectManagerAccount(accId) {
+    managerSelectedAccountId = accId;
+    renderAccountManager();
+}
+
+function renderSelectedAccountConfig() {
+    const container = document.getElementById('managerConfigContainer');
+    if (!container) return;
+
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
+    const eqVal = (acc.equity !== undefined && acc.equity !== null) ? Number(acc.equity) : 1000.00;
+    const eqDisplay = (acc.equity !== undefined && acc.equity !== null)
+        ? (isCent ? `${Number(acc.equity).toLocaleString()} USC ($${(Number(acc.equity) / 100).toFixed(2)})` : `$${Number(acc.equity).toFixed(2)}`)
+        : 'Connecting...';
+
+    const riskVal = acc.riskPercent !== undefined ? Number(acc.riskPercent) : 2.0;
+    const activePairs = (Array.isArray(acc.instruments) && acc.instruments.length > 0) ? [...acc.instruments] : [acc.instrument || 'XAUUSD'];
+    const isPaused = Boolean(acc.isPaused);
+
+    // Calculate cash risk
+    let cashRiskText = '';
+    if (isCent) {
+        const uscRisk = (eqVal * (riskVal / 100)).toFixed(0);
+        const usdRisk = (Number(uscRisk) / 100).toFixed(2);
+        cashRiskText = `${Number(uscRisk).toLocaleString()} USC ($${usdRisk} USD)`;
+    } else {
+        const usdRisk = (eqVal * (riskVal / 100)).toFixed(2);
+        cashRiskText = `$${Number(usdRisk).toLocaleString()} USD`;
+    }
+
+    const popularInstruments = [
+        { sym: 'XAUUSD', label: 'Gold Spot' },
+        { sym: 'EURUSD', label: 'Euro / USD' },
+        { sym: 'GBPUSD', label: 'Pound / USD' },
+        { sym: 'USDJPY', label: 'USD / Yen' },
+        { sym: 'US30',   label: 'Dow Jones' },
+        { sym: 'NAS100', label: 'Nasdaq 100' },
+        { sym: 'BTCUSD', label: 'Bitcoin' },
+        { sym: 'USOIL',  label: 'Crude Oil' }
+    ];
+
+    container.innerHTML = `
+        <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- HEADER BAR FOR CURRENT ACCOUNT -->
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 20px; background: var(--bg-surface-secondary); border: 1px solid var(--border); border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3rem;">⚡</span>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <strong style="font-size: 1.05rem; color: var(--text-primary);">${escapeHtml(acc.name)}</strong>
+                            <span class="manager-status-pill ${isPaused ? 'paused' : 'active'}">${isPaused ? '⏸️ Paused' : '🟢 Active'}</span>
+                            ${isCent ? '<span class="item-risk-tag" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">CENT</span>' : ''}
+                        </div>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(acc.server || 'MT5')} • Login: ${escapeHtml(acc.login || '--')} • Strategy: ${escapeHtml(acc.strategy || 'The Big Boys 4H')}</span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; display: block;">Live Equity</span>
+                    <strong style="font-size: 1.15rem; color: #10b981;">${eqDisplay}</strong>
+                </div>
+            </div>
+
+            <!-- 2x2 CONFIGURATION GRID -->
+            <div class="manager-config-grid">
+
+                <!-- CARD 1: RISK MANAGEMENT ENGINE -->
+                <div class="manager-card">
+                    <div class="manager-card-title-row">
+                        <div>
+                            <div class="manager-card-title">
+                                <span>🎯</span>
+                                <span>1. Risk Allocation Per Trade</span>
+                            </div>
+                            <div class="manager-card-subtitle">
+                                Set the exact percentage of account equity at risk per trade execution.
+                            </div>
+                        </div>
+                        <span class="manager-status-pill active" style="font-size: 0.75rem;">${riskVal}% Sizing</span>
+                    </div>
+
+                    <!-- Presets -->
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; display: block;">QUICK PRESETS</span>
+                        <div class="manager-preset-group">
+                            <button type="button" class="manager-preset-btn ${riskVal === 0.5 ? 'active' : ''}" onclick="setManagerRiskPreset(0.5)">
+                                <span class="preset-pct">0.5%</span>
+                                <span class="preset-desc">Conservative</span>
+                            </button>
+                            <button type="button" class="manager-preset-btn ${riskVal === 1.0 ? 'active' : ''}" onclick="setManagerRiskPreset(1.0)">
+                                <span class="preset-pct">1.0%</span>
+                                <span class="preset-desc">Prop Safe</span>
+                            </button>
+                            <button type="button" class="manager-preset-btn ${riskVal === 2.0 ? 'active' : ''}" onclick="setManagerRiskPreset(2.0)">
+                                <span class="preset-pct">2.0%</span>
+                                <span class="preset-desc">Standard</span>
+                            </button>
+                            <button type="button" class="manager-preset-btn ${riskVal === 3.0 ? 'active' : ''}" onclick="setManagerRiskPreset(3.0)">
+                                <span class="preset-pct">3.0%</span>
+                                <span class="preset-desc">Aggressive</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Slider & Number Input -->
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; display: block;">CUSTOM RISK PERCENTAGE</span>
+                        <div class="manager-custom-risk-row">
+                            <input type="range" class="manager-risk-slider" id="managerRiskSlider" min="0.1" max="5.0" step="0.1" value="${riskVal}" oninput="onManagerRiskSliderChange(this.value)">
+                            <div class="manager-risk-input-wrap">
+                                <input type="number" class="manager-risk-input" id="managerRiskInput" min="0.1" max="10.0" step="0.1" value="${riskVal}" oninput="onManagerRiskInputChange(this.value)">
+                                <span style="font-weight: 800; color: var(--text-secondary); font-size: 0.9rem;">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Risk Drawdown Calculation -->
+                    <div class="manager-calc-box">
+                        <div class="manager-calc-row">
+                            <span class="manager-calc-label">Current Account Equity:</span>
+                            <span class="manager-calc-val">${eqDisplay}</span>
+                        </div>
+                        <div class="manager-calc-row">
+                            <span class="manager-calc-label">Max Risk Allocation (${riskVal}%):</span>
+                            <span class="manager-calc-val cash-risk" id="managerRiskCashPreview">-${cashRiskText}</span>
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                            🛡️ <strong>Systematic Lot Sizing:</strong> Order volume is automatically calculated at entry so your stop-loss risk never exceeds <strong>${riskVal}%</strong> of balance.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2: MULTI-ASSET SENTINEL (UP TO 3 INSTRUMENTS) -->
+                <div class="manager-card">
+                    <div class="manager-card-title-row">
+                        <div>
+                            <div class="manager-card-title">
+                                <span>🌐</span>
+                                <span>2. Monitored Instruments Portfolio</span>
+                            </div>
+                            <div class="manager-card-subtitle">
+                                Select up to 3 instruments. The strategy executes anytime a setup triggers on <strong>any of the 3 pairs</strong>.
+                            </div>
+                        </div>
+                        <span class="manager-status-pill active" style="font-size: 0.72rem;">${activePairs.length} / 3 Active</span>
+                    </div>
+
+                    <!-- Slot Indicator -->
+                    <div class="manager-slots-header">
+                        <span class="manager-slots-count">ACTIVE SLOTS: ${activePairs.length}/3 FILLED</span>
+                        <div class="manager-slots-pills">
+                            <span class="manager-slot-chip ${activePairs[0] ? 'filled' : ''}">1. ${activePairs[0] || 'Empty'}</span>
+                            <span class="manager-slot-chip ${activePairs[1] ? 'filled' : ''}">2. ${activePairs[1] || 'Empty'}</span>
+                            <span class="manager-slot-chip ${activePairs[2] ? 'filled' : ''}">3. ${activePairs[2] || 'Empty'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Active Tags Cloud -->
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; display: block;">CURRENTLY MONITORED:</span>
+                        <div class="manager-active-tags-cloud" id="managerActiveTags">
+                            ${activePairs.map(p => `
+                                <span class="manager-active-tag">
+                                    <span>${escapeHtml(p)}</span>
+                                    <button type="button" class="manager-active-tag-remove" onclick="removeManagerInstrument('${escapeHtml(p)}')" title="Remove ${escapeHtml(p)}">✕</button>
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Quick Select Popular Pairs -->
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; display: block;">QUICK SELECT POPULAR INSTRUMENTS:</span>
+                        <div class="manager-quick-instruments-cloud">
+                            ${popularInstruments.map(item => {
+                                const isChecked = activePairs.includes(item.sym);
+                                const isMax = activePairs.length >= 3 && !isChecked;
+                                return `
+                                    <button type="button" class="manager-quick-inst-btn ${isChecked ? 'selected' : ''} ${isMax ? 'disabled' : ''}" onclick="toggleManagerQuickInstrument('${item.sym}')" title="${isMax ? 'Max 3 pairs reached. Remove an existing pair first.' : item.label}">
+                                        <span>${isChecked ? '✓' : '+'}</span>
+                                        <span>${item.sym}</span>
+                                        <span style="font-size: 0.68rem; color: var(--text-muted);">(${item.label})</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Custom Broker Symbol Input -->
+                    <div>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; display: block;">ADD CUSTOM BROKER SYMBOL:</span>
+                        <div class="manager-custom-inst-row">
+                            <input type="text" class="manager-custom-inst-input" id="managerCustomSymbolInput" placeholder="e.g. XAUUSDm, GOLD, GER40, US500" onkeydown="if(event.key==='Enter'){event.preventDefault();addManagerCustomSymbol();}">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="addManagerCustomSymbol()" style="padding: 8px 14px; font-weight: 700;">+ Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Sentinel Explainer Callout -->
+                    <div class="manager-sentinel-banner">
+                        <span style="font-size: 1.1rem; line-height: 1;">⚡</span>
+                        <div>
+                            <strong>Multi-Asset Sentinel Scanner:</strong> The algorithmic execution engine simultaneously streams tick & bar feeds for all 3 pairs. Whenever a valid setup qualifies on any monitored instrument, the bot enters the market immediately using your <strong>${riskVal}%</strong> risk formula.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: EXECUTION CONTROLS (ACTIVE / PAUSE) -->
+                <div class="manager-card">
+                    <div class="manager-card-title-row">
+                        <div>
+                            <div class="manager-card-title">
+                                <span>⏯️</span>
+                                <span>3. Systematic EA Execution Controls</span>
+                            </div>
+                            <div class="manager-card-subtitle">
+                                Toggle automated trading on or off for this specific account.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="manager-status-box">
+                        <div class="manager-status-indicator-wrap">
+                            <span class="manager-pulse-dot ${isPaused ? 'paused' : 'active'}"></span>
+                            <div class="manager-status-texts">
+                                <span class="manager-status-title">
+                                    ${isPaused ? 'Trading Paused (EA Inactive)' : 'Trading Active (EA Live & Scanning)'}
+                                </span>
+                                <span class="manager-status-desc">
+                                    ${isPaused ? 'Bot will not open any new market or limit orders on this account.' : 'Strategy engine is actively monitoring order blocks & FVGs on your selected pairs.'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn ${isPaused ? 'btn-primary' : 'btn-warning'} btn-sm" onclick="toggleManagerAccountPause()" style="font-weight: 700; padding: 10px 18px; border-radius: 8px;">
+                            ${isPaused ? '▶️ Resume Automated Trading' : '⏸️ Pause Trading on this Account'}
+                        </button>
+                    </div>
+
+                    <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; background: var(--bg-surface-secondary); padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border);">
+                        💡 <strong>Safety Guarantee:</strong> Pausing an account halts all new trade triggers. Any existing open trades continue to be monitored by MetaApi trailing stops and breakeven rules until natural TP/SL exit.
+                    </div>
+                </div>
+
+                <!-- CARD 4: DANGER ZONE (ACCOUNT LIFECYCLE) -->
+                <div class="manager-card danger-card">
+                    <div class="manager-card-title-row">
+                        <div>
+                            <div class="manager-card-title" style="color: #ef4444;">
+                                <span>🗑️</span>
+                                <span>4. Danger Zone - Account Removal</span>
+                            </div>
+                            <div class="manager-card-subtitle">
+                                Permanently delete this account from LitmusTrend and revoke cloud workers.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 16px 18px; border-radius: 10px;">
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); max-width: 420px; line-height: 1.4;">
+                            Once deleted, LitmusTrend stops monitoring this MT5 terminal immediately. Open trades will remain with your broker but won't receive cloud signals.
+                        </div>
+                        <button type="button" class="btn-danger-outline" onclick="deleteManagerAccount()">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Delete Account</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SAVE & APPLY ACTION BAR -->
+            <div class="manager-save-bar">
+                <div class="manager-save-status">
+                    <span>⚡ Configuration loaded for <strong>${escapeHtml(acc.name)}</strong></span>
+                    <span>&bull;</span>
+                    <span id="managerSaveNotice">All changes are ready to commit</span>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="saveManagerAccountSettings()" style="padding: 10px 24px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    <span>Save & Apply Settings</span>
+                </button>
+            </div>
+
+        </div>
+    `;
+}
+
+function setManagerRiskPreset(pct) {
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) return;
+    acc.riskPercent = pct;
+    renderSelectedAccountConfig();
+}
+
+function onManagerRiskSliderChange(val) {
+    const num = Math.round(parseFloat(val) * 10) / 10;
+    const inp = document.getElementById('managerRiskInput');
+    if (inp) inp.value = num;
+    updateManagerRiskDisplay(num);
+}
+
+function onManagerRiskInputChange(val) {
+    let num = parseFloat(val);
+    if (isNaN(num) || num <= 0) num = 0.5;
+    if (num > 10.0) num = 10.0;
+    const slider = document.getElementById('managerRiskSlider');
+    if (slider) slider.value = Math.min(num, 5.0);
+    updateManagerRiskDisplay(num);
+}
+
+function updateManagerRiskDisplay(num) {
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) return;
+    acc.riskPercent = num;
+
+    const isCent = acc.isCent || acc.currency === 'USC' || /cent/i.test(acc.server || '') || /cent/i.test(acc.name || '');
+    const eqVal = (acc.equity !== undefined && acc.equity !== null) ? Number(acc.equity) : 1000.00;
+    const cashPreview = document.getElementById('managerRiskCashPreview');
+    if (cashPreview) {
+        if (isCent) {
+            const uscRisk = (eqVal * (num / 100)).toFixed(0);
+            const usdRisk = (Number(uscRisk) / 100).toFixed(2);
+            cashPreview.innerText = `-${Number(uscRisk).toLocaleString()} USC ($${usdRisk} USD)`;
+        } else {
+            const usdRisk = (eqVal * (num / 100)).toFixed(2);
+            cashPreview.innerText = `-$${Number(usdRisk).toLocaleString()} USD`;
+        }
+    }
+}
+
+function toggleManagerQuickInstrument(symbol) {
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) return;
+    if (!Array.isArray(acc.instruments)) acc.instruments = [acc.instrument || 'XAUUSD'];
+
+    const idx = acc.instruments.indexOf(symbol);
+    if (idx >= 0) {
+        if (acc.instruments.length === 1) {
+            alert('At least 1 monitored instrument is required.');
+            return;
+        }
+        acc.instruments.splice(idx, 1);
+    } else {
+        if (acc.instruments.length >= 3) {
+            alert('Maximum 3 instruments allowed per account. Remove an existing instrument first.');
+            return;
+        }
+        acc.instruments.push(symbol);
+    }
+    acc.instrument = acc.instruments[0];
+    renderSelectedAccountConfig();
+}
+
+function removeManagerInstrument(symbol) {
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc || !Array.isArray(acc.instruments)) return;
+
+    if (acc.instruments.length <= 1) {
+        alert('At least 1 monitored instrument is required.');
+        return;
+    }
+
+    acc.instruments = acc.instruments.filter(s => s !== symbol);
+    acc.instrument = acc.instruments[0];
+    renderSelectedAccountConfig();
+}
+
+function addManagerCustomSymbol() {
+    const input = document.getElementById('managerCustomSymbolInput');
+    if (!input) return;
+    const raw = input.value.trim().toUpperCase().replace(/[^A-Z0-9._-]/g, '');
+    if (!raw) return;
+
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) return;
+    if (!Array.isArray(acc.instruments)) acc.instruments = [acc.instrument || 'XAUUSD'];
+
+    if (acc.instruments.includes(raw)) {
+        alert(`${raw} is already being monitored.`);
+        input.value = '';
+        return;
+    }
+
+    if (acc.instruments.length >= 3) {
+        alert('Maximum 3 instruments allowed per account. Remove an existing instrument first.');
+        return;
+    }
+
+    acc.instruments.push(raw);
+    acc.instrument = acc.instruments[0];
+    input.value = '';
+    renderSelectedAccountConfig();
+}
+
+function toggleManagerAccountPause() {
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) return;
+
+    acc.isPaused = !acc.isPaused;
+    saveAccounts();
+    renderSidebar();
+    renderAccountManager();
+
+    // Sync button in top analysis view if selected
+    if (acc.id === selectedAccountId) {
+        const pauseBtn = document.getElementById('btnTogglePause');
+        if (pauseBtn) {
+            pauseBtn.innerText = acc.isPaused ? 'Resume EA' : 'Pause EA';
+        }
+    }
+
+    showLitmusToast(acc.isPaused ? `⏸️ Trading paused for ${acc.name}` : `🟢 Trading resumed for ${acc.name}`);
+}
+
+function deleteManagerAccount() {
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) return;
+
+    if (confirm(`Permanently remove "${acc.name}" from LitmusTrend workspace?`)) {
+        fetch('/api/portal/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accountId: acc.metaAccountId || acc.id, login: acc.login })
+        }).catch(err => console.warn('MetaApi cleanup notice:', err));
+
+        accounts = accounts.filter(a => a.id !== managerSelectedAccountId);
+        saveAccounts();
+
+        selectedAccountId = accounts.length > 0 ? accounts[0].id : null;
+        managerSelectedAccountId = accounts.length > 0 ? accounts[0].id : null;
+
+        renderSidebar();
+        renderAccountManager();
+
+        if (selectedAccountId) {
+            selectAccount(selectedAccountId);
+        } else {
+            showEmptyAnalysis();
+        }
+
+        showLitmusToast(`🗑️ Account "${acc.name}" removed`);
+    }
+}
+
+function saveManagerAccountSettings() {
+    const acc = accounts.find(a => a.id === managerSelectedAccountId);
+    if (!acc) return;
+
+    saveAccounts();
+    renderSidebar();
+    renderAccountManager();
+
+    const notice = document.getElementById('managerSaveNotice');
+    if (notice) {
+        notice.innerHTML = `<span style="color: #10b981; font-weight: 700;">✓ Saved & Applied to Live Sentinel</span>`;
+    }
+
+    showLitmusToast(`✅ Settings saved: ${acc.name} (${acc.riskPercent}% Risk, ${acc.instruments.join(', ')})`);
+}

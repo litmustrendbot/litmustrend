@@ -575,68 +575,42 @@
             </div>
 
             <!-- ==============================================================
-                 3. SOCIAL VIBE STUDIO (TIKTOK PHOTO MODE & ZERO-API CREATOR SUITE)
+                 3. SOCIAL VIBE STUDIO
                  ============================================================== -->
             <div id="socialStudioView" class="studio-viewport hidden">
-                <div class="studio-header-card">
-                    <div class="studio-header-left">
-                        <div class="studio-badge-row">
-                            <span class="studio-kpi-badge">CREATOR SUITE</span>
-                            <span class="studio-sub-badge">Zero-API Viral Engine</span>
-                        </div>
-                        <h2 class="studio-main-title">
-                            <span class="studio-icon-glow">📸</span>
-                            <span>Social Vibe Studio</span>
+                <div class="studio-header-card" style="padding: 16px 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button class="btn-icon btn-viewport-toggle" title="Toggle Sidebar (Ctrl+B)" onclick="toggleSidebarCollapse()" aria-label="Toggle Sidebar">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                                <path d="m14 9 3 3-3 3"></path>
+                            </svg>
+                        </button>
+                        <h2 class="studio-main-title" style="font-size: 1.25rem;">
+                            <span>📸 Social Vibe Studio</span>
                         </h2>
-                        <p class="studio-main-desc">
-                            1-Click multi-platform creator suite for <strong>@litmus_trend</strong> • TikTok Photo Mode & instant high-impact Before/After trade carousels
-                        </p>
                     </div>
 
-                    <div class="studio-trade-selector-card">
-                        <div class="selector-meta-header">
-                            <span class="selector-label">ACTIVE SETUP</span>
-                            <span class="selector-status" id="ltHeaderTradeGrade">GRADE A+</span>
-                        </div>
-                        <select id="ltSelectTrade" class="form-input studio-trade-select" onchange="onLitmusTradeChanged(this.value)">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <select id="ltSelectTrade" class="form-input studio-trade-select" style="max-width: 280px;" onchange="onLitmusTradeChanged(this.value)">
                             <option value="TRD-81816344-01">XAUUSD (Gold) • +12.0R WIN</option>
                             <option value="TRD-81816344-02">GBPUSD • +15.0R WIN</option>
                         </select>
-                        <div class="trade-mini-stats-bar">
-                            <span>Return: <strong id="ltHeaderReturn" class="text-green">+12.0R ($120.00)</strong></span>
-                            <span>&bull;</span>
-                            <span>Efficiency: <strong id="ltHeaderEfficiency" class="text-accent">99.2%</strong></span>
-                        </div>
+                        <span id="ltHeaderTradeGrade" class="journal-grade-pill">Grade: A+</span>
+                        <span id="ltHeaderReturn" class="text-green" style="font-weight: 700; font-size: 0.9rem;">+12.0R</span>
                     </div>
                 </div>
 
                 <div class="studio-grid">
-                    <!-- LEFT: TIKTOK PHOTO MODE (SMARTPHONE FRAME CAROUSEL) -->
-                    <div class="tiktok-mockup-frame">
-                        <div class="phone-status-bar">
-                            <div class="phone-profile-meta">
-                                <div class="creator-avatar-wrap">
-                                    <div class="creator-avatar-inner">LT</div>
-                                </div>
-                                <div>
-                                    <div class="creator-username-row">
-                                        <span class="creator-name">@litmus_trend</span>
-                                        <span class="verified-badge" title="Verified Prop Strategy">✓</span>
-                                    </div>
-                                    <span class="creator-mode-tag">📸 TikTok Photo Mode (2-Slide Carousel)</span>
-                                </div>
-                            </div>
-                            <span class="swipe-indicator-pill">Swipe Mode ➡️</span>
-                        </div>
-
+                    <!-- LEFT: BEFORE & AFTER SLIDE PREVIEW -->
+                    <div class="studio-card" style="display: flex; flex-direction: column; gap: 14px; padding: 18px;">
                         <!-- Slide Switcher Tabs -->
                         <div class="slide-nav-tabs">
                             <button type="button" id="ltSlide1Tab" class="share-pill-btn primary" onclick="switchLtTikTokSlide(1)">
-                                <span>1️⃣</span>
                                 <span>Slide 1: Before Entry</span>
                             </button>
                             <button type="button" id="ltSlide2Tab" class="share-pill-btn" onclick="switchLtTikTokSlide(2)">
-                                <span>2️⃣</span>
                                 <span>Slide 2: After Outcome 🎯</span>
                             </button>
                         </div>
@@ -645,50 +619,27 @@
                         <div class="carousel-viewport-box">
                             <div id="ltSlide1Box">
                                 <img id="ltSlide1Img" src="snapshots/XAUUSD_Trade_Before.png" alt="Slide 1 Before" class="carousel-slide-img" onclick="openSnapshotLightbox(this.src, 'Slide 1: Before Setup', '15M Imbalance & POI Zone Analysis')">
-                                <div class="slide-overlay-badge">SLIDE 1 • BEFORE ENTRY (15M POI)</div>
-                                <div class="slide-zoom-hint" onclick="openSnapshotLightbox(document.getElementById('ltSlide1Img').src, 'Slide 1: Before Setup', '15M Imbalance & POI Zone Analysis')">🔍 Click to Enlarge</div>
-                                <div class="slide-swipe-pill">Swipe for outcome ➡️</div>
+                                <div class="slide-overlay-badge">BEFORE ENTRY</div>
+                                <div class="slide-zoom-hint" onclick="openSnapshotLightbox(document.getElementById('ltSlide1Img').src, 'Slide 1: Before Setup', '15M Imbalance & POI Zone Analysis')">🔍 Enlarge</div>
                             </div>
                             <div id="ltSlide2Box" class="hidden">
                                 <img id="ltSlide2Img" src="snapshots/XAUUSD_Trade_After.png" alt="Slide 2 After" class="carousel-slide-img" onclick="openSnapshotLightbox(this.src, 'Slide 2: After Outcome', 'Full Expansion Target Hit')">
-                                <div class="slide-overlay-badge success">SLIDE 2 • AFTER OUTCOME</div>
-                                <div class="slide-zoom-hint" onclick="openSnapshotLightbox(document.getElementById('ltSlide2Img').src, 'Slide 2: After Outcome', 'Full Expansion Target Hit')">🔍 Click to Enlarge</div>
+                                <div class="slide-overlay-badge success">AFTER OUTCOME</div>
+                                <div class="slide-zoom-hint" onclick="openSnapshotLightbox(document.getElementById('ltSlide2Img').src, 'Slide 2: After Outcome', 'Full Expansion Target Hit')">🔍 Enlarge</div>
                                 <div class="slide-swipe-pill success" id="ltSlide2BadgeR">+12.0R Target Hit 🎯</div>
                             </div>
                         </div>
-
-                        <!-- Caption & Swipe Hook Box -->
-                        <div class="caption-display-card">
-                            <div class="caption-hook-header">
-                                <span class="caption-hook-tag">⚡ VIRAL SWIPE HOOK</span>
-                                <span class="copy-hint-text">Auto-synced</span>
-                            </div>
-                            <p class="caption-hook-body" id="ltTikTokHook">
-                                "Look at this clean 15m Gold setup... swipe right to see how it played out! ➡️"
-                            </p>
-                            <p class="caption-full-text" id="ltTikTokCaption">
-                                Textbook execution adhering strictly to the strategy rulebook. Follow @litmus_trend for daily before & after setups! #fyp #forex #trading #xauusd #tradingview #smartmoneyconcepts
-                            </p>
-                        </div>
                     </div>
 
-                    <!-- RIGHT: ZERO-API 1-CLICK SHARE HUB & DOWNLOADS -->
-                    <div class="studio-card">
-                        <!-- ZERO-API SHARE HUB -->
-                        <div class="share-hub-box">
-                            <div class="share-hub-header">
-                                <span class="share-hub-title">
-                                    <span>⚡</span> 1-Click Instant Share (Zero-API)
-                                </span>
-                                <span class="share-hub-pill">100% Free / No Setup</span>
-                            </div>
-                            <p class="share-hub-desc">
-                                Charts, Before/After slides, and formatted captions are prepared. Tap any platform to publish immediately:
-                            </p>
+                    <!-- RIGHT: DIRECT SHARE & DOWNLOAD ACTIONS -->
+                    <div class="studio-card" style="display: flex; flex-direction: column; gap: 18px; padding: 18px;">
+                        <!-- DIRECT SHARE -->
+                        <div>
+                            <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px;">1-CLICK SHARE</div>
                             <div class="share-btn-grid">
                                 <button type="button" class="share-pill-btn brand-tiktok" onclick="ltShareToTikTok()">
                                     <span>🎵</span>
-                                    <span>TikTok Photo</span>
+                                    <span>TikTok</span>
                                 </button>
                                 <button type="button" class="share-pill-btn brand-x" onclick="ltShareToX()">
                                     <span>𝕏</span>
@@ -708,27 +659,27 @@
                                 </button>
                                 <button type="button" class="share-pill-btn brand-device primary" onclick="ltShareToDeviceApps()">
                                     <span>📱</span>
-                                    <span>Share to Apps</span>
+                                    <span>Share</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- SLIDE DOWNLOAD ACTIONS -->
-                        <div class="slide-downloads-wrap">
-                            <div class="section-micro-title">DOWNLOAD HIGH-RES SLIDES (PNG)</div>
+                        <!-- SLIDE DOWNLOADS -->
+                        <div>
+                            <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px;">DOWNLOAD SLIDES</div>
                             <div class="slide-download-grid">
                                 <a id="ltBtnDownloadS1" href="snapshots/XAUUSD_Trade_Before.png" download="Slide1_Before_Setup_XAUUSD.png" class="btn btn-secondary btn-sm download-btn-card">
                                     <span class="dl-icon">⬇</span>
                                     <div class="dl-meta">
                                         <strong class="dl-name">Slide 1 (Before)</strong>
-                                        <span class="dl-specs">15M Setup POI • PNG</span>
+                                        <span class="dl-specs">PNG</span>
                                     </div>
                                 </a>
                                 <a id="ltBtnDownloadS2" href="snapshots/XAUUSD_Trade_After.png" download="Slide2_After_Outcome_XAUUSD.png" class="btn btn-secondary btn-sm download-btn-card">
                                     <span class="dl-icon">⬇</span>
                                     <div class="dl-meta">
                                         <strong class="dl-name">Slide 2 (After)</strong>
-                                        <span class="dl-specs">Target Expansion • PNG</span>
+                                        <span class="dl-specs">PNG</span>
                                     </div>
                                 </a>
                             </div>
@@ -737,62 +688,46 @@
                         <!-- CAPTION EDITOR -->
                         <div class="caption-editor-wrap">
                             <div class="caption-editor-header">
-                                <label class="caption-editor-label">EDIT POST CAPTION & HASHTAGS:</label>
-                                <button type="button" class="btn-text-link" onclick="ltCopyCurrentCaption()">📋 Copy Text</button>
+                                <label class="caption-editor-label">POST CAPTION:</label>
+                                <button type="button" class="btn-text-link" onclick="ltCopyCurrentCaption()">📋 Copy</button>
                             </div>
-                            <textarea id="ltSocialCaption" rows="6" class="form-input font-mono caption-textarea" placeholder="Post caption auto-generated here..."></textarea>
+                            <textarea id="ltSocialCaption" rows="4" class="form-input font-mono caption-textarea" placeholder="Post caption..."></textarea>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- ==============================================================
-                 4. INSTITUTIONAL TRADE JOURNAL (BEFORE & AFTER SNAPSHOTS)
+                 4. TRADE JOURNAL
                  ============================================================== -->
             <div id="tradeJournalView" class="studio-viewport hidden">
-                <div class="studio-header-card">
-                    <div>
-                        <div class="studio-badge-row">
-                            <span class="studio-kpi-badge journal-badge">INSTITUTIONAL AUDIT</span>
-                            <span class="studio-sub-badge">Prop Desk Standards</span>
-                        </div>
-                        <h2 class="studio-main-title">
-                            <span class="studio-icon-glow">📖</span>
-                            <span>Institutional Trade Journal</span>
+                <div class="studio-header-card" style="padding: 16px 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button class="btn-icon btn-viewport-toggle" title="Toggle Sidebar (Ctrl+B)" onclick="toggleSidebarCollapse()" aria-label="Toggle Sidebar">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                                <path d="m14 9 3 3-3 3"></path>
+                            </svg>
+                        </button>
+                        <h2 class="studio-main-title" style="font-size: 1.25rem;">
+                            <span>📖 Trade Journal</span>
                         </h2>
-                        <p class="studio-main-desc">
-                            After Market Strategy (AMS) execution audits, systematic rule adherence, liquidity sweep verification & TradingView charts
-                        </p>
                     </div>
 
-                    <div class="journal-filter-group">
-                        <button type="button" class="journal-filter-btn active" id="jFilterAll" onclick="filterJournal('ALL')">All Trades</button>
-                        <button type="button" class="journal-filter-btn" id="jFilterGold" onclick="filterJournal('XAUUSD')">Gold (XAUUSD)</button>
-                        <button type="button" class="journal-filter-btn" id="jFilterGbp" onclick="filterJournal('GBPUSD')">British Pound</button>
-                    </div>
-                </div>
-
-                <!-- 4 EXECUTIVE KPI METRICS BAR -->
-                <div class="journal-kpi-bar">
-                    <div class="journal-kpi-card">
-                        <span class="kpi-label">VERIFIED SETUPS</span>
-                        <span class="kpi-num" id="jKpiTradesCount">2 Trades</span>
-                        <span class="kpi-foot text-green">100% Rule Compliance</span>
-                    </div>
-                    <div class="journal-kpi-card">
-                        <span class="kpi-label">TOTAL NET RETURN</span>
-                        <span class="kpi-num text-green" id="jKpiNetReturn">+27.0 R</span>
-                        <span class="kpi-foot" id="jKpiNetPnl">+$270.00 Account Net</span>
-                    </div>
-                    <div class="journal-kpi-card">
-                        <span class="kpi-label">AVERAGE MULTIPLIER</span>
-                        <span class="kpi-num text-accent" id="jKpiAvgR">+13.5 R</span>
-                        <span class="kpi-foot">Stepped Trailing Ladder</span>
-                    </div>
-                    <div class="journal-kpi-card">
-                        <span class="kpi-label">WIN RATE & GRADE</span>
-                        <span class="kpi-num text-green">100% (A+)</span>
-                        <span class="kpi-foot">Zero Breakeven Drag</span>
+                    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 12px; font-size: 0.8rem; color: var(--text-secondary);">
+                            <span>Total Setups: <strong id="jKpiTradesCount" style="color: var(--text-primary);">2</strong></span>
+                            <span>&bull;</span>
+                            <span>Net Return: <strong id="jKpiNetReturn" class="text-green">+27.0 R</strong></span>
+                            <span>&bull;</span>
+                            <span>Profit: <strong id="jKpiNetPnl" class="text-green">+$270.00</strong></span>
+                        </div>
+                        <div class="journal-filter-group" style="margin-left: auto;">
+                            <button type="button" class="journal-filter-btn active" id="jFilterAll" onclick="filterJournal('ALL')">All</button>
+                            <button type="button" class="journal-filter-btn" id="jFilterGold" onclick="filterJournal('XAUUSD')">Gold</button>
+                            <button type="button" class="journal-filter-btn" id="jFilterGbp" onclick="filterJournal('GBPUSD')">GBPUSD</button>
+                        </div>
                     </div>
                 </div>
 
@@ -803,11 +738,11 @@
             </div>
 
             <!-- ==============================================================
-                 5. ACCOUNT MANAGER & MULTI-ASSET RISK ENGINE
+                 5. ACCOUNT MANAGER
                  ============================================================== -->
             <div id="accountManagerView" class="studio-viewport hidden">
-                <div class="studio-header-card">
-                    <div style="display: flex; align-items: center; gap: 14px; width: 100%;">
+                <div class="studio-header-card" style="padding: 16px 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
                         <button class="btn-icon btn-viewport-toggle" title="Toggle Sidebar (Ctrl+B)" onclick="toggleSidebarCollapse()" aria-label="Toggle Sidebar">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -815,34 +750,23 @@
                                 <path d="m14 9 3 3-3 3"></path>
                             </svg>
                         </button>
-                        <div class="studio-header-left" style="flex: 1;">
-                            <div class="studio-badge-row">
-                                <span class="studio-kpi-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3);">ACCOUNT MANAGER</span>
-                                <span class="studio-sub-badge">Multi-Asset Sentinel & Risk Governance</span>
-                            </div>
-                            <h2 class="studio-main-title">
-                                <span class="studio-icon-glow">⚙️</span>
-                                <span>Account Manager</span>
-                            </h2>
-                            <p class="studio-main-desc">
-                                Configure per-account risk sizing, monitor up to 3 instruments concurrently (auto-executed on trigger), pause execution, and manage account lifecycles.
-                            </p>
-                        </div>
+                        <h2 class="studio-main-title" style="font-size: 1.25rem;">
+                            <span>⚙️ Account Manager</span>
+                        </h2>
                     </div>
                 </div>
 
-                <!-- ACCOUNT SELECTOR STRIP -->
+                <!-- ACCOUNT SELECTOR -->
                 <div class="manager-section">
                     <div class="manager-section-header">
-                        <span class="manager-section-title">CONNECTED MT5 ACCOUNTS</span>
-                        <span class="manager-section-hint">Click any account to inspect & customize its risk and monitored pairs</span>
+                        <span class="manager-section-title">ACCOUNTS</span>
                     </div>
                     <div id="managerAccountsGrid" class="manager-accounts-grid">
                         <!-- Populated dynamically via app.js -->
                     </div>
                 </div>
 
-                <!-- SELECTED ACCOUNT CONFIGURATION PANEL -->
+                <!-- SELECTED ACCOUNT CONFIGURATION -->
                 <div id="managerConfigContainer">
                     <!-- Populated dynamically via app.js -->
                 </div>
